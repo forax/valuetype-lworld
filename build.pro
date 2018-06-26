@@ -27,9 +27,7 @@ compiler.
     )
 
 packager.
-  modules(
-     "fr.umlv.valuetype@1.0/fr.umlv.valuetype.Main"
-     )   
+  modules("fr.umlv.valuetype@1.0/fr.umlv.valuetype.Main")   
 
 run(resolver, modulefixer, compiler, tester, packager /*, perfer */)
 
