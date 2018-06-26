@@ -23,9 +23,9 @@ import fr.umlv.valuetype.IntBox;
 @Measurement(iterations = 5, time = 5, timeUnit = TimeUnit.SECONDS)
 @Fork(value = 3, jvmArgsAppend = "-XX:+EnableValhalla")
 @BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.NANOSECONDS)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
-public class MethodCallBenchMark {
+public class IntBoxBenchMark {
   
   @Benchmark
   public int sum_IntBox() {
@@ -59,7 +59,7 @@ public class MethodCallBenchMark {
   
   public static void main(String[] args) throws RunnerException {
     Options opt = new OptionsBuilder()
-        .include(MethodCallBenchMark.class.getName())
+        .include(IntBoxBenchMark.class.getName())
         .build();
     new Runner(opt).run();
   }
