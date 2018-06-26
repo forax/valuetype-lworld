@@ -1,0 +1,18 @@
+sudo: false
+dist: trusty
+language: java
+jdk: openjdk-ea
+
+env:
+  - PRO_SPECIAL_BUILD='early-access'
+
+# https://github.com/travis-ci/travis-ci/issues/8408
+before_install:
+  - unset _JAVA_OPTIONS
+
+install:
+  - java pro_wrapper.java version
+
+script:
+  - ./pro/bin/pro perfer
+  
