@@ -4,7 +4,7 @@ language: java
 jdk: openjdk-ea
 
 env:
-  - PRO_SPECIAL_BUILD='early-access'
+  - PRO_SPECIAL_BUILD='early-access-lworld'
 
 # https://github.com/travis-ci/travis-ci/issues/8408
 before_install:
@@ -14,5 +14,5 @@ install:
   - java pro_wrapper.java version
 
 script:
-  - ./pro/bin/pro perfer
+  - ./pro/bin/pro build build.pro perfer
   
