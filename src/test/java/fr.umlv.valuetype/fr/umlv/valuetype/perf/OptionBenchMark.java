@@ -1,5 +1,7 @@
 package fr.umlv.valuetype.perf;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,18 +27,18 @@ import fr.umlv.valuetype.Option;
 @SuppressWarnings("static-method")
 @Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
-@Fork(value = 3, jvmArgsAppend = "-XX:+EnableValhalla")
+@Fork(value = 3, jvmArgsAppend = {"-XX:+EnableValhalla"/*, "-XX:+PrintCompilation", "-XX:+UnlockDiagnosticVMOptions", "-XX:+PrintInlining"*/})
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Benchmark)
 public class OptionBenchMark {
   
-  private static final Map<String, Integer> INTEGER_MAP =
-      Map.of("foo", 1, "bar", 2, "baz", 3);
-  private static final Map<String, IntBox> INT_BOX_MAP =
-      Map.of("foo", IntBox.valueOf(1), "bar", IntBox.valueOf(2), "baz", IntBox.valueOf(3));
-  private static final List<String> list =
-      List.of("a", "foo", "b", "bar", "c", "baz");
+  private static final HashMap<String, Integer> INTEGER_MAP =
+      new HashMap<>(Map.of("foo", 1, "bar", 2, "baz", 3));
+  private static final HashMap<String, IntBox> INT_BOX_MAP =
+      new HashMap<>(Map.of("foo", IntBox.valueOf(1), "bar", IntBox.valueOf(2), "baz", IntBox.valueOf(3)));
+  private static final ArrayList<String> list =
+      new ArrayList<>(List.of("a", "foo", "b", "bar", "c", "baz"));
   
   private static Integer get_null(String key) {
     return INTEGER_MAP.get(key);
