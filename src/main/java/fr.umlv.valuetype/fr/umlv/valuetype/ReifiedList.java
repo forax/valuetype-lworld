@@ -2,6 +2,8 @@ package fr.umlv.valuetype;
 import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
@@ -15,6 +17,14 @@ public class ReifiedList<E> implements Iterable<E> {
       throw new IllegalArgumentException("primitiva are not supported yet");
     }
     this.array = (E[])Array.newInstance(type, 0);
+  }
+  
+  public int size() {
+    return size;
+  }
+  
+  public E get(int index) {
+    return array[index];
   }
   
   public void add(E element) {
@@ -83,13 +93,32 @@ public class ReifiedList<E> implements Iterable<E> {
   
   @Override
   public Iterator<E> iterator() {
-    return cursor().iterator();
+    var size = this.size;
+    var array = this.array;
+    return new Iterator<>() {
+      private int index;
+      
+      @Override
+      public boolean hasNext() {
+        return index < size;
+      }
+      @Override
+      public E next() {
+        try {
+          return array[index++];
+        } catch(ArrayIndexOutOfBoundsException e) {
+          throw new NoSuchElementException();
+        }
+      }
+    };
   }
   
   @Override
   public void forEach(Consumer<? super E> consumer) {
-    for(var cursor = cursor(); cursor != null; cursor = cursor.next()) {
-      consumer.accept(cursor.element()); 
+    var size = this.size;
+    var array = this.array;
+    for(int i = 0; i < size; i++) {
+      consumer.accept(array[i]); 
     }
   }
   
