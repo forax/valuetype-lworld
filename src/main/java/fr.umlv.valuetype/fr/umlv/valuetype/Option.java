@@ -43,6 +43,10 @@ public final __ByValue class Option<E> {
     }
   }
   
+  public E orElse(E defaultValue) {
+    return (value == null)? defaultValue: value;
+  }
+  
   public E orElseGet(Supplier<? extends E> supplier) {
     Objects.requireNonNull(supplier);
     return (value == null)? supplier.get(): value;
