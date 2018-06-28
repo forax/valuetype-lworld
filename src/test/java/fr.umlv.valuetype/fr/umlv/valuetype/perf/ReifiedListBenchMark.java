@@ -33,30 +33,30 @@ import fr.umlv.valuetype.ReifiedList;
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
 public class ReifiedListBenchMark {
-  private static final ReifiedList<IntBox> INTBOX_LIST;
-  static {
+  private final ReifiedList<IntBox> intBoxList;
+  {
     var list = new ReifiedList<IntBox>(IntBox.class);
     for(int i = 0; i < 100_000; i++) {
       list.add(IntBox.valueOf(i));
     }
-    INTBOX_LIST = list;
+    intBoxList = list;
   }
   
-  private static final ArrayList<Integer> INTEGER_LIST;
-  static {
+  private final ArrayList<Integer> integerList;
+  {
     var list = new ArrayList<Integer>();
     for(int i = 0; i < 100_000; i++) {
       list.add(Integer.valueOf(i));
     }
-    INTEGER_LIST = list;
+    integerList = list;
   }
   
   @Benchmark
   public int reifiedlist_intbox_get() {
     int sum = 0;
-    int size = INTBOX_LIST.size();
+    int size = intBoxList.size();
     for(int i = 0; i < size; i++) {
-      sum += INTBOX_LIST.get(i).intValue();
+      sum += intBoxList.get(i).intValue();
     }
     return sum;
   }
@@ -64,7 +64,7 @@ public class ReifiedListBenchMark {
   @Benchmark
   public int reifiedlist_intbox_cursor() {
     int sum = 0;
-    for(var cursor = INTBOX_LIST.cursor(); cursor != null; cursor = cursor.next()) {
+    for(var cursor = intBoxList.cursor(); cursor != null; cursor = cursor.next()) {
       sum += cursor.element().intValue();
     }
     return sum;
@@ -73,7 +73,7 @@ public class ReifiedListBenchMark {
   @Benchmark
   public int reifiedlist_intbox_iterator() {
     int sum = 0;
-    for(var iterator = INTBOX_LIST.iterator(); iterator.hasNext();) {
+    for(var iterator = intBoxList.iterator(); iterator.hasNext();) {
       sum += iterator.next().intValue();
     }
     return sum;
@@ -82,7 +82,7 @@ public class ReifiedListBenchMark {
   @Benchmark
   public int arraylist_integer_iterator() {
     int sum = 0;
-    for(var iterator = INTEGER_LIST.iterator(); iterator.hasNext();) {
+    for(var iterator = integerList.iterator(); iterator.hasNext();) {
       sum += iterator.next();
     }
     return sum;
@@ -91,9 +91,9 @@ public class ReifiedListBenchMark {
   @Benchmark
   public int arraylist_integer_get() {
     int sum = 0;
-    int size = INTEGER_LIST.size();
+    int size = integerList.size();
     for(int i = 0; i < size; i++) {
-      sum += INTEGER_LIST.get(i);
+      sum += integerList.get(i);
     }
     return sum;
   }
