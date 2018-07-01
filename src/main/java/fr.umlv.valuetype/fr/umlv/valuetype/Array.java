@@ -125,7 +125,7 @@ public final __ByValue class Array<E> implements List<E> {
   public boolean contains(Object o) {
     Objects.requireNonNull(o);
     for(var element: elements) {
-      if (o.equals(elements)) {
+      if (o.equals(element)) {
         return true;
       }
     }
