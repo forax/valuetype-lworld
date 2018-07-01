@@ -4,12 +4,12 @@ import static com.github.forax.pro.builder.Builders.*;
 pro.loglevel("verbose")
 
 resolver.
-  checkForUpdate(true).
+  //checkForUpdate(true).
   dependencies(
     // JUnit 5
-    "org.junit.jupiter.api=org.junit.jupiter:junit-jupiter-api:5.3.0-M1",
-    "org.junit.jupiter.params=org.junit.jupiter:junit-jupiter-params:5.3.0-M1",
-    "org.junit.platform.commons=org.junit.platform:junit-platform-commons:1.3.0-M1",
+    "org.junit.jupiter.api=org.junit.jupiter:junit-jupiter-api:5.2.0",
+    "org.junit.jupiter.params=org.junit.jupiter:junit-jupiter-params:5.2.0",
+    "org.junit.platform.commons=org.junit.platform:junit-platform-commons:1.2.0",
     "org.apiguardian.api=org.apiguardian:apiguardian-api:1.0.0",
     "org.opentest4j=org.opentest4j:opentest4j:1.1.0",
 
