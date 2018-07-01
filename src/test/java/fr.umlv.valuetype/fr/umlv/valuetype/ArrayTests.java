@@ -1,4 +1,4 @@
-package fr.umlv.valuetype;
+/*package fr.umlv.valuetype;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,5 +33,5 @@ class ArrayTests {
         () -> assertEquals(list.size(), array.size())
         );
   }
-}
+}*/
 
