@@ -12,8 +12,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 @SuppressWarnings("static-method")
 class ArrayTests {
-  @SuppressWarnings("unused")
-  private static Stream<List<Object>> createLists() {
+  /*
+  private static Stream<List<Object>> withLists() {
       return Stream.of(
           new Object[0],
           new Integer[] { 1, 2, 42},
@@ -23,8 +23,13 @@ class ArrayTests {
           ).map(List::of);
   }
   
+  @SuppressWarnings("unused")
+  private static Stream<List<Object>> withNonEmptyLists() {
+    return withLists().filter(l -> !l.isEmpty());
+  }
+  
   @ParameterizedTest
-  @MethodSource("createLists")
+  @MethodSource("withLists")
   void testSizeAndIsEmpty(List<Object> list) {
     var array = Array.wrap(list.toArray());
     assertAll(
@@ -34,7 +39,7 @@ class ArrayTests {
   }
   
   @ParameterizedTest
-  @MethodSource("createLists")
+  @MethodSource("withLists")
   void testContains(List<Object> list) {
     var array = Array.wrap(list.toArray());
     assertAll(
@@ -42,5 +47,15 @@ class ArrayTests {
         () -> assertEquals(list.contains("foo"), array.contains("foo"))
         );
   }
+  
+  @ParameterizedTest
+  @MethodSource("withNonEmptyLists")
+  void testGet(List<Object> list) {
+    var array = Array.wrap(list.toArray());
+    assertAll(
+        () -> assertEquals(list.get(0), array.get(0)),
+        () -> assertEquals(list.get(list.size() - 1), array.get(array.size() - 1))
+        );
+  }*/
 }
 
