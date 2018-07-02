@@ -32,15 +32,17 @@ import fr.umlv.valuetype.Option;
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
 @State(Scope.Benchmark)
 public class OptionBenchMark {
-  private static final HashMap<String, Integer> INTEGER_MAP =
-      new HashMap<>(Map.of("foo", 1, "bar", 2, "baz", 3));
-  private static final HashMap<String, IntBox> INT_BOX_MAP =
-      new HashMap<>(Map.of("foo", IntBox.valueOf(1), "bar", IntBox.valueOf(2), "baz", IntBox.valueOf(3)));
-  
-  //private static final Map<String, Integer> INTEGER_MAP =
-  //    Map.of("foo", 1, "bar", 2, "baz", 3);
-  //private static final Map<String, IntBox> INT_BOX_MAP =
-  //    Map.of("foo", IntBox.valueOf(1), "bar", IntBox.valueOf(2), "baz", IntBox.valueOf(3));
+  static class Holder  {
+    static final HashMap<String, Integer> INTEGER_MAP =
+        new HashMap<>(Map.of("foo", 1, "bar", 2, "baz", 3));
+    static final HashMap<String, IntBox> INT_BOX_MAP =
+        new HashMap<>(Map.of("foo", IntBox.valueOf(1), "bar", IntBox.valueOf(2), "baz", IntBox.valueOf(3)));
+
+    //static final Map<String, Integer> INTEGER_MAP =
+    //    Map.of("foo", 1, "bar", 2, "baz", 3);
+    //static final Map<String, IntBox> INT_BOX_MAP =
+    //    Map.of("foo", IntBox.valueOf(1), "bar", IntBox.valueOf(2), "baz", IntBox.valueOf(3));
+  }
   
   private static final ArrayList<String> list =
       new ArrayList<>(List.of("a", "foo", "b", "bar", "c", "baz"));
@@ -49,7 +51,7 @@ public class OptionBenchMark {
   public int sum_null() {
     int sum = 0;
     for(var key: list) {
-      var value = INTEGER_MAP.get(key);
+      var value = Holder.INTEGER_MAP.get(key);
       sum += (value != null)? value: 0;
     }
     return sum;
@@ -59,7 +61,7 @@ public class OptionBenchMark {
   public int sum_option() {
     int sum = 0;
     for(var key: list) {
-      var value = Option.ofNullable(INTEGER_MAP.get(key));
+      var value = Option.ofNullable(Holder.INTEGER_MAP.get(key));
       sum += value.orElse(0);
     }
     return sum;
@@ -69,7 +71,7 @@ public class OptionBenchMark {
   public int sum_intbox() {
     int sum = 0;
     for(var key: list) {
-      var value = INT_BOX_MAP.getOrDefault(key, IntBox.valueOf(0));
+      var value = Holder.INT_BOX_MAP.getOrDefault(key, IntBox.valueOf(0));
       sum += value.intValue();
     }
     return sum;
@@ -79,7 +81,7 @@ public class OptionBenchMark {
   public int sum_optional() {
     int sum = 0;
     for(var key: list) {
-      var value = Optional.ofNullable(INTEGER_MAP.get(key));
+      var value = Optional.ofNullable(Holder.INTEGER_MAP.get(key));
       sum += value.orElse(0);
     }
     return sum;
