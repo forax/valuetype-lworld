@@ -24,6 +24,7 @@ compiler.
   sourceRelease(11).
   rawArguments(
     "-XDallowGenericsOverValues",
+    "-XDallowEmptyValues",
     "--processor-module-path", "deps"   // enable JMH annotation processor
     )
 
