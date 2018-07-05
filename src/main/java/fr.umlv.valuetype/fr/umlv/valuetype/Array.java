@@ -22,12 +22,11 @@ public final __ByValue class Array<E> implements List<E> {
     throw new AssertionError();
   }
 
-  @SuppressWarnings({"raw", "unchecked"})
   public static <E> Array<E> wrap(E[] elements) {
     for(var element: elements) {
       Objects.requireNonNull(element);
     }
-    var array = __MakeDefault Array();
+    var array = __MakeDefault Array<E>();
     array = __WithField(array.elements, elements);
     return array;
   }
