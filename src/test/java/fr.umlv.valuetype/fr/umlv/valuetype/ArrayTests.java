@@ -12,7 +12,6 @@ import org.junit.jupiter.params.provider.MethodSource;
 
 @SuppressWarnings("static-method")
 class ArrayTests {
-  /*
   private static Stream<List<Object>> withLists() {
       return Stream.of(
           new Object[0],
@@ -56,6 +55,13 @@ class ArrayTests {
         () -> assertEquals(list.get(0), array.get(0)),
         () -> assertEquals(list.get(list.size() - 1), array.get(array.size() - 1))
         );
-  }*/
+  }
+  
+  @ParameterizedTest
+  @MethodSource("withLists")
+  void testHashCode(List<Object> list) {
+    var array = Array.wrap(list.toArray());
+    assertEquals(list.hashCode(), array.hashCode());
+  }
 }
 
