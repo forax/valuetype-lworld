@@ -2,8 +2,6 @@ package fr.umlv.valuetype;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-import java.util.function.Consumer;
-
 import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("static-method")
