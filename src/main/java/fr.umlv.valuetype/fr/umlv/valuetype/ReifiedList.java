@@ -14,7 +14,7 @@ public class ReifiedList<E> implements Iterable<E> {
   @SuppressWarnings("unchecked")
   public ReifiedList(Class<E> type) {
     if (type.isPrimitive()) {
-      throw new IllegalArgumentException("primitiva are not supported yet");
+      throw new IllegalArgumentException("primitive are not supported yet");
     }
     this.array = (E[])Array.newInstance(type, 0);
   }
