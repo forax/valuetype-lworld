@@ -31,13 +31,21 @@ public final __ByValue class IntBox implements Comparable<IntBox> {
     return box;
   }
   
+  public static IntBox zero() {
+    return __MakeDefault IntBox();
+  }
+  
   public int intValue() {
     return value;
   }
+  
+  public IntBox increment() {
+    return valueOf(value + 1);
+  }
 
   private static IntBox sum(IntBox n) {
-    IntBox sum = IntBox.valueOf(0);
-    for(IntBox i = IntBox.valueOf(0); i.compareTo(n) < 0; i = i.add(IntBox.valueOf(1))) {
+    IntBox sum = zero();
+    for(IntBox i = zero(); i.compareTo(n) < 0; i = i.add(IntBox.valueOf(1))) {
       sum = sum.add(i);
     }
     return sum;
