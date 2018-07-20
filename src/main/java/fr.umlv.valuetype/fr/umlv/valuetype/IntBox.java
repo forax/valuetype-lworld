@@ -25,6 +25,18 @@ public final __ByValue class IntBox implements Comparable<IntBox> {
     return IntBox.valueOf(value + box.value);
   }
   
+  public IntBox subtract(IntBox box) {
+    return IntBox.valueOf(value - box.value);
+  }
+  
+  public IntBox multiply(IntBox box) {
+    return IntBox.valueOf(value * box.value);
+  }
+  
+  public IntBox divide(IntBox box) {
+    return IntBox.valueOf(value / box.value);
+  }
+  
   public static IntBox valueOf(int value) {
     IntBox box = __MakeDefault IntBox();
     box = __WithField(box.value, value);
