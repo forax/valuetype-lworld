@@ -9,6 +9,7 @@ import static java.lang.Math.subtractExact;
 import static java.math.BigInteger.valueOf;
 
 import java.math.BigInteger;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
@@ -28,6 +29,11 @@ public __ByValue class RubyLikeInt implements Comparable<RubyLikeInt> {
   public static RubyLikeInt big(BigInteger big) {
     var integer = __MakeDefault RubyLikeInt();
     return __WithField(integer.big, big);
+  }
+  
+  @Override
+  public String toString() {
+    return (big == null)? "" + small: big.toString();
   }
   
   @Override
@@ -207,5 +213,13 @@ public __ByValue class RubyLikeInt implements Comparable<RubyLikeInt> {
   
   public void times(Consumer<? super RubyLikeInt> consumer) {
     small(0).upto(this, consumer);
+  }
+  
+  public <T> T rangeReduce(RubyLikeInt to, T initial, BiFunction<? super T, ? super RubyLikeInt, ? extends T> reducer) {
+    T current = initial;
+    for(RubyLikeInt i = this; i.compareTo(to) < 0; i = i.succ()) {
+      current = reducer.apply(current, i);
+    }
+    return current;
   }
 }

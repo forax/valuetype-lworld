@@ -20,15 +20,15 @@ import fr.umlv.valuetype.RubyLikeInt;
 import fr.umlv.valuetype.IntBox;
 
 @SuppressWarnings("static-method")
-@Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
+@Warmup(iterations = 3, time = 10, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 3, time = 10, timeUnit = TimeUnit.SECONDS)
 @Fork(value = 3, jvmArgsAppend = {"-XX:+EnableValhalla"/*, "-XX:+PrintCompilation", "-XX:+UnlockDiagnosticVMOptions", "-XX:+PrintInlining"*/})
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
 public class RubyLikeIntBenchMark {
   @Benchmark
-  public int java_int_loop() {
+  public int int_loop() {
     int result = 0;
     int length = 100_000;
     for(int i = 0; i < length; i++) {
@@ -37,20 +37,44 @@ public class RubyLikeIntBenchMark {
         result = result / 1_000_000;
       }
     }
-    return result;
+    return result;  // 18
+  }
+  
+  @Benchmark
+  public IntBox intbox_loop() {
+    var result = IntBox.valueOf(0);
+    var length = IntBox.valueOf(100_000);
+    for(var i = IntBox.valueOf(0); i.compareTo(length) < 0; i = i.increment()) {
+      result = result.multiply(IntBox.valueOf(13)).add(i);
+      if (result.compareTo(IntBox.valueOf(10_000_000)) > 0) {
+        result = result.divide(IntBox.valueOf(1_000_000));
+      }
+    }
+    return result;  // 18
   }
   
   @Benchmark
   public RubyLikeInt ruby_like_int_loop() {
-    RubyLikeInt result = RubyLikeInt.small(0);
-    RubyLikeInt length = RubyLikeInt.small(100_000);
-    for(RubyLikeInt i = RubyLikeInt.small(0); i.compareTo(length) < 0; i = i.succ()) {
+    var result = RubyLikeInt.small(0);
+    var length = RubyLikeInt.small(100_000);
+    for(var i = RubyLikeInt.small(0); i.compareTo(length) < 0; i = i.succ()) {
       result = result.multiply(RubyLikeInt.small(13)).add(i);
       if (result.compareTo(RubyLikeInt.small(10_000_000)) > 0) {
         result = result.divide(RubyLikeInt.small(1_000_000));
       }
     }
-    return result;
+    return result;  // 18
+  }
+  
+  @Benchmark
+  public RubyLikeInt ruby_like_int_range_reduce() {
+    return RubyLikeInt.small(0).rangeReduce(RubyLikeInt.small(100_000), RubyLikeInt.small(0), (acc, index) -> {
+      var res = acc.multiply(RubyLikeInt.small(13)).add(index);
+      if (res.compareTo(RubyLikeInt.small(10_000_000)) > 0) {
+        return res.divide(RubyLikeInt.small(1_000_000));
+      }
+      return res;
+    });  // 18
   }
   
   /*@Benchmark
@@ -63,21 +87,8 @@ public class RubyLikeIntBenchMark {
         result = result / 1_000_000;
       }
     }
-    return result;
+    return result;  // 18
   }*/
-  
-  @Benchmark
-  public IntBox intbox_loop() {
-    IntBox result = IntBox.valueOf(0);
-    IntBox length = IntBox.valueOf(100_000);
-    for(IntBox i = IntBox.valueOf(0); i.compareTo(length) < 0; i = i.increment()) {
-      result = result.multiply(IntBox.valueOf(13)).add(i);
-      if (result.compareTo(IntBox.valueOf(10_000_000)) > 0) {
-        result = result.divide(IntBox.valueOf(1_000_000));
-      }
-    }
-    return result;
-  }
   
   public static void main(String[] args) throws RunnerException {
     Options opt = new OptionsBuilder()
