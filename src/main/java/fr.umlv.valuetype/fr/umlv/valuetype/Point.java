@@ -5,9 +5,12 @@ public final __ByValue class Point {
   public final int y;
 
   public Point() {
-    this.x = 0;
-    this.y = 0;
-    throw new AssertionError();
+    this(0, 0);
+  }
+  
+  public Point(int x, int y) {
+    this.x = x;
+    this.y = y;
   }
   
   public static Point of(int x, int y) {
@@ -18,7 +21,7 @@ public final __ByValue class Point {
   }
   
   public static void main(String[] args) {
-    Point p = Point.of(2, 3);
+    var p = new Point(2, 3);
     System.out.println(p);
     System.out.println(p.hashCode());
     System.out.println(p.equals(Point.of(2, 3)));
