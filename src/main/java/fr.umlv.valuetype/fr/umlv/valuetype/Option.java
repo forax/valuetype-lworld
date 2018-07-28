@@ -17,12 +17,11 @@ public final __ByValue class Option<E> {
     return __MakeDefault Option<>();
   }
   
-  @SuppressWarnings({"unchecked", "raw"})
   public static <E> Option<E> of(E value) {
     Objects.requireNonNull(value);
-    var option = __MakeDefault Option();
+    var option = __MakeDefault Option<E>();
     option = __WithField(option.value, value);
-    return (Option<E>)option;
+    return option;
   }
   
   public static <E> Option<E> ofNullable(E value) {
