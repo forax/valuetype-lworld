@@ -41,7 +41,7 @@ public class RubyLikeIntBenchMark {
   }
   
   @Benchmark
-  public IntBox intbox_loop() {
+  public int intbox_loop() {
     var result = IntBox.valueOf(0);
     var length = IntBox.valueOf(100_000);
     for(var i = IntBox.valueOf(0); i.compareTo(length) < 0; i = i.increment()) {
@@ -50,11 +50,11 @@ public class RubyLikeIntBenchMark {
         result = result.divide(IntBox.valueOf(1_000_000));
       }
     }
-    return result;  // 18
+    return result.intValue();  // 18
   }
   
   @Benchmark
-  public RubyLikeInt ruby_like_int_loop() {
+  public int ruby_like_int_loop() {
     var result = RubyLikeInt.small(0);
     var length = RubyLikeInt.small(100_000);
     for(var i = RubyLikeInt.small(0); i.compareTo(length) < 0; i = i.succ()) {
@@ -63,18 +63,18 @@ public class RubyLikeIntBenchMark {
         result = result.divide(RubyLikeInt.small(1_000_000));
       }
     }
-    return result;  // 18
+    return result.extractSmallValue();  // 18
   }
   
   @Benchmark
-  public RubyLikeInt ruby_like_int_range_reduce() {
+  public int ruby_like_int_range_reduce() {
     return RubyLikeInt.small(0).rangeReduce(RubyLikeInt.small(100_000), RubyLikeInt.small(0), (acc, index) -> {
       var res = acc.multiply(RubyLikeInt.small(13)).add(index);
       if (res.compareTo(RubyLikeInt.small(10_000_000)) > 0) {
         return res.divide(RubyLikeInt.small(1_000_000));
       }
       return res;
-    });  // 18
+    }).extractSmallValue();  // 18
   }
   
   /*@Benchmark

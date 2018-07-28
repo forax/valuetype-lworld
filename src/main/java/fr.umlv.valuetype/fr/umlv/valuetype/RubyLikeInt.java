@@ -31,6 +31,10 @@ public __ByValue class RubyLikeInt implements Comparable<RubyLikeInt> {
     return __WithField(integer.big, big);
   }
   
+  public int extractSmallValue() {  // only for testing
+    return small;
+  }
+  
   @Override
   public String toString() {
     return (big == null)? "" + small: big.toString();
