@@ -28,6 +28,9 @@ compiler.
     "--processor-module-path", "deps"   // enable JMH annotation processor
     )
 
+tester.
+  parallel(false)
+
 packager.
   modules("fr.umlv.valuetype@1.0/fr.umlv.valuetype.Main")   
 
