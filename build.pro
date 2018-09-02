@@ -21,7 +21,7 @@ resolver.
     );
 
 compiler.
-  sourceRelease(11).
+  sourceRelease(12).
   rawArguments(
     "-XDallowGenericsOverValues",
     "-XDallowEmptyValues",
