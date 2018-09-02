@@ -17,18 +17,12 @@ import java.util.function.UnaryOperator;
 public final __ByValue class Array<E> implements List<E> {
   private final E[] elements;
 
-  private Array() {
-    elements = null;
-    throw new AssertionError();
+  private Array(E[] elements) {
+    this.elements = elements;
   }
 
   public static <E> Array<E> wrap(E[] elements) {
-    for(var element: elements) {
-      Objects.requireNonNull(element);
-    }
-    var array = __MakeDefault Array<E>();
-    array = __WithField(array.elements, elements);
-    return array;
+    return new Array<>(Objects.requireNonNull(elements));
   }
 
   @SafeVarargs
@@ -58,7 +52,7 @@ public final __ByValue class Array<E> implements List<E> {
         return false;
       }
       Object other = it.next();
-      if (!element.equals(other)) {
+      if (!Objects.equals(element, other)) {
         return false;
       }
     }
@@ -93,16 +87,15 @@ public final __ByValue class Array<E> implements List<E> {
   @Override
   public E set(int index, E element) {
     var old = elements[index];
-    elements[index] = Objects.requireNonNull(element);
+    elements[index] = element;
     return old;
   }
   
   @Override
   public int indexOf(Object o) {
-    Objects.requireNonNull(o);
     int length = elements.length;
     for(int i = 0; i < length; i++) {
-      if (o.equals(elements[i])) {
+      if (Objects.equals(o, elements[i])) {
         return i;
       }
     }
@@ -113,7 +106,7 @@ public final __ByValue class Array<E> implements List<E> {
   public int lastIndexOf(Object o) {
     Objects.requireNonNull(o);
     for(int i = elements.length; --i >= 0;) {
-      if (o.equals(elements[i])) {
+      if (Objects.equals(o, elements[i])) {
         return i;
       }
     }
@@ -124,7 +117,7 @@ public final __ByValue class Array<E> implements List<E> {
   public boolean contains(Object o) {
     Objects.requireNonNull(o);
     for(var element: elements) {
-      if (o.equals(element)) {
+      if (Objects.equals(o, element)) {
         return true;
       }
     }
@@ -256,6 +249,6 @@ public final __ByValue class Array<E> implements List<E> {
   
   @Override
   public Spliterator<E> spliterator() {
-    return Spliterators.spliterator(elements, Spliterator.ORDERED | Spliterator.NONNULL);
+    return Spliterators.spliterator(elements, Spliterator.ORDERED);
   }
 }

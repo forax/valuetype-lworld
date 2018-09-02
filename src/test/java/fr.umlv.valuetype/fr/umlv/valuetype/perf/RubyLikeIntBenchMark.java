@@ -22,7 +22,7 @@ import fr.umlv.valuetype.IntBox;
 @SuppressWarnings("static-method")
 @Warmup(iterations = 3, time = 10, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 3, time = 10, timeUnit = TimeUnit.SECONDS)
-@Fork(value = 3, jvmArgsAppend = {"-XX:+EnableValhalla"/*, "-XX:+PrintCompilation", "-XX:+UnlockDiagnosticVMOptions", "-XX:+PrintInlining"*/})
+@Fork(value = 3, jvmArgsAppend = {"-XX:+EnableValhalla"})
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
@@ -77,18 +77,18 @@ public class RubyLikeIntBenchMark {
     }).extractSmallValue();  // 18
   }
   
-  /*@Benchmark
-  public Integer integer_loop() {
-    Integer result = 0;
-    Integer length = 100_000;
-    for(Integer i = 0; i < length; i++) {
-      result = result * 13 + i;
-      if (result > 10_000_000) {
-        result = result / 1_000_000;
-      }
-    }
-    return result;  // 18
-  }*/
+  //@Benchmark
+  //public Integer integer_loop() {
+  //  Integer result = 0;
+  //  Integer length = 100_000;
+  //  for(Integer i = 0; i < length; i++) {
+  //    result = result * 13 + i;
+  //    if (result > 10_000_000) {
+  //      result = result / 1_000_000;
+  //    }
+  //  }
+  //  return result;  // 18
+  //}
   
   public static void main(String[] args) throws RunnerException {
     Options opt = new OptionsBuilder()

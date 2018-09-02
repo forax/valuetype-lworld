@@ -32,7 +32,7 @@ import fr.umlv.valuetype.ValueList.ArrayAccess;
 @SuppressWarnings("static-method")
 @Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
-@Fork(value = 3, jvmArgsAppend = {"-XX:+EnableValhalla"/*, "-XX:+PrintCompilation", "-XX:+UnlockDiagnosticVMOptions", "-XX:+PrintInlining"*/})
+@Fork(value = 3, jvmArgsAppend = {"-XX:+EnableValhalla"})
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MILLISECONDS)
 @State(Scope.Benchmark)
@@ -95,24 +95,6 @@ public class ReifiedListBenchMark {
     }
     return sum;
   }
-  /*
-  @Benchmark
-  public int reifiedlist_intbox_cursor() {
-    int sum = 0;
-    for(var cursor = reifiedList.cursor(); cursor != null; cursor = cursor.next()) {
-      sum += cursor.element().intValue();
-    }
-    return sum;
-  }
-  
-  @Benchmark
-  public int reifiedlist_intbox_iterator() {
-    int sum = 0;
-    for(var iterator = reifiedList.iterator(); iterator.hasNext();) {
-      sum += iterator.next().intValue();
-    }
-    return sum;
-  }*/
   
   @Benchmark
   public int valuelist_intbox_get() {
@@ -139,7 +121,7 @@ public class ReifiedListBenchMark {
     return valueList.reduce(IntBox.zero(), (acc, element) -> acc.add(element)).intValue();
   }
   
-  /*@Benchmark
+  @Benchmark
   public int valuelist_intbox_innervalue_reduce() {
     __ByValue class Adder implements BiFunction<IntBox, IntBox, IntBox> {
       private final boolean nonEmpty;
@@ -154,7 +136,7 @@ public class ReifiedListBenchMark {
       }
     }
     return valueList.reduce(IntBox.zero(), __MakeDefault Adder()).intValue();
-  }*/
+  }
   
   @Benchmark
   public int valuelist_intbox_innervalue_inlined_reduce() {
@@ -178,16 +160,6 @@ public class ReifiedListBenchMark {
     }
     return sum.intValue();
   }
-  
-  
-  /*@Benchmark
-  public int arraylist_integer_iterator() {
-    int sum = 0;
-    for(var iterator = integerList.iterator(); iterator.hasNext();) {
-      sum += iterator.next();
-    }
-    return sum;
-  }*/
   
   @Benchmark
   public int arraylist_integer_get() {

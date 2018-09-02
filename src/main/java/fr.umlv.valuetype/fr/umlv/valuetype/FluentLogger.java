@@ -25,7 +25,7 @@ public interface FluentLogger {
   public static FluentLogger create(Class<?> declaringClass, Level level) {
     Objects.requireNonNull(declaringClass);
     Objects.requireNonNull(level);
-    return Impl.create(declaringClass.getName(), level, null);
+    return new Impl(declaringClass.getName(), level, null);
   }
   
   public interface MessageFluent {
@@ -44,25 +44,16 @@ public interface FluentLogger {
     private final Level level;
     private final String message;
 
-    public Impl() {
-      this.className = null;
-      this.level = null;
-      this.message = null;
-      throw new AssertionError();
-    }
-    
-    public static Impl create(String className, Level level, String message) {
-      Impl impl = __MakeDefault Impl();
-      impl = __WithField(impl.className, className);
-      impl = __WithField(impl.level, level);
-      impl = __WithField(impl.message, message);
-      return impl;
+    public Impl(String className, Level level, String message) {
+      this.className = className;
+      this.level = level;
+      this.message = message;
     }
     
     @Override
     public MessageFluent at(Level level) {
       Objects.requireNonNull(level);
-      return create(className, isEnabled(this.level, level)? level: null, null);
+      return new Impl(className, isEnabled(this.level, level)? level: null, null);
     }
     
     private static boolean isEnabled(Level loggerLevel, Level loggingLevel) {
@@ -80,7 +71,7 @@ public interface FluentLogger {
     @Override
     public LogFluent message(String message) {
       Objects.requireNonNull(message);
-      return create(className, level, message);
+      return new Impl(className, level, message);
     }
     
     @Override

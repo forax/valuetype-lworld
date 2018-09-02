@@ -29,18 +29,10 @@ public final class FlatMap<K,V> {
     final K key;
     final V value;
     
-    private Entry() {
-      hash = 0;
-      key = null;
-      value = null;
-    }
-    
-    static <K, V> Entry<K, V> create(int hash, K key, V value) {
-      var entry = __MakeDefault Entry<K,V>();
-      entry = __WithField(entry.hash, hash);
-      entry = __WithField(entry.key, key);
-      entry = __WithField(entry.value, value);
-      return entry;
+    private Entry(int hash, K key, V value) {
+      this.hash = hash;
+      this.key = key;
+      this.value = value;
     }
     
     @Override
@@ -92,7 +84,7 @@ public final class FlatMap<K,V> {
       var entry = entries[index];
       var empty = entry.key == null;
       if (empty || (hash == entry.hash && key.equals(entry.key))) {
-        entries[index] = Entry.create(hash, key, value);
+        entries[index] = new Entry<>(hash, key, value);
         if (!empty) {
           return;
         }

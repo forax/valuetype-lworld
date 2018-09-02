@@ -67,7 +67,7 @@ public interface Vector {
   }
   
   static Vector wrap(int[] values) {
-    return VectorBig.of(values);
+    return of(values);
   }
   
   static Vector zero(int length) {
