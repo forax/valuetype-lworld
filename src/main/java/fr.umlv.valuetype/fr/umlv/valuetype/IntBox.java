@@ -38,13 +38,13 @@ public final __ByValue class IntBox implements Comparable<IntBox> {
   }
   
   public static IntBox valueOf(int value) {
-    IntBox box = __MakeDefault IntBox();
+    IntBox box = IntBox.default;
     box = __WithField(box.value, value);
     return box;
   }
   
   public static IntBox zero() {
-    return __MakeDefault IntBox();
+    return IntBox.default;
   }
   
   public int intValue() {

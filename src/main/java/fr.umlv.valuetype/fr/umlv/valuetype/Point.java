@@ -14,7 +14,7 @@ public final __ByValue class Point {
   }
   
   public static Point of(int x, int y) {
-    Point p = __MakeDefault Point();
+    Point p = Point.default;
     p = __WithField(p.x, x);
     p = __WithField(p.y, y);
     return p;

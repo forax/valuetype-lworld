@@ -135,7 +135,7 @@ public class ReifiedListBenchMark {
         return acc.add(element);
       }
     }
-    return valueList.reduce(IntBox.zero(), __MakeDefault Adder()).intValue();
+    return valueList.reduce(IntBox.zero(), Adder.default).intValue();
   }
   
   @Benchmark
@@ -152,7 +152,7 @@ public class ReifiedListBenchMark {
         return acc.add(element);
       }
     }
-    BiFunction<IntBox, IntBox, IntBox> mapper = __MakeDefault Adder();
+    BiFunction<IntBox, IntBox, IntBox> mapper = Adder.default;
     var sum = IntBox.zero();
     int size = valueList.size();
     for(int i = 0; i < size; i++) {

@@ -23,11 +23,11 @@ public __ByValue class RubyLikeInt implements Comparable<RubyLikeInt> {
     throw new AssertionError();
   }
   public static RubyLikeInt small(int small) {
-    var integer = __MakeDefault RubyLikeInt();
+    var integer = RubyLikeInt.default;
     return __WithField(integer.small, small);
   }
   public static RubyLikeInt big(BigInteger big) {
-    var integer = __MakeDefault RubyLikeInt();
+    var integer = RubyLikeInt.default;
     return __WithField(integer.big, big);
   }
   

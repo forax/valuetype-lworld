@@ -14,17 +14,17 @@ public final __ByValue class TaggedValue {
   
   public static TaggedValue from(Object o) {
     Object object = (o == null)? NULL: o;
-    var tagged = __MakeDefault TaggedValue();
+    var tagged = TaggedValue.default;
     return __WithField(tagged.object, object);
   }
   
   public static TaggedValue from(int i) {
-    var tagged = __MakeDefault TaggedValue();
+    var tagged = TaggedValue.default;
     return __WithField(tagged.number, i);
   }
   
   public static TaggedValue zero() {
-    return __MakeDefault TaggedValue();
+    return TaggedValue.default;
   }
   
   public static TaggedValue one() {

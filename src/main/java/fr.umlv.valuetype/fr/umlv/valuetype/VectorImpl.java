@@ -33,11 +33,11 @@ class VectorImpl {
     }
 
     static VectorInt1 zero() {
-      return __MakeDefault VectorInt1();
+      return VectorInt1.default;
     }
     
     static VectorInt1 of(int v0) {
-      var vector = __MakeDefault VectorInt1();
+      var vector = VectorInt1.default;
       vector = __WithField(vector.v0, v0);
       return vector;
     }
@@ -76,11 +76,11 @@ class VectorImpl {
     }
 
     static VectorInt2 zero() {
-      return __MakeDefault VectorInt2();
+      return VectorInt2.default;
     }
     
     public static VectorInt2 of(int v0, int v1) {
-      var vector = __MakeDefault VectorInt2();
+      var vector = VectorInt2.default;
       vector = __WithField(vector.v0, v0);
       vector = __WithField(vector.v1, v1);
       return vector;
@@ -126,11 +126,11 @@ class VectorImpl {
     }
 
     static VectorInt3 zero() {
-      return __MakeDefault VectorInt3();
+      return VectorInt3.default;
     }
     
     public static VectorInt3 of(int v0, int v1, int v2) {
-      var vector = __MakeDefault VectorInt3();
+      var vector = VectorInt3.default;
       vector = __WithField(vector.v0, v0);
       vector = __WithField(vector.v1, v1);
       vector = __WithField(vector.v2, v2);
@@ -178,11 +178,11 @@ class VectorImpl {
     }
 
     static VectorInt4 zero() {
-      return __MakeDefault VectorInt4();
+      return VectorInt4.default;
     }
     
     public static VectorInt4 of(int v0, int v1, int v2, int v3) {
-      var vector = __MakeDefault VectorInt4();
+      var vector = VectorInt4.default;
       vector = __WithField(vector.v0, v0);
       vector = __WithField(vector.v1, v1);
       vector = __WithField(vector.v2, v2);
@@ -230,7 +230,7 @@ class VectorImpl {
     }
     
     static VectorBig of(int[] values) {
-      var vector = __MakeDefault VectorBig();
+      var vector = VectorBig.default;
       vector = __WithField(vector.values, values);
       return vector;
     }
