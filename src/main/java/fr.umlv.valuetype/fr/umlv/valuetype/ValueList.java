@@ -77,7 +77,7 @@ public __ByValue class ValueList<E> {
   }
   
   private static <T> ValueList<T> create(ArrayAccess<T> access, T[] array) {
-    var list = ValueList<E>.default;
+    ValueList<T> list = ValueList.default;
     list = __WithField(list.access, access);
     list = __WithField(list.array, array);
     return list;

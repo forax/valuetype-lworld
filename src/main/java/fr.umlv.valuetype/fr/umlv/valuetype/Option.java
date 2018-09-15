@@ -19,7 +19,7 @@ public final __ByValue class Option<E> {
   
   public static <E> Option<E> of(E value) {
     Objects.requireNonNull(value);
-    var option = Option<E>.default;
+    Option<E> option = Option.default;
     option = __WithField(option.value, value);
     return option;
   }
