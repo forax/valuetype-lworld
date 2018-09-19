@@ -36,7 +36,7 @@ public __ByValue class ValueList<E> {
     }
     
     static <T> ReferenceArrayAccess<T> create() {
-      return ReferenceArrayAccess.default;
+      return ReferenceArrayAccess<T>.default;
     }
     
     @Override
@@ -77,7 +77,7 @@ public __ByValue class ValueList<E> {
   }
   
   private static <T> ValueList<T> create(ArrayAccess<T> access, T[] array) {
-    ValueList<T> list = ValueList.default;
+    var list = ValueList<T>.default;
     list = __WithField(list.access, access);
     list = __WithField(list.array, array);
     return list;

@@ -14,12 +14,12 @@ public final __ByValue class Option<E> {
   }
   
   public static <E> Option<E> empty() {
-    return Option.default;
+    return Option<E>.default;
   }
   
   public static <E> Option<E> of(E value) {
     Objects.requireNonNull(value);
-    Option<E> option = Option.default;
+    var option = Option<E>.default;
     option = __WithField(option.value, value);
     return option;
   }

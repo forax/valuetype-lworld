@@ -23,8 +23,10 @@ resolver.
 compiler.
   sourceRelease(12).
   rawArguments(
+    "-Xlint:all",
     "-XDallowGenericsOverValues",
     "-XDallowEmptyValues",
+    "-XDallowWithFieldOperator",
     "--processor-module-path", "deps"   // enable JMH annotation processor
     )
 

@@ -68,7 +68,7 @@ public class ReifiedList<E> implements Iterable<E> {
       throw new AssertionError("fake constructor");
     }
     static <E> CursorImpl<E> create(E[] array, int size, int index) {
-      CursorImpl<E> cursor = CursorImpl.default;
+      var cursor = CursorImpl<E>.default;
       cursor = __WithField(cursor.array, array);
       cursor = __WithField(cursor.size, size);
       cursor = __WithField(cursor.index, index);
