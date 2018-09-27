@@ -3,7 +3,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 
 public class InvokeBug {
-  static __ByValue class Value {
+  static value class Value {
     private final int value;
     
     public Value(int value) {

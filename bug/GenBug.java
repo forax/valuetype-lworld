@@ -1,4 +1,4 @@
-public final __ByValue class GenBug<E> {
+public final value class GenBug<E> {
   private final boolean value;
   
   private GenBug() {

@@ -1,6 +1,6 @@
 package fr.umlv.valuetype;
 
-public final __ByValue class Point {
+public final value class Point {
   public final int x;
   public final int y;
 

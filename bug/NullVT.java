@@ -1,6 +1,6 @@
 import java.util.Objects;
 
-public final __ByValue class NullVT {
+public final value class NullVT {
   private final boolean value;
   
   private NullVT() {

@@ -39,7 +39,7 @@ public interface FluentLogger {
     public void log(Consumer<? super String> consumer);
   }
   
-  static final __ByValue class Impl implements FluentLogger, MessageFluent, LogFluent  {
+  static final value class Impl implements FluentLogger, MessageFluent, LogFluent  {
     private final String className;
     private final Level level;
     private final String message;

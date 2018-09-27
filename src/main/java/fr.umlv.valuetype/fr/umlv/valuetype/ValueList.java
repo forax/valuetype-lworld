@@ -12,7 +12,7 @@ import java.util.stream.IntStream;
 import fr.umlv.valuetype.ReifiedList.Cursor;
 import fr.umlv.valuetype.ReifiedList.CursorImpl;
 
-public __ByValue class ValueList<E> {
+public value class ValueList<E> {
   private final ArrayAccess<E> access;
   private final E[] array;
   
@@ -27,7 +27,7 @@ public __ByValue class ValueList<E> {
     }
   }
   
-  private static __ByValue class ReferenceArrayAccess<E> implements ArrayAccess<E> {
+  private static value class ReferenceArrayAccess<E> implements ArrayAccess<E> {
     private final boolean empty;
     
     private ReferenceArrayAccess() {

@@ -1,4 +1,4 @@
-public final __ByValue class IntBox {
+public final value class IntBox {
   private final int value;
 
   private IntBox() {

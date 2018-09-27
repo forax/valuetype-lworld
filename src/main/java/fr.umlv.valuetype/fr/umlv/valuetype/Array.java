@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
-public final __ByValue class Array<E> implements List<E> {
+public final value class Array<E> implements List<E> {
   private final E[] elements;
 
   private Array(E[] elements) {

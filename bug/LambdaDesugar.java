@@ -1,5 +1,5 @@
 
-public __ByValue class LambdaDesugar {
+public value class LambdaDesugar {
   private final int value;
   public LambdaDesugar() { this.value = 0; }
   

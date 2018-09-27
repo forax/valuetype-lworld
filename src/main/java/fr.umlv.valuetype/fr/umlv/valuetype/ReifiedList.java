@@ -58,7 +58,7 @@ public class ReifiedList<E> implements Iterable<E> {
     }
   }
   
-  static final __ByValue class CursorImpl<E> implements Cursor<E> {
+  static final value class CursorImpl<E> implements Cursor<E> {
     private final E[] array;
     private final int size;
     private final int index;

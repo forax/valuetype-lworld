@@ -11,12 +11,12 @@ import fr.umlv.valuetype.reified.Support.Magic2;
 import fr.umlv.valuetype.reified.Support.Opcode;
 
 public class ArrayList</*any*/E> {
-  final static /*__ByValue*/ class __CP {
+  final static /*value*/ class __CP {
     final Class<?> e;
     __CP(Class<?> e) { this.e = e; }
     static __CP __CP(Class<?> e) { return new __CP(e); }
   }
-  final static /*__ByValue*/ class __MP0 {
+  final static /*value*/ class __MP0 {
     final Class<?> t;
     public __MP0(Class<?> t) { this.t = t; }
     static __MP0 __MP0(Class<?> t) { return new __MP0(t); }

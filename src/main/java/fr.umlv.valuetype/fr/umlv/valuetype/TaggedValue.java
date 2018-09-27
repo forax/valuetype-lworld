@@ -1,6 +1,6 @@
 package fr.umlv.valuetype;
 
-public final __ByValue class TaggedValue {
+public final value class TaggedValue {
   private final int number;
   private final Object object;
   

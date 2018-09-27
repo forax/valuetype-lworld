@@ -1,6 +1,6 @@
 package fr.umlv.valuetype;
 
-public __ByValue class Pair<A, B> {
+public value class Pair<A, B> {
   private final A first;
   private final B second;
   

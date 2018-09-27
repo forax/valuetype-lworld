@@ -5,7 +5,7 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public final __ByValue class Option<E> {
+public final value class Option<E> {
   private final E value;
   
   private Option() {

@@ -13,7 +13,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
-public __ByValue class RubyLikeInt implements Comparable<RubyLikeInt> {
+public value class RubyLikeInt implements Comparable<RubyLikeInt> {
   private final int small;
   private final BigInteger big;
   

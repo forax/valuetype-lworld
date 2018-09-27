@@ -24,7 +24,7 @@ class VectorImpl {
       }).toArray(VarHandle[]::new);
   }
   
-  static final __ByValue class VectorInt1 implements Vector {
+  static final value class VectorInt1 implements Vector {
     private final int v0;
 
     private VectorInt1() {
@@ -64,7 +64,7 @@ class VectorImpl {
     }
   }
   
-  static final __ByValue class VectorInt2 implements Vector {
+  static final value class VectorInt2 implements Vector {
     private final int v0;
     private final int v1;
 
@@ -113,7 +113,7 @@ class VectorImpl {
     }
   }
   
-  static final __ByValue class VectorInt3 implements Vector {
+  static final value class VectorInt3 implements Vector {
     private final int v0;
     private final int v1;
     private final int v2;
@@ -164,7 +164,7 @@ class VectorImpl {
     }
   }
   
-  static final __ByValue class VectorInt4 implements Vector {
+  static final value class VectorInt4 implements Vector {
     private final int v0;
     private final int v1;
     private final int v2;
@@ -217,7 +217,7 @@ class VectorImpl {
     }
   }
   
-  static final __ByValue class VectorBig implements Vector {
+  static final value class VectorBig implements Vector {
     private final int[] values;
     
     private VectorBig() {

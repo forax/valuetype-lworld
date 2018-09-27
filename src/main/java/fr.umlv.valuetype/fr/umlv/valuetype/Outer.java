@@ -1,13 +1,13 @@
 package fr.umlv.valuetype;
 
-public __ByValue class Outer {
+public value class Outer {
   private final  int value;
   
   public Outer(int value) {
     this.value = value;
   }
   
-  public __ByValue class Inner {
+  public value class Inner {
     private final int value2;
     
     public Inner(int value2) {

@@ -121,9 +121,10 @@ public class ReifiedListBenchMark {
     return valueList.reduce(IntBox.zero(), (acc, element) -> acc.add(element)).intValue();
   }
   
+  /*FIXME
   @Benchmark
   public int valuelist_intbox_innervalue_reduce() {
-    __ByValue class Adder implements BiFunction<IntBox, IntBox, IntBox> {
+    value   class Adder implements BiFunction<IntBox, IntBox, IntBox> {
       private final boolean nonEmpty;
       
       Adder() {
@@ -136,11 +137,12 @@ public class ReifiedListBenchMark {
       }
     }
     return valueList.reduce(IntBox.zero(), Adder.default).intValue();
-  }
+  }*/
   
+  /*FIXME
   @Benchmark
   public int valuelist_intbox_innervalue_inlined_reduce() {
-    __ByValue class Adder implements BiFunction<IntBox, IntBox, IntBox> {
+    value class Adder implements BiFunction<IntBox, IntBox, IntBox> {
       private final boolean nonEmpty;
       
       Adder() {
@@ -159,7 +161,7 @@ public class ReifiedListBenchMark {
       sum = mapper.apply(sum, valueList.get(i));
     }
     return sum.intValue();
-  }
+  }*/
   
   @Benchmark
   public int arraylist_integer_get() {
