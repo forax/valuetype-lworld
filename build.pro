@@ -22,12 +22,12 @@ resolver.
 
 compiler.
   sourceRelease(12).
+  processorModuleTestPath(path("deps")). // enable JMH annotation processor
   rawArguments(
     "-Xlint:all",
     "-XDallowGenericsOverValues",
     "-XDallowEmptyValues",
-    "-XDallowWithFieldOperator",
-    "--processor-module-path", "deps"   // enable JMH annotation processor
+    "-XDallowWithFieldOperator"   
     )
 
 tester.
@@ -40,4 +40,4 @@ run(resolver, modulefixer, compiler, tester, packager /*, perfer */)
 
 pro.arguments().forEach(plugin -> run(plugin))   // run command line defined plugins
 
-/exit
+/exit errorCode()
