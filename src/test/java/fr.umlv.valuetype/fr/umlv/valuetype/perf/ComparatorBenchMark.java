@@ -21,8 +21,8 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 @SuppressWarnings("static-method")
-@Warmup(iterations = 3, time = 3, timeUnit = TimeUnit.SECONDS)
-@Measurement(iterations = 3, time = 3, timeUnit = TimeUnit.SECONDS)
+@Warmup(iterations = 5, time = 5, timeUnit = TimeUnit.SECONDS)
+@Measurement(iterations = 5, time = 5, timeUnit = TimeUnit.SECONDS)
 @Fork(value = 3, jvmArgsAppend = {"-XX:+EnableValhalla" })
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
@@ -52,6 +52,8 @@ public class ComparatorBenchMark {
   }
   
   static final Comparator<Person> PERSON_COMPARATOR = Comparator.comparing(Person::getFirstname).thenComparing(Person::getLastname);
+  
+  static final Comparator<Person> VALUE_PERSON_COMPARATOR = thenComparing(comparing(getFirstname()), getLastname());
   
   static <T, U extends Comparable<? super U>> Comparator<T> comparing(Function<? super T, ? extends U> keyExtractor) {
     return new value Comparator<T>() {
@@ -126,6 +128,11 @@ public class ComparatorBenchMark {
   @Benchmark
   public void j_u_compator_static() {
     Arrays.sort(PERSONS, PERSON_COMPARATOR);
+  }
+  
+  @Benchmark
+  public void j_u_compator_value_static() {
+    Arrays.sort(PERSONS, VALUE_PERSON_COMPARATOR);
   }
   
   
