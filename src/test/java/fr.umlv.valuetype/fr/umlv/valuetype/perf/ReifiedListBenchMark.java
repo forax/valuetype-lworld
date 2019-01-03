@@ -28,7 +28,7 @@ import fr.umlv.valuetype.Option;
 import fr.umlv.valuetype.ReifiedList;
 import fr.umlv.valuetype.ValueList;
 import fr.umlv.valuetype.ValueList.ArrayAccess;
-
+/*
 @SuppressWarnings("static-method")
 @Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
 @Measurement(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
@@ -121,47 +121,47 @@ public class ReifiedListBenchMark {
     return valueList.reduce(IntBox.zero(), (acc, element) -> acc.add(element)).intValue();
   }
   
-  /*FIXME
-  @Benchmark
-  public int valuelist_intbox_innervalue_reduce() {
-    value   class Adder implements BiFunction<IntBox, IntBox, IntBox> {
-      private final boolean nonEmpty;
-      
-      Adder() {
-        nonEmpty = false;
-        throw new AssertionError();
-      }
-      
-      public IntBox apply(IntBox acc, IntBox element) {
-        return acc.add(element);
-      }
-    }
-    return valueList.reduce(IntBox.zero(), Adder.default).intValue();
-  }*/
+//  //FIXME
+//  @Benchmark
+//  public int valuelist_intbox_innervalue_reduce() {
+//    value   class Adder implements BiFunction<IntBox, IntBox, IntBox> {
+//      private final boolean nonEmpty;
+//      
+//      Adder() {
+//        nonEmpty = false;
+//        throw new AssertionError();
+//      }
+//      
+//      public IntBox apply(IntBox acc, IntBox element) {
+//        return acc.add(element);
+//      }
+//    }
+//    return valueList.reduce(IntBox.zero(), Adder.default).intValue();
+//  }
   
-  /*FIXME
-  @Benchmark
-  public int valuelist_intbox_innervalue_inlined_reduce() {
-    value class Adder implements BiFunction<IntBox, IntBox, IntBox> {
-      private final boolean nonEmpty;
-      
-      Adder() {
-        nonEmpty = false;
-        throw new AssertionError();
-      }
-      
-      public IntBox apply(IntBox acc, IntBox element) {
-        return acc.add(element);
-      }
-    }
-    BiFunction<IntBox, IntBox, IntBox> mapper = Adder.default;
-    var sum = IntBox.zero();
-    int size = valueList.size();
-    for(int i = 0; i < size; i++) {
-      sum = mapper.apply(sum, valueList.get(i));
-    }
-    return sum.intValue();
-  }*/
+//  //FIXME
+//  @Benchmark
+//  public int valuelist_intbox_innervalue_inlined_reduce() {
+//    value class Adder implements BiFunction<IntBox, IntBox, IntBox> {
+//      private final boolean nonEmpty;
+//      
+//      Adder() {
+//        nonEmpty = false;
+//        throw new AssertionError();
+//      }
+//      
+//      public IntBox apply(IntBox acc, IntBox element) {
+//        return acc.add(element);
+//      }
+//    }
+//    BiFunction<IntBox, IntBox, IntBox> mapper = Adder.default;
+//    var sum = IntBox.zero();
+//    int size = valueList.size();
+//    for(int i = 0; i < size; i++) {
+//      sum = mapper.apply(sum, valueList.get(i));
+//    }
+//    return sum.intValue();
+//  }
   
   @Benchmark
   public int arraylist_integer_get() {
@@ -179,4 +179,4 @@ public class ReifiedListBenchMark {
         .build();
     new Runner(opt).run();
   }
-}
+}*/
