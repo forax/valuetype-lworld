@@ -53,30 +53,90 @@ public class TupleLoopBenchMark {
     }
     
     Cursor.box next() {
+//      if (index + 1 == array.length) {
+//        return null;
+//      }
+//      return new Cursor(array, index + 1);
+      
+      Cursor.box box;
       if (index + 1 == array.length) {
-        return null;
+        box = null;
+      } else {
+        box = new Cursor(array, index + 1);
       }
-      return new Cursor(array, index + 1);
+      return box;
     }
   }
   
   private static Cursor.box indexedElements(int[] array) {
+//    if (array.length == 0) {
+//      return null;
+//    }
+//    return new Cursor(array, 0);
+    Cursor.box box;
     if (array.length == 0) {
-      return null;
+      box = null;
+    } else {
+      box = new Cursor(array, 0);
     }
-    return new Cursor(array, 0);
+    return box;
   }
   
   private static Cursor fix(Cursor.box cursor) {
     return cursor;
   }
   
+  static value class FlatCursor {
+    private final int[] array;
+    private final int index;
+    
+    private FlatCursor(int[] array, int index) {
+      this.array = array;
+      this.index = index;
+    }
+    
+    Tuple current() {
+      return new Tuple(index, array[index]);
+    }
+    
+    boolean hasNext() {
+      return index < array.length;
+    }
+    
+    FlatCursor next() {
+      return new FlatCursor(array, index + 1);
+    }
+  }
+  
+  private static FlatCursor flatIndexedElements(int[] array) {
+    return new FlatCursor(array, 0);
+  }
+  
   @Benchmark
-  public int sum() {
-    int sum = 0;
-    for(Cursor.box cursor = indexedElements(ARRAY); cursor != null; cursor = fix(cursor).next()) {
-      Tuple tuple = fix(cursor).current();
+  public int sum_indexedElements() {
+    var sum = 0;
+    for(var cursor = indexedElements(ARRAY); cursor != null; cursor = fix(cursor).next()) {
+      var tuple = fix(cursor).current();
       sum += tuple.index + tuple.element;
+    }
+    return sum;
+  }
+  
+  @Benchmark
+  public int sum_flat_indexedElements() {
+    var sum = 0;
+    for(var cursor = flatIndexedElements(ARRAY); cursor.hasNext(); cursor = cursor.next()) {
+      var tuple = cursor.current();
+      sum += tuple.index + tuple.element;
+    }
+    return sum;
+  }
+  
+  @Benchmark
+  public int sum_loop() {
+    var sum = 0;
+    for(var i = 0; i < ARRAY.length; i = i + 1) {
+      sum += i + ARRAY[i];
     }
     return sum;
   }
