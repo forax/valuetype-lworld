@@ -53,33 +53,33 @@ public class TupleLoopBenchMark {
     }
     
     Cursor.box next() {
-//      if (index + 1 == array.length) {
-//        return null;
-//      }
-//      return new Cursor(array, index + 1);
-      
-      Cursor.box box;
       if (index + 1 == array.length) {
-        box = null;
-      } else {
-        box = new Cursor(array, index + 1);
+        return null;
       }
-      return box;
+      return new Cursor(array, index + 1);
+      
+//      Cursor.box box;
+//      if (index + 1 == array.length) {
+//        box = null;
+//      } else {
+//        box = new Cursor(array, index + 1);
+//      }
+//      return box;
     }
   }
   
   private static Cursor.box indexedElements(int[] array) {
-//    if (array.length == 0) {
-//      return null;
-//    }
-//    return new Cursor(array, 0);
-    Cursor.box box;
     if (array.length == 0) {
-      box = null;
-    } else {
-      box = new Cursor(array, 0);
+      return null;
     }
-    return box;
+    return new Cursor(array, 0);
+//    Cursor.box box;
+//    if (array.length == 0) {
+//      box = null;
+//    } else {
+//      box = new Cursor(array, 0);
+//    }
+//    return box;
   }
   
   private static Cursor fix(Cursor.box cursor) {
