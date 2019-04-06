@@ -24,6 +24,14 @@ public value class UnsignedInt implements Comparable<UnsignedInt> {
     return new UnsignedInt((int)l);
   }
   
+  public static UnsignedInt zero() {
+    return new UnsignedInt(0);
+  }
+  
+  public int asSigned() {
+    return value;
+  }
+  
   @Override
   public boolean equals(Object obj) {
     if (!(obj instanceof UnsignedInt)) {
@@ -50,9 +58,17 @@ public value class UnsignedInt implements Comparable<UnsignedInt> {
   public UnsignedInt add(UnsignedInt unsignedInt) {
     return new UnsignedInt(value + unsignedInt.value);
   }
+  
+  public UnsignedInt increment() {
+    return new UnsignedInt(value + 1);
+  }
 
   public UnsignedInt subtract(UnsignedInt unsignedInt) {
     return new UnsignedInt(value - unsignedInt.value);
+  }
+  
+  public UnsignedInt decrement() {
+    return new UnsignedInt(value - 1);
   }
   
   public UnsignedInt multiply(UnsignedInt unsignedInt) {

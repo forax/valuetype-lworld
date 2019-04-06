@@ -82,10 +82,6 @@ public class TupleLoopBenchMark {
 //    return box;
   }
   
-  private static Cursor fix(Cursor.box cursor) {
-    return cursor;
-  }
-  
   static value class FlatCursor {
     private final int[] array;
     private final int index;
@@ -115,8 +111,8 @@ public class TupleLoopBenchMark {
   @Benchmark
   public int sum_indexedElements() {
     var sum = 0;
-    for(var cursor = indexedElements(ARRAY); cursor != null; cursor = fix(cursor).next()) {
-      var tuple = fix(cursor).current();
+    for(var cursor = indexedElements(ARRAY); cursor != null; cursor = cursor.next()) {
+      var tuple = cursor.current();
       sum += tuple.index + tuple.element;
     }
     return sum;
