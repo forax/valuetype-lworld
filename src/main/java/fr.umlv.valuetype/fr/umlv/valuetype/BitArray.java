@@ -2,7 +2,8 @@ package fr.umlv.valuetype;
 
 import java.util.Objects;
 
-public value class BitArray {
+@__value__
+public /*value*/ class BitArray {
   private final int capacity;
   private final int[] array;
   

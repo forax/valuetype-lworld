@@ -24,7 +24,8 @@ public final class FlatMap<K,V> {
     this.entries = (Entry<K,V>[])new Entry<?,?>[16];
   }
   
-  private static final value class Entry<K,V> implements Map.Entry<K, V> {
+  @__value__
+  private static final /*value*/ class Entry<K,V> implements Map.Entry<K, V> {
     final int hash;
     final K key;
     final V value;

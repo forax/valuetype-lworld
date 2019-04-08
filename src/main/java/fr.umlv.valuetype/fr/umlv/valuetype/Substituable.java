@@ -4,7 +4,8 @@ import java.lang.invoke.ValueBootstrapMethods;
 import java.util.stream.IntStream;
 
 public class Substituable {
-  static value class Link {
+  @__value__
+  static /*value*/ class Link {
     private final int value;
     private final Object next;
     private final Object next2;

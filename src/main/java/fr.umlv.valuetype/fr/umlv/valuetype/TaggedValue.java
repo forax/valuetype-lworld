@@ -1,30 +1,29 @@
 package fr.umlv.valuetype;
 
-public final value class TaggedValue {
+@__value__
+public final /*value*/ class TaggedValue {
   private final int number;
   private final Object object;
   
-  private TaggedValue() {
-    number = 0;
-    object = null;
-    throw new AssertionError();
+  private TaggedValue(int number, Object object) {
+    this.number = number;
+    this.object = object;
   }
   
   private static final Object NULL = new Object();
   
   public static TaggedValue from(Object o) {
-    Object object = (o == null)? NULL: o;
-    var tagged = TaggedValue.default;
-    return __WithField(tagged.object, object);
+    var object = (o == null)? NULL: o;
+    return new TaggedValue(0, object);
   }
   
   public static TaggedValue from(int i) {
-    var tagged = TaggedValue.default;
-    return __WithField(tagged.number, i);
+    return new TaggedValue(i, null);
   }
   
   public static TaggedValue zero() {
-    return TaggedValue.default;
+    //return TaggedValue.default;
+    return from(0);
   }
   
   public static TaggedValue one() {
@@ -90,7 +89,7 @@ public final value class TaggedValue {
     }
     try {
       return TaggedValue.from(Math.incrementExact(number));
-    } catch(ArithmeticException e) {  // overflow
+    } catch(@SuppressWarnings("unused") ArithmeticException e) {  // overflow
       throw newError("overflow increment", this);
     }
   }
@@ -101,7 +100,7 @@ public final value class TaggedValue {
     }
     try {
       return TaggedValue.from(Math.decrementExact(number));
-    } catch(ArithmeticException e) {  // overflow
+    } catch(@SuppressWarnings("unused") ArithmeticException e) {  // overflow
       throw newError("overflow decrement", this);
     }
   }
@@ -112,7 +111,7 @@ public final value class TaggedValue {
     }
     try {
       return TaggedValue.from(Math.negateExact(number));
-    } catch(ArithmeticException e) {  // overflow
+    } catch(@SuppressWarnings("unused") ArithmeticException e) {  // overflow
       throw newError("overflow negate", this);
     }
   }
@@ -123,7 +122,7 @@ public final value class TaggedValue {
     }
     try {
       return TaggedValue.from(Math.addExact(number, tagged.number));
-    } catch(ArithmeticException e) {  // overflow
+    } catch(@SuppressWarnings("unused")  ArithmeticException e) {  // overflow
       throw newError("overflow add", this, tagged);
     }
   }
@@ -134,7 +133,7 @@ public final value class TaggedValue {
     }
     try {
       return TaggedValue.from(Math.subtractExact(number, tagged.number));
-    } catch(ArithmeticException e) {  // overflow
+    } catch(@SuppressWarnings("unused") ArithmeticException e) {  // overflow
       throw newError("overflow subtract", this, tagged);
     }
   }
@@ -145,7 +144,7 @@ public final value class TaggedValue {
     }
     try {
       return TaggedValue.from(Math.multiplyExact(number, tagged.number));
-    } catch(ArithmeticException e) {  // overflow
+    } catch(@SuppressWarnings("unused")  ArithmeticException e) {  // overflow
       throw newError("overflow multiply", this, tagged);
     }
   }

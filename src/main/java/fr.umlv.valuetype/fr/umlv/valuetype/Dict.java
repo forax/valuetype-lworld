@@ -17,7 +17,8 @@ public class Dict<K, V> {
     this(0, (Entry<K, V>[])new Entry<?, ?>[8]);
   }
   
-  private static value class Entry<K, V> {
+  @__value__
+  private static /*value*/ class Entry<K, V> {
     private final int gen;
     private final K key;
     private final V value;

@@ -4,7 +4,8 @@ import static java.util.stream.Collectors.toList;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public final value class IntBox implements Comparable<IntBox> {
+@__value__
+public final /*value*/ class IntBox implements Comparable<IntBox> {
   private final int value;
 
   private IntBox() {

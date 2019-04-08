@@ -1,5 +1,8 @@
 package fr.umlv.valuetype;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
+
 public interface Finder<E extends Comparable<? super E>> {
   boolean find(E element);
   

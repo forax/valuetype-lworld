@@ -13,7 +13,8 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
-public value class RubyLikeInt implements Comparable<RubyLikeInt> {
+@__value__
+public /*value*/ class RubyLikeInt implements Comparable<RubyLikeInt> {
   private final int small;
   private final BigInteger big;
   
@@ -73,7 +74,7 @@ public value class RubyLikeInt implements Comparable<RubyLikeInt> {
     if (big == null) {
       try {
         return small(decrementExact(small));
-      } catch(ArithmeticException e) {
+      } catch(@SuppressWarnings("unused") ArithmeticException e) {
         return predOverflow(this);
       }
     }
@@ -90,7 +91,7 @@ public value class RubyLikeInt implements Comparable<RubyLikeInt> {
     if (big == null) {
       try {
         return small(incrementExact(small));
-      } catch(ArithmeticException e) {
+      } catch(@SuppressWarnings("unused") ArithmeticException e) {
         return succOverflow(this);
       }
     }
@@ -107,7 +108,7 @@ public value class RubyLikeInt implements Comparable<RubyLikeInt> {
     if (big == null) {
       try {
         return small(negateExact(small));
-      } catch(ArithmeticException e) {
+      } catch(@SuppressWarnings("unused") ArithmeticException e) {
         return negateOverflow(this);
       }
     }
@@ -124,7 +125,7 @@ public value class RubyLikeInt implements Comparable<RubyLikeInt> {
     if (big == null && integer.big == null) {
       try {
         return small(addExact(small, integer.small));
-      } catch(ArithmeticException e) {
+      } catch(@SuppressWarnings("unused") ArithmeticException e) {
         // empty
       }
     }
@@ -148,7 +149,7 @@ public value class RubyLikeInt implements Comparable<RubyLikeInt> {
     if (big == null && integer.big == null) {
       try {
         return small(subtractExact(small, integer.small));
-      } catch(ArithmeticException e) {
+      } catch(@SuppressWarnings("unused") ArithmeticException e) {
         // empty
       }
     }
@@ -172,7 +173,7 @@ public value class RubyLikeInt implements Comparable<RubyLikeInt> {
     if (big == null && integer.big == null) {
       try {
         return small(multiplyExact(small, integer.small));
-      } catch(ArithmeticException e) {
+      } catch(@SuppressWarnings("unused") ArithmeticException e) {
         // empty
       }
     }

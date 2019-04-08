@@ -1,6 +1,7 @@
 package fr.umlv.valuetype;
 
-public final value class Point {
+@__value__
+public final /*value*/ class Point {
   public final int x;
   public final int y;
 
@@ -14,10 +15,7 @@ public final value class Point {
   }
   
   public static Point of(int x, int y) {
-    Point p = Point.default;
-    p = __WithField(p.x, x);
-    p = __WithField(p.y, y);
-    return p;
+    return new Point(x, y);
   }
   
   public static void main(String[] args) {

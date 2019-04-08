@@ -1,18 +1,12 @@
 package fr.umlv.valuetype;
 
-import java.lang.reflect.Array;
 import java.util.Arrays;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.IntFunction;
-import java.util.stream.IntStream;
 
-import fr.umlv.valuetype.ReifiedList.Cursor;
-import fr.umlv.valuetype.ReifiedList.CursorImpl;
-
-public value class ValueList<E> {
+@__value__
+public /*value*/ class ValueList<E> {
   private final ArrayAccess<E> access;
   private final E[] array;
   
@@ -27,16 +21,18 @@ public value class ValueList<E> {
     }
   }
   
-  private static value class ReferenceArrayAccess<E> implements ArrayAccess<E> {
-    private final boolean empty;
+  @__value__
+  private static /*value*/ class ReferenceArrayAccess<E> implements ArrayAccess<E> {
+    @SuppressWarnings("unused")
+    private final boolean empty;  // fake field
     
     private ReferenceArrayAccess() {
       this.empty = false;
-      throw new AssertionError();
     }
     
     static <T> ReferenceArrayAccess<T> create() {
-      return ReferenceArrayAccess<T>.default;
+      //return ReferenceArrayAccess<T>.default;
+      return new ReferenceArrayAccess<>();
     }
     
     @Override
@@ -61,10 +57,9 @@ public value class ValueList<E> {
     }
   }
   
-  private ValueList() {
-    access = null;
-    array = null;
-    throw new AssertionError();
+  private ValueList(ArrayAccess<E> access, E[] array) {
+    this.access = access;
+    this.array = array;
   }
   
   public static <T> ValueList<T> empty(ArrayAccess<T> access) {
@@ -77,10 +72,7 @@ public value class ValueList<E> {
   }
   
   private static <T> ValueList<T> create(ArrayAccess<T> access, T[] array) {
-    var list = ValueList<T>.default;
-    list = __WithField(list.access, access);
-    list = __WithField(list.array, array);
-    return list;
+    return new ValueList<>(access, array);
   }
   
   public int size() {

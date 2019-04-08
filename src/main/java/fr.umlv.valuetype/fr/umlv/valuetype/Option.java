@@ -5,12 +5,12 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public final value class Option<E> {
+@__value__
+public final /*value*/ class Option<E> {
   private final E value;
   
-  private Option() {
-    value = null;
-    throw new AssertionError();
+  private Option(E value) {
+    this.value = value;
   }
   
   public static <E> Option<E> empty() {
@@ -19,9 +19,7 @@ public final value class Option<E> {
   
   public static <E> Option<E> of(E value) {
     Objects.requireNonNull(value);
-    var option = Option<E>.default;
-    option = __WithField(option.value, value);
-    return option;
+    return new Option<>(value);
   }
   
   public static <E> Option<E> ofNullable(E value) {

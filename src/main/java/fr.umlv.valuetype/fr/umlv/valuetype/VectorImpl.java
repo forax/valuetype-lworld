@@ -7,8 +7,6 @@ import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.invoke.VarHandle;
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 class VectorImpl {
   static VarHandle[] accessors(Lookup lookup) {
@@ -24,22 +22,21 @@ class VectorImpl {
       }).toArray(VarHandle[]::new);
   }
   
-  static final value class VectorInt1 implements Vector {
+  @__value__
+  static final /*value*/ class VectorInt1 implements Vector {
     private final int v0;
 
-    private VectorInt1() {
-      v0 = 0;
-      throw new AssertionError();
+    private VectorInt1(int v0) {
+      this.v0 = v0;
     }
 
     static VectorInt1 zero() {
-      return VectorInt1.default;
+      //return VectorInt1.default;
+      return new VectorInt1(0);
     }
     
     static VectorInt1 of(int v0) {
-      var vector = VectorInt1.default;
-      vector = __WithField(vector.v0, v0);
-      return vector;
+      return new VectorInt1(v0);
     }
     
     @Override
@@ -64,26 +61,24 @@ class VectorImpl {
     }
   }
   
-  static final value class VectorInt2 implements Vector {
+  @__value__
+  static final /*value*/ class VectorInt2 implements Vector {
     private final int v0;
     private final int v1;
 
     private static final VarHandle[] ACCESSORS = accessors(lookup());
     
-    private VectorInt2() {
-      v0 = v1 = 0;
-      throw new AssertionError();
+    private VectorInt2(int v0, int v1) {
+      this.v0 = v0;
+      this.v1 = v1;
     }
 
     static VectorInt2 zero() {
-      return VectorInt2.default;
+      return new VectorInt2(0, 0);
     }
     
     public static VectorInt2 of(int v0, int v1) {
-      var vector = VectorInt2.default;
-      vector = __WithField(vector.v0, v0);
-      vector = __WithField(vector.v1, v1);
-      return vector;
+      return new VectorInt2(v0, v1);
     }
     
     @Override
@@ -113,28 +108,27 @@ class VectorImpl {
     }
   }
   
-  static final value class VectorInt3 implements Vector {
+  @__value__
+  static final /*value*/ class VectorInt3 implements Vector {
     private final int v0;
     private final int v1;
     private final int v2;
     
     private static final VarHandle[] ACCESSORS = accessors(lookup());
     
-    private VectorInt3() {
-      v0 = v1 = v2 = 0;
-      throw new AssertionError();
+    private VectorInt3(int v0, int v1, int v2) {
+      this.v0 = v0;
+      this.v1 = v1;
+      this.v2 = v2;
     }
 
     static VectorInt3 zero() {
-      return VectorInt3.default;
+      //return VectorInt3.default;
+      return new VectorInt3(0, 0, 0);
     }
     
     public static VectorInt3 of(int v0, int v1, int v2) {
-      var vector = VectorInt3.default;
-      vector = __WithField(vector.v0, v0);
-      vector = __WithField(vector.v1, v1);
-      vector = __WithField(vector.v2, v2);
-      return vector;
+      return new VectorInt3(v0, v1, v2);
     }
     
     @Override
@@ -164,7 +158,8 @@ class VectorImpl {
     }
   }
   
-  static final value class VectorInt4 implements Vector {
+  @__value__
+  static final /*value*/ class VectorInt4 implements Vector {
     private final int v0;
     private final int v1;
     private final int v2;
@@ -172,22 +167,20 @@ class VectorImpl {
 
     private static final VarHandle[] ACCESSORS = accessors(lookup());
     
-    private VectorInt4() {
-      v0 = v1 = v2 = v3 = 0;
-      throw new AssertionError();
+    private VectorInt4(int v0, int v1, int v2, int v3) {
+      this.v0 = v0;
+      this.v1 = v1;
+      this.v2 = v2;
+      this.v3 = v3;
     }
 
     static VectorInt4 zero() {
-      return VectorInt4.default;
+      //return VectorInt4.default;
+      return new VectorInt4(0, 0, 0, 0);
     }
     
     public static VectorInt4 of(int v0, int v1, int v2, int v3) {
-      var vector = VectorInt4.default;
-      vector = __WithField(vector.v0, v0);
-      vector = __WithField(vector.v1, v1);
-      vector = __WithField(vector.v2, v2);
-      vector = __WithField(vector.v3, v3);
-      return vector;
+      return new VectorInt4(v0, v1, v2, v3);
     }
     
     @Override
@@ -217,12 +210,12 @@ class VectorImpl {
     }
   }
   
-  static final value class VectorBig implements Vector {
+  @__value__
+  static final /*value*/ class VectorBig implements Vector {
     private final int[] values;
     
-    private VectorBig() {
-      values = null;
-      throw new AssertionError();
+    private VectorBig(int[] values) {
+      this.values = values;
     }
 
     static VectorBig zero(int length) {
@@ -230,9 +223,7 @@ class VectorImpl {
     }
     
     static VectorBig of(int[] values) {
-      var vector = VectorBig.default;
-      vector = __WithField(vector.values, values);
-      return vector;
+      return new VectorBig(values);
     }
     
     @Override

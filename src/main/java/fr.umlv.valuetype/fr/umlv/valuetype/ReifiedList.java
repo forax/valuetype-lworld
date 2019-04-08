@@ -3,7 +3,6 @@ import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.stream.IntStream;
 
@@ -58,21 +57,19 @@ public class ReifiedList<E> implements Iterable<E> {
     }
   }
   
-  static final value class CursorImpl<E> implements Cursor<E> {
+  @__value__
+  static final /*value*/ class CursorImpl<E> implements Cursor<E> {
     private final E[] array;
     private final int size;
     private final int index;
     
-    private CursorImpl() {
-      array = null; index = size = 0;
-      throw new AssertionError("fake constructor");
+    private CursorImpl(E[] array, int size, int index) {
+      this.array = array;
+      this.size = size;
+      this.index = index;
     }
     static <E> CursorImpl<E> create(E[] array, int size, int index) {
-      var cursor = CursorImpl<E>.default;
-      cursor = __WithField(cursor.array, array);
-      cursor = __WithField(cursor.size, size);
-      cursor = __WithField(cursor.index, index);
-      return cursor;
+      return new CursorImpl<>(array, size, index);
     }
     
     @Override
@@ -106,7 +103,7 @@ public class ReifiedList<E> implements Iterable<E> {
         try {
           return array[index++];
         } catch(ArrayIndexOutOfBoundsException e) {
-          throw new NoSuchElementException();
+          throw (NoSuchElementException)new NoSuchElementException().initCause(e);
         }
       }
     };
