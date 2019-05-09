@@ -1,7 +1,7 @@
 package fr.umlv.valuetype;
 
-@__value__
-public final /*value*/ class Point {
+@__inline__
+public final /*inline*/ class Point {
   public final int x;
   public final int y;
 

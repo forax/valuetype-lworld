@@ -1,15 +1,15 @@
 package fr.umlv.valuetype;
 
-@__value__
-public /*value*/ class Outer {
+@__inline__
+public /*inline*/ class Outer {
   private final int value;
   
   public Outer(int value) {
     this.value = value;
   }
   
-  @__value__
-  public /*value*/ class Inner {
+  @__inline__
+  public /*inline*/ class Inner {
     private final int value2;
     
     public Inner(int value2) {

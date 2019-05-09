@@ -11,12 +11,12 @@ import fr.umlv.valuetype.reified.Support.Magic2;
 import fr.umlv.valuetype.reified.Support.Opcode;
 
 public class ArrayList</*any*/E> {
-  final static /*value*/ class __CP {
+  final static /*inline*/ class __CP {
     final Class<?> e;
     __CP(Class<?> e) { this.e = e; }
     static __CP __CP(Class<?> e) { return new __CP(e); }
   }
-  final static /*value*/ class __MP0 {
+  final static /*inline*/ class __MP0 {
     final Class<?> t;
     public __MP0(Class<?> t) { this.t = t; }
     static __MP0 __MP0(Class<?> t) { return new __MP0(t); }
@@ -27,7 +27,7 @@ public class ArrayList</*any*/E> {
   private static final Opcode<__CP, Magic1> reified_new_arraylist = reified_new(__CP.class, Magic1.class, ArrayList.class, "(I)V");
   private static final Opcode<__CP, Magic2> reified_invokevirtual_add = reified_invokevirtual(__CP.class, Magic2.class, ArrayList.class, "add", "(Ljava/lang/Object;)V");
   private static final Opcode<__CP, Magic2> reified_invokevirtual_get = reified_invokevirtual(__CP.class, Magic2.class, ArrayList.class, "get", "(I)Ljava/lang/Object;");
-  private static final Opcode<__MP0, Magic1> reified_invokestatic_single = reified_invokestatic(__MP0.class, Magic1.class, ArrayList.class, "single", "(Ljava/lang/Object;)Lfr/umlv/valuetype/reified/ArrayList;");
+  private static final Opcode<__MP0, Magic1> reified_invokestatic_single = reified_invokestatic(__MP0.class, Magic1.class, ArrayList.class, "single", "(Ljava/*inline*/ArrayList;");
   
   // ---
   

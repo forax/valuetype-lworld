@@ -39,8 +39,8 @@ public interface FluentLogger {
     public void log(Consumer<? super String> consumer);
   }
   
-  @__value__
-  static final /*value*/ class Impl implements FluentLogger, MessageFluent, LogFluent  {
+  @__inline__
+  static final /*inline*/ class Impl implements FluentLogger, MessageFluent, LogFluent  {
     private final String className;
     private final Level level;
     private final String message;

@@ -5,8 +5,8 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.IntFunction;
 
-@__value__
-public /*value*/ class ValueList<E> {
+@__inline__
+public /*inline*/ class ValueList<E> {
   private final ArrayAccess<E> access;
   private final E[] array;
   
@@ -21,8 +21,8 @@ public /*value*/ class ValueList<E> {
     }
   }
   
-  @__value__
-  private static /*value*/ class ReferenceArrayAccess<E> implements ArrayAccess<E> {
+  @__inline__
+  private static /*inline*/ class ReferenceArrayAccess<E> implements ArrayAccess<E> {
     @SuppressWarnings("unused")
     private final boolean empty;  // fake field
     

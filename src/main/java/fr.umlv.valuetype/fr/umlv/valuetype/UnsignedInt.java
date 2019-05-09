@@ -1,7 +1,7 @@
 package fr.umlv.valuetype;
 
-@__value__
-public /*value*/ class UnsignedInt implements Comparable<UnsignedInt> {
+@__inline__
+public /*inline*/ class UnsignedInt implements Comparable<UnsignedInt> {
   private final int value;
 
   private UnsignedInt(int value) {

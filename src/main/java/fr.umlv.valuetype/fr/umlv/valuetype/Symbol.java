@@ -2,8 +2,8 @@ package fr.umlv.valuetype;
 
 import java.util.Objects;
 
-@__value__
-public /* value */ class Symbol {
+@__inline__
+public /*inline*/ class Symbol {
   private final String name;
 
   private Symbol(String name) {

@@ -14,8 +14,8 @@ import java.util.function.Consumer;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
-@__value__
-public final /*value*/ class Array<E> implements List<E> {
+@__inline__
+public final /*inline*/ class Array<E> implements List<E> {
   private final E[] elements;
 
   private Array(E[] elements) {

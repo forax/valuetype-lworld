@@ -1,7 +1,7 @@
 package fr.umlv.valuetype;
 
-@__value__
-public final /*value*/ class TaggedValue {
+@__inline__
+public final /*inline*/ class TaggedValue {
   private final int number;
   private final Object object;
   

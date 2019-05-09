@@ -28,8 +28,8 @@ import org.openjdk.jmh.runner.options.OptionsBuilder;
 public class TupleLoopBenchMark {
   private static final int[] ARRAY = new Random(0).ints(100_000).toArray();
   
-  @__value__
-  static /*value*/ class Tuple {
+  @__inline__
+  static /*inline*/ class Tuple {
     private final int index;
     private final int element;
     
@@ -39,8 +39,8 @@ public class TupleLoopBenchMark {
     }
   }
   
-  @__value__
-  static /*value*/ class Cursor {
+  @__inline__
+  static /*inline*/ class Cursor {
     private final int[] array;
     private final int index;
     
@@ -53,38 +53,23 @@ public class TupleLoopBenchMark {
       return new Tuple(index, array[index]);
     }
     
-    Cursor.box next() {
+    Cursor? next() {
       if (index + 1 == array.length) {
         return null;
       }
       return new Cursor(array, index + 1);
-      
-//      Cursor.box box;
-//      if (index + 1 == array.length) {
-//        box = null;
-//      } else {
-//        box = new Cursor(array, index + 1);
-//      }
-//      return box;
     }
   }
   
-  private static Cursor.box indexedElements(int[] array) {
+  private static Cursor? indexedElements(int[] array) {
     if (array.length == 0) {
       return null;
     }
     return new Cursor(array, 0);
-//    Cursor.box box;
-//    if (array.length == 0) {
-//      box = null;
-//    } else {
-//      box = new Cursor(array, 0);
-//    }
-//    return box;
   }
   
-  @__value__
-  static /*value*/ class FlatCursor {
+  @__inline__
+  static /*inline*/ class FlatCursor {
     private final int[] array;
     private final int index;
     

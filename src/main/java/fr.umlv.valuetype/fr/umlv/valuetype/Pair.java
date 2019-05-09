@@ -1,7 +1,7 @@
 package fr.umlv.valuetype;
 
-@__value__
-public /*value*/ class Pair<A, B> {
+@__inline__
+public /*inline*/ class Pair<A, B> {
   private final A first;
   private final B second;
   

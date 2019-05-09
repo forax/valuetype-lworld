@@ -13,8 +13,8 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
-@__value__
-public /*value*/ class RubyLikeInt implements Comparable<RubyLikeInt> {
+@__inline__
+public /*inline*/ class RubyLikeInt implements Comparable<RubyLikeInt> {
   private final int small;
   private final BigInteger big;
   

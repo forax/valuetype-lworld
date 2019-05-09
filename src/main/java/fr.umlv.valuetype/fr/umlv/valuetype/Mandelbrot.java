@@ -1,4 +1,5 @@
 package fr.umlv.valuetype;
+
 import java.awt.Color;
 import java.io.File;
 import java.io.IOException;
@@ -13,7 +14,7 @@ public class Mandelbrot {
         var image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
         var black = 0;
         var colors = new int[max];
-        for (var i = 0; i<max; i++) {
+        for (var i = 0; i < max; i++) {
             colors[i] = Color.HSBtoRGB(i/256f, 1, i/(i+8f));
         }
 

@@ -2,7 +2,7 @@ package fr.umlv.valuetype;
 
 import java.util.stream.IntStream;
 
-public @__value__ class SecurityToken {
+public @__inline__ class SecurityToken {
   private final long id1;
   private final long id2;
   

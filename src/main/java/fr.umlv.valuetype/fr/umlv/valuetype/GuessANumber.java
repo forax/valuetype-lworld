@@ -3,8 +3,8 @@ package fr.umlv.valuetype;
 import java.util.Random;
 import java.util.stream.IntStream;
 
-@__value__
-public /*value*/ class GuessANumber {
+@__inline__
+public /*inline*/ class GuessANumber {
   private final int value;
   
   public GuessANumber(int value) {

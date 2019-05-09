@@ -1,6 +1,6 @@
 package fr.umlv.valuetype;
 
-@__value__
+@__inline__
 public class Complex {
   private final double re;
   private final double im;

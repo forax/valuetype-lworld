@@ -1,12 +1,13 @@
 package fr.umlv.valuetype;
+
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-@__value__
-public final /*value*/ class Option<E> {
+@__inline__
+public final /*inline*/ class Option<E> {
   private final E value;
   
   private Option(E value) {
@@ -51,12 +52,12 @@ public final /*value*/ class Option<E> {
   
   public Option<E> or(Supplier<? extends Option<E>> supplier) {
     Objects.requireNonNull(supplier);
-    return (value == null)? supplier.get(): this;
+    return (value == null)? (Option<E>)supplier.get(): this;
   }
   
   public <R> Option<R> flatMap(Function<? super E, ? extends Option<R>> mapper) {
     Objects.requireNonNull(mapper);
-    return (value == null)? empty(): mapper.apply(value);
+    return (value == null)? empty(): (Option<R>)mapper.apply(value);
   }
   public Option<E> filter(Predicate<? super E> predicate) {
     Objects.requireNonNull(predicate);
