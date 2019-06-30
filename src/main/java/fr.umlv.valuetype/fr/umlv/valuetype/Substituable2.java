@@ -59,7 +59,7 @@ public class Substituable2 {
     String toString();
     
     static Fun of(int value, Object next) {
-      return new value Fun() {
+      return new inline Fun() {
         public String toString() {
           return value + " -> " + next;
         }

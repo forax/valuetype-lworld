@@ -12,7 +12,7 @@ public interface Finder<E extends Comparable<? super E>> {
   
   public static <E extends Comparable<? super E>> Finder<E> of(E element, Finder<? super E> left, Finder<? super E> right) {
     //return element::equals;
-    return new value Finder<>() {
+    return new inline Finder<>() {
       public boolean find(E e) {
         if (e.equals(element)) {
           return true;
