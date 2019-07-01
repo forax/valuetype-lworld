@@ -56,7 +56,7 @@ public class ComparatorBenchMark {
   static final Comparator<Person> VALUE_PERSON_COMPARATOR = thenComparing(comparing(getFirstname()), getLastname());
   
   static <T, U extends Comparable<? super U>> Comparator<T> comparing(Function<? super T, ? extends U> keyExtractor) {
-    return new value Comparator<T>() {
+    return new inline Comparator<T>() {
       int blank = 0;
       
       @Override
@@ -66,7 +66,7 @@ public class ComparatorBenchMark {
     };
   }
   static <T, U extends Comparable<? super U>> Comparator<T> thenComparing(Comparator<? super T> comparator, Function<? super T, ? extends U> keyExtractor) {
-    return new value Comparator<T>() {
+    return new inline Comparator<T>() {
       int blank = 0;
       
       @Override
@@ -80,7 +80,7 @@ public class ComparatorBenchMark {
     };
   }
   static Function<Person, String> getFirstname() {
-    return new value Function<Person, String>() {
+    return new inline Function<Person, String>() {
       int blank = 0;
       
       @Override
@@ -90,7 +90,7 @@ public class ComparatorBenchMark {
     };
   }
   static Function<Person, String> getLastname() {
-    return new value Function<Person, String>() {
+    return new inline Function<Person, String>() {
       int blank = 0;
       
       @Override
@@ -107,7 +107,7 @@ public class ComparatorBenchMark {
   
   @Benchmark
   public void poc_compator() {
-    Arrays.sort(PERSONS, new value Comparator<Person>() {
+    Arrays.sort(PERSONS, new inline Comparator<Person>() {
       int blank = 0;
       
       public int compare(Person p1, Person p2) {
@@ -131,7 +131,7 @@ public class ComparatorBenchMark {
   }
   
   @Benchmark
-  public void j_u_compator_value_static() {
+  public void j_u_compator_inline_static() {
     Arrays.sort(PERSONS, VALUE_PERSON_COMPARATOR);
   }
   
