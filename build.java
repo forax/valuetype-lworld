@@ -24,7 +24,7 @@ resolver.
     );
 
 compiler.
-  sourceRelease(13).
+  sourceRelease(14).
   processorModuleTestPath(path("deps")). // enable JMH annotation processor
   rawArguments(
     "-Xlint:all",
