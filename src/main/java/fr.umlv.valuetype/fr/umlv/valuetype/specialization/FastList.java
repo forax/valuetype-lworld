@@ -37,7 +37,7 @@ public class FastList<T> extends AbstractList<T> {
   }
   
   public static void main(String[] args) {
-    var list = new FastList<>(Species.raw(Point.class.asValueType()));
+    var list = new FastList<>(Species.raw(Point.class.asPrimaryType()));
     list.add(new Point(1, 1));
     
     @SuppressWarnings("unchecked")

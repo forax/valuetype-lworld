@@ -2,7 +2,6 @@ package fr.umlv.valuetype;
 
 import static java.util.stream.Collectors.toList;
 
-import java.lang.invoke.ValueBootstrapMethods;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -68,6 +67,7 @@ public class Substituable2 {
   }
   
   public static void main(String[] args) {
-    System.out.println(ValueBootstrapMethods.isSubstitutable(Fun.of(1, null), Fun.of(2, null)));
+  	System.out.println(Fun.of(1, null) == Fun.of(2, null));
+    //System.out.println(java.lang.invoke.ValueBootstrapMethods.isSubstitutable(Fun.of(1, null), Fun.of(2, null)));
   }
 }

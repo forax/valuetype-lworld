@@ -218,7 +218,7 @@ public class FastMap<K, V> extends AbstractMap<K, V> {
   public static void main(String[] args) {
     System.out.println(Species.raw(FastMap.class).getTypeArgumentCount());
     
-    var map = new FastMap<>(Species.raw(Point.class.asValueType()), Species.raw(String.class));
+    var map = new FastMap<>(Species.raw(Point.class.asPrimaryType()), Species.raw(String.class));
     map.put(new Point(1, 2), "a");
     map.put(new Point(10, 20), "b");
     map.put(new Point(100, 200), "c");

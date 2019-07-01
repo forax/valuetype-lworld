@@ -1,6 +1,5 @@
 package fr.umlv.valuetype;
 
-import java.lang.invoke.ValueBootstrapMethods;
 import java.util.stream.IntStream;
 
 public class Substituable {
@@ -25,7 +24,7 @@ public class Substituable {
   public static void main(String[] args) {
     var l = Link.times(100);
     
-    //System.out.println(l == l);
-    System.out.println(ValueBootstrapMethods.isSubstitutable(l, l));
+    System.out.println(l == l);
+    //System.out.println(java.lang.invoke.ValueBootstrapMethods.isSubstitutable(l, l));
   }
 }
