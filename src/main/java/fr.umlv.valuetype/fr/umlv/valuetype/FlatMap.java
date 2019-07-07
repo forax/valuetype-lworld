@@ -2,18 +2,6 @@ package fr.umlv.valuetype;
 
 import java.util.Map;
 import java.util.Objects;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.function.BiConsumer;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
-import static java.util.Spliterator.DISTINCT;
-import static java.util.Spliterator.NONNULL;
-
-import java.util.AbstractMap.SimpleImmutableEntry;
-import java.util.Arrays;
-import java.util.Iterator;
 
 public final class FlatMap<K,V> {
   private Entry<K,V>[] entries;
