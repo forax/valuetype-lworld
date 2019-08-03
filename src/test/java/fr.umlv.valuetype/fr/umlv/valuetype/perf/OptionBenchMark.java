@@ -1,7 +1,5 @@
 package fr.umlv.valuetype.perf;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -21,8 +19,8 @@ import org.openjdk.jmh.runner.RunnerException;
 import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
-import fr.umlv.valuetype.IntBox;
 import fr.umlv.valuetype.Option;
+import fr.umlv.valuetype.OptionItf;
 
 @SuppressWarnings("static-method")
 @Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
@@ -64,6 +62,26 @@ public class OptionBenchMark {
     }
     return sum;
   }
+  
+  @Benchmark
+  public int sum_option_itf() {
+    int sum = 0;
+    for(var key: LIST) {
+      var value = OptionItf.ofNullable(MAP.get(key));
+      sum += value.orElse(0);
+    }
+    return sum;
+  }
+  
+  /*@Benchmark
+  public int sum_option_itf_val() {
+    int sum = 0;
+    for(var key: LIST) {
+      var value = OptionItf.val.ofNullable(MAP.get(key));
+      sum += value.orElse(0);
+    }
+    return sum;
+  }*/
   
   public static void main(String[] args) throws RunnerException {
     Options opt = new OptionsBuilder()
