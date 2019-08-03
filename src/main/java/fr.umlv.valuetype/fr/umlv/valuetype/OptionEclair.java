@@ -6,16 +6,16 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
-public interface OptionItf<E> {
-	public static <E> OptionItf<E> empty() {
+public interface OptionEclair<E> {
+	public static <E> OptionEclair<E> empty() {
     return val.empty();
   }
   
-  public static <E> OptionItf<E> of(E value) {
+  public static <E> OptionEclair<E> of(E value) {
     return val.of(value);
   }
   
-  public static <E> OptionItf<E> ofNullable(E value) {
+  public static <E> OptionEclair<E> ofNullable(E value) {
     return val.ofNullable(value);
   }
 	  
@@ -24,13 +24,13 @@ public interface OptionItf<E> {
 	  public void ifPresent(Consumer<? super E> consumer);
 	  public E orElse(E defaultValue);
 	  public E orElseGet(Supplier<? extends E> supplier);
-	  public OptionItf<E> or(Supplier<? extends OptionItf<E>> supplier);
-	  public <R> OptionItf<R> flatMap(Function<? super E, ? extends OptionItf<R>> mapper);
-	  public OptionItf<E> filter(Predicate<? super E> predicate);
-	  public <R> OptionItf<R> map(Function<? super E, ? extends R> mapper);
+	  public OptionEclair<E> or(Supplier<? extends OptionEclair<E>> supplier);
+	  public <R> OptionEclair<R> flatMap(Function<? super E, ? extends OptionEclair<R>> mapper);
+	  public OptionEclair<E> filter(Predicate<? super E> predicate);
+	  public <R> OptionEclair<R> map(Function<? super E, ? extends R> mapper);
 	  
 	  @__inline__
-	  public final /*inline*/ class val<E> implements OptionItf<E> {
+	  public final /*inline*/ class val<E> implements OptionEclair<E> {
 	    private final E value;
 	    
 	    private val(E value) {
@@ -80,14 +80,14 @@ public interface OptionItf<E> {
 	    
 			@Override
 			@SuppressWarnings("unchecked")
-			public val<E> or(Supplier<? extends OptionItf<E>> supplier) {
+			public val<E> or(Supplier<? extends OptionEclair<E>> supplier) {
 	      Objects.requireNonNull(supplier);
 	      return (value == null)? (val<E>)supplier.get(): this;
 	    }
 	    
 	    @Override
 	    @SuppressWarnings("unchecked")
-			public <R> val<R> flatMap(Function<? super E, ? extends OptionItf<R>> mapper) {
+			public <R> val<R> flatMap(Function<? super E, ? extends OptionEclair<R>> mapper) {
 	      Objects.requireNonNull(mapper);
 	      return (value == null)? empty(): (val<R>)mapper.apply(value);
 	    }
@@ -99,7 +99,7 @@ public interface OptionItf<E> {
 	    @Override
 			public <R> val<R> map(Function<? super E, ? extends R> mapper) {
 	      Objects.requireNonNull(mapper);
-	      return flatMap(value -> OptionItf.of(mapper.apply(value)));
+	      return flatMap(value -> OptionEclair.of(mapper.apply(value)));
 	    }
 	  }
 }

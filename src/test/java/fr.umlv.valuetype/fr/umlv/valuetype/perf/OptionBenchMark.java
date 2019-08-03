@@ -20,7 +20,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import fr.umlv.valuetype.Option;
-import fr.umlv.valuetype.OptionItf;
+import fr.umlv.valuetype.OptionEclair;
 
 @SuppressWarnings("static-method")
 @Warmup(iterations = 3, time = 5, timeUnit = TimeUnit.SECONDS)
@@ -67,7 +67,7 @@ public class OptionBenchMark {
   public int sum_option_itf() {
     int sum = 0;
     for(var key: LIST) {
-      var value = OptionItf.ofNullable(MAP.get(key));
+      var value = OptionEclair.ofNullable(MAP.get(key));
       sum += value.orElse(0);
     }
     return sum;
@@ -77,7 +77,7 @@ public class OptionBenchMark {
   public int sum_option_itf_val() {
     int sum = 0;
     for(var key: LIST) {
-      var value = OptionItf.val.ofNullable(MAP.get(key));
+      var value = OptionEclair.val.ofNullable(MAP.get(key));
       sum += value.orElse(0);
     }
     return sum;
