@@ -7,6 +7,7 @@ import static java.util.stream.IntStream.range;
 
 import java.util.Iterator;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.function.IntFunction;
 
 public @__inline__ class CompactList<E> implements Iterable<E> {
@@ -31,8 +32,9 @@ public @__inline__ class CompactList<E> implements Iterable<E> {
   }
   
 	public E get(int index) {
-		if (index >= size) {
-			throw new IndexOutOfBoundsException();
+		Objects.checkIndex(index, size);
+		if (size > 4) {
+			return array[index];
 		}
 		if (index == 0) {
 			return embedded0;
@@ -43,15 +45,40 @@ public @__inline__ class CompactList<E> implements Iterable<E> {
 		if (index == 2) {
   		return embedded2;
   	}
-		if (index == 3) {
+		//if (index == 3) {
   		return embedded3;
-  	}
-  	return array[index];
+  	//}
   }
 	
 	@Override
 	public String toString() {
-		return range(0, size).mapToObj(this::get).map(Object::toString).collect(joining());
+		return range(0, size).mapToObj(this::get).map(Object::toString).collect(joining(", ", "[", "]"));
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (!(obj instanceof CompactList)) {
+			return false;
+		}
+		var list = (CompactList<?>) obj;
+		if (size != list.size) {
+			return false;
+		}
+		for(var i = 0; i < size; i++) {
+			if (!get(i).equals(list.get(i))) {
+				return false;
+			}
+		}
+		return true;
+	}
+	
+	@Override
+	public int hashCode() {
+		int hashCode = 1;
+    for (var i = 0; i < size; i++) {
+      hashCode = 31 * hashCode + get(i).hashCode();
+    }
+    return hashCode;
 	}
 	
 	@Override
@@ -97,22 +124,22 @@ public @__inline__ class CompactList<E> implements Iterable<E> {
 	@SuppressWarnings("unchecked")
 	public CompactList<E> append(E element) {
 		requireNonNull(element);
-		switch(array.length) {
+		switch(size) {
 		case 0:
-			return new CompactList<>(null, element, null, null, null, 1);
+			return CompactList.of(element);
 		case 1:
-			return new CompactList<>(null, embedded0, element, null, null, 2);
+			return CompactList.of(embedded0, element);
 		case 2:
-			return new CompactList<>(null, embedded0, embedded1, element, null, 3);
+			return CompactList.of(embedded0, embedded1, element);
 		case 3:
-			return new CompactList<>(null, embedded0, embedded1, embedded2, element, 4);
+			return CompactList.of(embedded0, embedded1, embedded2, element);
 		case 4:
-			return new CompactList<>((E[])new Object[] { embedded0, embedded1, embedded2, embedded3, element}, null, null, null, null, 5);
+			return CompactList.of((E[])new Object[] { embedded0, embedded1, embedded2, embedded3, element});
 	  default: {
-	  	var length = array.length + 1;
-	  	var newArray = copyOf(array, length);
+	  	var newLength = array.length + 1;
+	  	var newArray = copyOf(array, newLength);
 	  	newArray[array.length] = element;
-	  	return new CompactList<>(newArray, null, null, null, null, length);
+	  	return new CompactList<>(newArray, null, null, null, null, newLength);
 	  }
 		}
 	}

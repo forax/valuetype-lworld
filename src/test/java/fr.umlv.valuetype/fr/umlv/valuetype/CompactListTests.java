@@ -20,12 +20,14 @@ import org.junit.jupiter.api.Test;
 class CompactListTests {
 	@Test
 	void testOf() {
-		var lists = Stream.of(
+		var lists = List.of(
 				CompactList.of(), CompactList.of("foo"), CompactList.of("foo", "bar"),
 				CompactList.of("foo", "bar", "baz"), CompactList.of("foo", "bar", "baz", "wizz"),
 				CompactList.of("foo", "bar", "baz", "wizz", "buzz")
 				);
-		lists.forEach(Assertions::assertNotNull);
+		for(var list: lists) {
+			Assertions.assertNotNull(list);
+		}
 	}
 	
 	@Test
@@ -75,12 +77,12 @@ class CompactListTests {
 	
 	@Test
 	void testGet() {
-		var lists = List.of(
+		var lists = Stream.of(
 				CompactList.of("foo"), CompactList.of("foo", "bar"),
 				CompactList.of("foo", "bar", "baz"), CompactList.of("foo", "bar", "baz", "wizz"),
 				CompactList.of("foo", "bar", "baz", "wizz", "buzz")
 				);
-    assertAll(range(0, lists.size()).mapToObj(i -> () -> assertEquals("foo", lists.get(0))));
+    assertAll(lists.map((Object/*FIXME*/ list) -> () -> assertEquals("foo", (((CompactList<?>)list).get(0)))));
 	}
 	@Test
 	void testGetAllElements() {
@@ -105,6 +107,33 @@ class CompactListTests {
     assertAll(lists.map(list -> () -> {
 			var compactList = CompactList.of(list.toArray(String[]::new));
 			assertEquals(list.toString(), compactList.toString());
+		}));
+	}
+	
+	@Test
+	void testEquals() {
+		var lists = Stream.of(
+				List.of(), List.of("foo"), List.of("foo", "bar"),
+				List.of("foo", "bar", "baz"), List.of("foo", "bar", "baz", "wizz"),
+				List.of("foo", "bar", "baz", "wizz", "buzz")
+				);
+		assertAll(lists.map(list -> () -> {
+			var compactList1 = CompactList.of(list.toArray(String[]::new));
+			var compactList2 = CompactList.of(list.toArray(String[]::new));
+			assertEquals(compactList1, compactList2);
+		}));
+	}
+	
+	@Test
+	void testHashCode() {
+		var lists = Stream.of(
+				List.of(), List.of("foo"), List.of("foo", "bar"),
+				List.of("foo", "bar", "baz"), List.of("foo", "bar", "baz", "wizz"),
+				List.of("foo", "bar", "baz", "wizz", "buzz")
+				);
+		assertAll(lists.map(list -> () -> {
+			var compactList = CompactList.of(list.toArray(String[]::new));
+			assertEquals(list.hashCode(), compactList.hashCode());
 		}));
 	}
 	
@@ -156,6 +185,6 @@ class CompactListTests {
 		String[] array = { "foo", "bar", "baz", "wizz", "buzz" };
 		var compactList = CompactList.of(array);
 		array[0] = "hell";
-		assertEquals("foo, bar, baz, wizz, buzz", compactList.toString());
+		assertEquals("[foo, bar, baz, wizz, buzz]", compactList.toString());
 	}
 }
