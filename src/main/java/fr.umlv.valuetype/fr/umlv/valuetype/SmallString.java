@@ -1,7 +1,13 @@
 package fr.umlv.valuetype;
 
+import static java.util.stream.IntStream.range;
+
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Objects;
+
+import sun.misc.Unsafe;
 
 public @__inline__ class SmallString implements CharSequence {
   private byte c0;
@@ -104,25 +110,14 @@ public @__inline__ class SmallString implements CharSequence {
 	@Override
 	public char charAt(int index) {
 		Objects.checkIndex(index, size);
-		if (index < 0 || index >= size) {
-			throw new IndexOutOfBoundsException();
-		}
-		switch(index) {
-		case 0:
-			return (char)c0;
-		case 1:
-			return (char)c1;
-		case 2:
-			return (char)c2;
-		case 3:
-			return (char)c3;
-		case 4:
-			return (char)c4;
-		case 5:
-			return (char)c5;
-		default: // case 6:
-			return (char)c6;
-		}
+		return (char)byteAt(index);
+	}
+	
+	private byte byteAt(int index) {
+		if(OFFSETS == null) {
+  		return UNSAFE.getByte(this, BASE + index * SCALE);
+  	}
+  	return UNSAFE.getByte(this, OFFSETS[index]);
 	}
 	
 	@Override
@@ -133,35 +128,35 @@ public @__inline__ class SmallString implements CharSequence {
 	@Override
 	public CharSequence subSequence(int start, int end) {
 		Objects.checkFromToIndex(start, end, size);
-		return from(toString().substring(start, end));
+		return from(new inline CharSequence() {
+			@Override
+			public char charAt(int index) {
+				return (char)byteAt(start + index);
+			}
+			@Override
+			public int length() {
+				return end - start;
+			}
+			@Override
+			public CharSequence subSequence(int start, int end) {
+				throw new AssertionError();
+			}
+		});
 	}
 	
 	@Override
 	public String toString() {
+		if (size == 0) {
+			return "";
+		}
 		return new String(asBytes(), StandardCharsets.ISO_8859_1);
 	}
-	
-	private static final byte[] EMPTY_BYTE_ARRAY = new byte[0];
-	
 	private byte[] asBytes() {
-		switch(size) {
-		case 0:
-			return EMPTY_BYTE_ARRAY;
-		case 1:
-			return new byte[] { c0 };
-		case 2:
-			return new byte[] { c0, c1 };
-		case 3:
-			return new byte[] { c0, c1, c2 };
-		case 4:
-			return new byte[] { c0, c1, c2, c3 };
-		case 5:
-			return new byte[] { c0, c1, c2, c3, c4 };
-		case 6:
-			return new byte[] { c0, c1, c2, c3, c4, c5 };
-		default: //case 7:
-			return new byte[] { c0, c1, c2, c3, c4, c5, c6 };
+		var bytes = new byte[size];
+		for(var i = 0; i < bytes.length; i++) {
+			bytes[i] = byteAt(i);
 		}
+		return bytes;
 	}
 	
 	private static boolean isNot8bits(char c) {
@@ -263,5 +258,42 @@ public @__inline__ class SmallString implements CharSequence {
   	  return s;
 		}
 		return new SmallString((byte)c0, (byte)c1, (byte)c2, (byte)c3, (byte)c4, (byte)c5, (byte)c6);
+  }
+  
+  private static final Unsafe UNSAFE;
+  private static final long[] OFFSETS;
+  private static final long BASE, SCALE;
+  static {
+  	Unsafe unsafe;
+    try {
+  		Field theUnsafe = Unsafe.class.getDeclaredField("theUnsafe");
+  		theUnsafe.setAccessible(true);
+  		unsafe = (Unsafe) theUnsafe.get(null);
+    } catch(NoSuchFieldException | IllegalAccessException e) {
+    	throw new AssertionError(e);
+    }
+  		
+    var offsets = new long[7];
+    Arrays.setAll(offsets, i -> {
+    	try {
+    		return unsafe.objectFieldOffset(SmallString.class.getDeclaredField("c" + i));
+    	} catch (NoSuchFieldException e) {
+    		throw new AssertionError(e);
+    	}
+    });
+  	
+  	// check if the offsets are linear
+  	var base = 0L;
+  	var offs = offsets; 
+  	var scale = offsets[1] - offsets[0];
+  	if (range(2, offsets.length).allMatch(i -> offs[i] - offs[i - 1] == scale)) {
+  		base = offsets[0];
+  		offsets = null;
+  	}
+  	
+  	OFFSETS = offsets;
+  	BASE = base;
+  	SCALE = scale;
+  	UNSAFE = unsafe;
   }
 }
