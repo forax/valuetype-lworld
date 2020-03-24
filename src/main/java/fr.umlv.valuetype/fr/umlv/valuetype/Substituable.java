@@ -4,18 +4,18 @@ import java.util.stream.IntStream;
 
 public class Substituable {
   @__inline__
-  static /*inline*/ class Link {
+  private static final /*inline*/ class Link {
     private final int value;
     private final Object next;
     private final Object next2;
     
-    public Link(int value, Object next) {
+    private Link(int value, Object next) {
       this.value = value;
       this.next = next;
       this.next2 = next;
     }
     
-    static Object times(int count) {
+    private static Object times(int count) {
       return IntStream.range(0, count).boxed().reduce(null, (acc, index) -> new Link(index, acc), (l1, l2) -> { throw null; });
     }
   }

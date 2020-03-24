@@ -49,6 +49,9 @@ public class ReifiedList<E> implements Iterable<E> {
         
         @Override
         public E next() {
+          if (!hasNext()) {
+            throw new NoSuchElementException();
+          }
           var element = cursor.element();
           cursor = cursor.next();
           return element;
@@ -58,7 +61,7 @@ public class ReifiedList<E> implements Iterable<E> {
   }
   
   @__inline__
-  static final /*inline*/ class CursorImpl<E> implements Cursor<E> {
+  private static final /*inline*/ class CursorImpl<E> implements Cursor<E> {
     private final E[] array;
     private final int size;
     private final int index;
@@ -68,7 +71,7 @@ public class ReifiedList<E> implements Iterable<E> {
       this.size = size;
       this.index = index;
     }
-    static <E> CursorImpl<E> create(E[] array, int size, int index) {
+    private static <E> CursorImpl<E> create(E[] array, int size, int index) {
       return new CursorImpl<>(array, size, index);
     }
     
@@ -100,21 +103,20 @@ public class ReifiedList<E> implements Iterable<E> {
       }
       @Override
       public E next() {
-        try {
-          return array[index++];
-        } catch(ArrayIndexOutOfBoundsException e) {
-          throw (NoSuchElementException)new NoSuchElementException().initCause(e);
+        if (!hasNext()) {
+          throw new NoSuchElementException();
         }
+        return array[index++];
       }
     };
   }
   
   @Override
-  public void forEach(Consumer<? super E> consumer) {
+  public void forEach(Consumer<? super E> action) {
     var size = this.size;
     var array = this.array;
-    for(int i = 0; i < size; i++) {
-      consumer.accept(array[i]); 
+    for(var i = 0; i < size; i++) {
+      action.accept(array[i]);
     }
   }
   

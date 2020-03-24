@@ -2,11 +2,11 @@ package fr.umlv.valuetype;
 
 public class ValueTearing {
 	@__inline__
-  static class Value {
+  private static final class Value {
 		private int x;
 		private int y;
 		
-		public Value(int x, int y) {
+		private Value(int x, int y) {
 			this.x = x;
 			this.y = y;
 		}

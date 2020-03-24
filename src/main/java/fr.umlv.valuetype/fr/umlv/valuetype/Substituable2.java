@@ -1,14 +1,5 @@
 package fr.umlv.valuetype;
 
-import static java.util.stream.Collectors.toList;
-
-import java.util.List;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
-
-import fr.umlv.valuetype.Substituable.Link;
-
 public class Substituable2 {
   /*
   interface Strategy<T> {

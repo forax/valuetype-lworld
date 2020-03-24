@@ -7,6 +7,7 @@ import fr.umlv.valuetype.VectorImpl.VectorInt3;
 import fr.umlv.valuetype.VectorImpl.VectorInt4;
 
 public interface Vector {
+  @FunctionalInterface
   interface Op {
     int apply(int a, int b);
   }
@@ -52,18 +53,13 @@ public interface Vector {
   }
   
   static Vector of(int... values) {
-    switch(values.length) {
-    case 1:
-      return VectorInt1.of(values[0]);
-    case 2:
-      return VectorInt2.of(values[0], values[1]);
-    case 3:
-      return VectorInt3.of(values[0], values[1], values[2]);
-    case 4:
-      return VectorInt4.of(values[0], values[1], values[2], values[3]);
-    default:
-      return VectorBig.of(values);
-    }
+    return switch (values.length) {
+      case 1 -> VectorInt1.of(values[0]);
+      case 2 -> VectorInt2.of(values[0], values[1]);
+      case 3 -> VectorInt3.of(values[0], values[1], values[2]);
+      case 4 -> VectorInt4.of(values[0], values[1], values[2], values[3]);
+      default -> VectorBig.of(values);
+    };
   }
   
   static Vector wrap(int[] values) {
@@ -71,17 +67,12 @@ public interface Vector {
   }
   
   static Vector zero(int length) {
-    switch(length) {
-    case 1:
-      return VectorInt1.zero();
-    case 2:
-      return VectorInt2.zero();
-    case 3:
-      return VectorInt3.zero();
-    case 4:
-      return VectorInt4.zero();
-    default:
-      return VectorBig.zero(length);
-    }
+    return switch (length) {
+      case 1 -> VectorInt1.zero();
+      case 2 -> VectorInt2.zero();
+      case 3 -> VectorInt3.zero();
+      case 4 -> VectorInt4.zero();
+      default -> VectorBig.zero(length);
+    };
   }
 }

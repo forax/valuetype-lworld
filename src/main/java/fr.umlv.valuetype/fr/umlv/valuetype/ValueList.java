@@ -6,7 +6,7 @@ import java.util.function.Consumer;
 import java.util.function.IntFunction;
 
 @__inline__
-public /*inline*/ class ValueList<E> {
+public /*inline*/ final class ValueList<E> {
   private final ArrayAccess<E> access;
   private final E[] array;
   
@@ -22,12 +22,11 @@ public /*inline*/ class ValueList<E> {
   }
   
   @__inline__
-  private static /*inline*/ class ReferenceArrayAccess<E> implements ArrayAccess<E> {
-    @SuppressWarnings("unused")
-    private final boolean empty;  // fake field
+  private static /*inline*/ final class ReferenceArrayAccess<E> implements ArrayAccess<E> {
+    //private final boolean empty;  // fake field [not needed anymore]
     
     private ReferenceArrayAccess() {
-      this.empty = false;
+      //this.empty = false;
     }
     
     static <T> ReferenceArrayAccess<T> create() {
@@ -90,24 +89,24 @@ public /*inline*/ class ValueList<E> {
   }
   
   public void forEach(Consumer<? super E> consumer) {
-    int length = array.length;
-    for(int i = 0; i < length; i++) {
+    var length = array.length;
+    for(var i = 0; i < length; i++) {
       consumer.accept(access.get(array, i));
     }
   }
   
   public <V> V reduce(V initial, BiFunction<? super V, ? super E, ? extends V> accumulate) {
     var v = initial;
-    int length = array.length;
-    for(int i = 0; i < length; i++) {
+    var length = array.length;
+    for(var i = 0; i < length; i++) {
       v = accumulate.apply(v, access.get(array, i));
     }
     return v;
   }
   
   public static <T> ValueList<T> generate(ArrayAccess<T> access, int count, IntFunction<? extends T> generator) {
-    T[] array = access.newArray(count);
-    for(int i = 0; i < count; i++) {
+    var array = access.newArray(count);
+    for(var i = 0; i < count; i++) {
       access.set(array, i, generator.apply(i));
     }
     return create(access, array);

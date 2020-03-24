@@ -63,7 +63,7 @@ public final /*inline*/ class TaggedValue {
     if (!(obj instanceof TaggedValue)) {
       return false;
     }
-    TaggedValue tagged = (TaggedValue)obj;
+    var tagged = (TaggedValue)obj;
     if (object == null) {
       if (tagged.object != null) {
         return false;

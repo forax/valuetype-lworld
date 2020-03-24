@@ -1,7 +1,5 @@
 package fr.umlv.valuetype.perf;
 
-import java.util.Iterator;
-import java.util.Random;
 import java.util.concurrent.TimeUnit;
 
 import org.openjdk.jmh.annotations.Benchmark;
@@ -20,6 +18,7 @@ import org.openjdk.jmh.runner.options.Options;
 import org.openjdk.jmh.runner.options.OptionsBuilder;
 
 import fr.umlv.valuetype.Complex;
+import fr.umlv.valuetype.ComplexItf;
 
 @SuppressWarnings("static-method")
 @Warmup(iterations = 5, time = 5, timeUnit = TimeUnit.SECONDS)
@@ -29,11 +28,11 @@ import fr.umlv.valuetype.Complex;
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
 @State(Scope.Benchmark)
 public class MandelbrotBenchMark {
-  static class ComplexRef {
+  static class ComplexIndirect {
     final double re;
     final double im;
     
-    ComplexRef(double re, double im) {
+    ComplexIndirect(double re, double im) {
       this.re = re;
       this.im = im;
     }
@@ -42,12 +41,12 @@ public class MandelbrotBenchMark {
       return re * re + im * im;
     }
     
-    public ComplexRef square() {
-      return new ComplexRef(re * re - im * im, 2 * re * im);
+    public ComplexIndirect square() {
+      return new ComplexIndirect(re * re - im * im, 2 * re * im);
     }
     
-    public ComplexRef add(ComplexRef c) {
-      return new ComplexRef(re + c.re, im + c.im);
+    public ComplexIndirect add(ComplexIndirect c) {
+      return new ComplexIndirect(re + c.re, im + c.im);
     }
   }
   
@@ -56,11 +55,11 @@ public class MandelbrotBenchMark {
   private static final int MAX = 1000;
   
   @Benchmark
-  public void mandelbrot_ref(Blackhole blackhole) {
+  public void mandelbrot_indirect(Blackhole blackhole) {
     for (var row = 0; row < HEIGHT; row++) {
       for (var col = 0; col < WIDTH; col++) {
-        var complex = new ComplexRef((col - WIDTH / 2) * 4.0 / WIDTH, (row - HEIGHT / 2) * 4.0 / WIDTH);
-        var point = new ComplexRef(0.0, 0.0);
+        var complex = new ComplexIndirect((col - WIDTH / 2) * 4.0 / WIDTH, (row - HEIGHT / 2) * 4.0 / WIDTH);
+        var point = new ComplexIndirect(0.0, 0.0);
 
         var iteration = 0;
         while (point.squareDistance() < 4 && iteration < MAX) {
@@ -86,6 +85,27 @@ public class MandelbrotBenchMark {
         var iteration = 0;
         while (point.squareDistance() < 4 && iteration < MAX) {
           point = point.square().add(complex);
+          iteration++;
+        }
+        if (iteration < MAX) {
+          blackhole.consume(iteration);
+        } else {
+          blackhole.consume(0);
+        }
+      }
+    }
+  }
+  
+  @Benchmark
+  public void mandelbrot_interface(Blackhole blackhole) {
+    for (var row = 0; row < HEIGHT; row++) {
+      for (var col = 0; col < WIDTH; col++) {
+        var complex = (ComplexItf)new Complex((col - WIDTH / 2) * 4.0 / WIDTH, (row - HEIGHT / 2) * 4.0 / WIDTH);
+        var point = (ComplexItf)new Complex(0.0, 0.0);
+
+        var iteration = 0;
+        while (((Complex)point).squareDistance() < 4 && iteration < MAX) {
+          point = ((Complex)(ComplexItf)((Complex)point).square()).add((Complex)complex);
           iteration++;
         }
         if (iteration < MAX) {

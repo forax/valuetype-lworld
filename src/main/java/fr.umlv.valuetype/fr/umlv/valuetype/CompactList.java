@@ -10,7 +10,7 @@ import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.function.IntFunction;
 
-public @__inline__ class CompactList<E> implements Iterable<E> {
+public @__inline__ final class CompactList<E> implements Iterable<E> {
 	private final E[] array;
 	private final E embedded0;
   private final E embedded1;
@@ -74,7 +74,7 @@ public @__inline__ class CompactList<E> implements Iterable<E> {
 	
 	@Override
 	public int hashCode() {
-		int hashCode = 1;
+		var hashCode = 1;
     for (var i = 0; i < size; i++) {
       hashCode = 31 * hashCode + get(i).hashCode();
     }
@@ -97,7 +97,7 @@ public @__inline__ class CompactList<E> implements Iterable<E> {
 					try {
 					  return get(index++);
 					} catch(@SuppressWarnings("unused") IndexOutOfBoundsException e) {
-						throw new NoSuchElementException();
+						throw (NoSuchElementException)new NoSuchElementException("no such element").initCause(e);
 					}
 				}
 			};
@@ -115,7 +115,7 @@ public @__inline__ class CompactList<E> implements Iterable<E> {
 				try {
 					return array[index++];
 				} catch(@SuppressWarnings("unused") ArrayIndexOutOfBoundsException e) {
-					throw new NoSuchElementException();
+					throw (NoSuchElementException)new NoSuchElementException("no such element").initCause(e);
 				}
 			}
 		};

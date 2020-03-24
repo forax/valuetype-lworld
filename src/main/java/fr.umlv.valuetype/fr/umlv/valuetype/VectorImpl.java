@@ -9,10 +9,14 @@ import java.util.Arrays;
 import java.util.Objects;
 
 class VectorImpl {
+  private VectorImpl() {
+    throw new AssertionError();
+  }
+
   static VarHandle[] accessors(Lookup lookup) {
-    Class<?> declaringClass = lookup.lookupClass();
-    String className = declaringClass.getName();
-    int length = className.charAt(className.length() - 1) - '0';
+    var declaringClass = lookup.lookupClass();
+    var className = declaringClass.getName();
+    var length = className.charAt(className.length() - 1) - '0';
     return range(0, length).mapToObj(i -> {
         try {
           return lookup.findVarHandle(declaringClass, "v" + i, int.class);
@@ -56,7 +60,7 @@ class VectorImpl {
     
     @Override
     public Vector apply(Vector vector, Op op) {
-      VectorInt1 impl = (VectorInt1)vector;
+      var impl = (VectorInt1)vector;
       return VectorInt1.of(op.apply(this.v0, impl.v0));
     }
   }
@@ -97,11 +101,11 @@ class VectorImpl {
     
     @Override
     public Vector apply(Vector vector, Op op) {
-      VectorInt2 impl = (VectorInt2)vector;
+      var impl = (VectorInt2)vector;
       int[] a = { this.v0, this.v1 };
       int[] b = { impl.v0, impl.v1 };
       int[] result = { 0, 0 };
-      for(int i = 0; i < 2; i++) {
+      for(var i = 0; i < 2; i++) {
         result[i] = op.apply(a[i], b[i]);
       }
       return VectorInt2.of(result[0], result[1]);
@@ -147,11 +151,11 @@ class VectorImpl {
     
     @Override
     public Vector apply(Vector vector, Op op) {
-      VectorInt3 impl = (VectorInt3)vector;
+      var impl = (VectorInt3)vector;
       int[] a = { this.v0, this.v1, this.v2 };
       int[] b = { impl.v0, impl.v1, impl.v2 };
       int[] result = { 0, 0, 0 };
-      for(int i = 0; i < 3; i++) {
+      for(var i = 0; i < 3; i++) {
         result[i] = op.apply(a[i], b[i]);
       }
       return VectorInt3.of(result[0], result[1], result[2]);
@@ -199,11 +203,11 @@ class VectorImpl {
     
     @Override
     public Vector apply(Vector vector, Op op) {
-      VectorInt4 impl = (VectorInt4)vector;
+      var impl = (VectorInt4)vector;
       int[] a = { this.v0, this.v1, this.v2, this.v3 };
       int[] b = { impl.v0, impl.v1, impl.v2, impl.v3 };
       int[] result = { 0, 0, 0, 0 };
-      for(int i = 0; i < 4; i++) {
+      for(var i = 0; i < 4; i++) {
         result[i] = op.apply(a[i], b[i]);
       }
       return VectorInt4.of(result[0], result[1], result[2], result[3]);
@@ -231,7 +235,7 @@ class VectorImpl {
       if (!(obj instanceof VectorBig)) {
         return false;
       }
-      VectorBig vector = (VectorBig)obj;
+      var vector = (VectorBig)obj;
       return Arrays.equals(values, vector.values);
     }
     
@@ -256,13 +260,13 @@ class VectorImpl {
     
     @Override
     public Vector apply(Vector vector, Op op) {
-      VectorBig impl = (VectorBig)vector;
-      int length = this.values.length;
+      var impl = (VectorBig)vector;
+      var length = this.values.length;
       if (impl.values.length != length) {
         throw new ArithmeticException("wrong length");
       }
-      int[] newValues = new int[length];
-      for(int i = 0; i < length; i++) {
+      var newValues = new int[length];
+      for(var i = 0; i < length; i++) {
         newValues[i] = op.apply(values[i], impl.values[i]);
       }
       return VectorBig.of(newValues);

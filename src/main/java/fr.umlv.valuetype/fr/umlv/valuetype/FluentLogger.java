@@ -3,44 +3,47 @@ package fr.umlv.valuetype;
 import java.util.Objects;
 import java.util.function.Consumer;
 
+@FunctionalInterface
 public interface FluentLogger {
-  public enum Level {
+  enum Level {
     DEBUG, WARNING, ERROR
   }
   
-  public default MessageFluent atDebug() {
+  default MessageFluent atDebug() {
     return at(Level.DEBUG);
   }
   
-  public default MessageFluent atWarning() {
+  default MessageFluent atWarning() {
     return at(Level.WARNING);
   }
   
-  public default MessageFluent atError() {
+  default MessageFluent atError() {
     return at(Level.ERROR);
   }
 
-  public MessageFluent at(Level level);
+  MessageFluent at(Level level);
   
-  public static FluentLogger create(Class<?> declaringClass, Level level) {
+  static FluentLogger create(Class<?> declaringClass, Level level) {
     Objects.requireNonNull(declaringClass);
     Objects.requireNonNull(level);
     return new Impl(declaringClass.getName(), level, null);
   }
-  
-  public interface MessageFluent {
-    public LogFluent message(String message);
+
+  @FunctionalInterface
+  interface MessageFluent {
+    LogFluent message(String message);
   }
-  
-  public interface LogFluent {
-    public default void log() {
+
+  @FunctionalInterface
+  interface LogFluent {
+    default void log() {
       log(System.err::println);
     }
-    public void log(Consumer<? super String> consumer);
+    void log(Consumer<? super String> consumer);
   }
   
   @__inline__
-  static final /*inline*/ class Impl implements FluentLogger, MessageFluent, LogFluent  {
+  final /*inline*/ class Impl implements FluentLogger, MessageFluent, LogFluent  {
     private final String className;
     private final Level level;
     private final String message;

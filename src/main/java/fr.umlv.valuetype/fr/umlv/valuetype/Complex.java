@@ -1,7 +1,7 @@
 package fr.umlv.valuetype;
 
 @__inline__
-public class Complex {
+public class Complex implements ComplexItf{
   private final double re;
   private final double im;
 

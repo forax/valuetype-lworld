@@ -45,7 +45,7 @@ public final class FlatMap<K,V> {
   public Option<V> get(K key) {
     var hash = key.hashCode(); // implicit nullcheck
     var mask = entries.length - 1;
-    int index = hash & mask;
+    var index = hash & mask;
     for(;;) {
       var entry = entries[index];
       if (hash == entry.hash && key.equals(entry.key)) {
@@ -86,8 +86,8 @@ public final class FlatMap<K,V> {
   
   private Entry<K, V>[] resize() {
     @SuppressWarnings("unchecked")
-    Entry<K, V>[] newEntries = (Entry<K, V>[])new Entry<?, ?>[entries.length << 1];
-    int mask = newEntries.length - 1;
+    var newEntries = (Entry<K, V>[])new Entry<?, ?>[entries.length << 1];
+    var mask = newEntries.length - 1;
     for(var entry: entries) {
       if (entry.key == null) {
         continue;

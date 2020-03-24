@@ -1,5 +1,7 @@
 package fr.umlv.valuetype;
 
+import static java.util.stream.IntStream.range;
+
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
@@ -38,7 +40,7 @@ public final /*inline*/ class Array<E> implements List<E> {
   @Override
   public boolean equals(Object obj) {
     if (obj instanceof Array) {
-      Array<?> array = (Array<?>)obj;
+      var array = (Array<?>)obj;
       return Arrays.equals(elements, array.elements);
     }
     if (obj instanceof List) {
@@ -47,12 +49,12 @@ public final /*inline*/ class Array<E> implements List<E> {
     return false;
   }
   private boolean equalsList(List<?> list) {
-    Iterator<?> it = list.iterator();
+    var it = list.iterator();
     for(var element: elements) {
       if (!it.hasNext()) {
         return false;
       }
-      Object other = it.next();
+      var other = it.next();
       if (!Objects.equals(element, other)) {
         return false;
       }
@@ -94,19 +96,14 @@ public final /*inline*/ class Array<E> implements List<E> {
   
   @Override
   public int indexOf(Object o) {
-    int length = elements.length;
-    for(int i = 0; i < length; i++) {
-      if (Objects.equals(o, elements[i])) {
-        return i;
-      }
-    }
-    return -1;
+    var length = elements.length;
+    return range(0, length).filter(i -> Objects.equals(o, elements[i])).findFirst()
+        .orElse(-1);
   }
   
   @Override
   public int lastIndexOf(Object o) {
-    Objects.requireNonNull(o);
-    for(int i = elements.length; --i >= 0;) {
+    for(var i = elements.length; --i >= 0;) {
       if (Objects.equals(o, elements[i])) {
         return i;
       }
@@ -116,23 +113,12 @@ public final /*inline*/ class Array<E> implements List<E> {
 
   @Override
   public boolean contains(Object o) {
-    Objects.requireNonNull(o);
-    for(var element: elements) {
-      if (Objects.equals(o, element)) {
-        return true;
-      }
-    }
-    return false;
+    return Arrays.stream(elements).anyMatch(Predicate.isEqual(o));
   }
   
   @Override
   public boolean containsAll(Collection<?> collection) {
-    for (var other: collection) {
-      if (!contains(other)) {
-        return false;
-      }
-    }
-    return true;
+    return collection.stream().allMatch(this::contains);
   }
 
   @Override
@@ -146,11 +132,10 @@ public final /*inline*/ class Array<E> implements List<E> {
       }
       @Override
       public E next() {
-        try {
-          return elements[index++];
-        } catch(ArrayIndexOutOfBoundsException e) {
-          throw new NoSuchElementException();
+        if (!hasNext()) {
+          throw new NoSuchElementException("no such element");
         }
+        return elements[index++];
       }
     };
   }
@@ -176,8 +161,8 @@ public final /*inline*/ class Array<E> implements List<E> {
   @Override
   @SuppressWarnings("unchecked")
   public <T> T[] toArray(T[] a) {
-    E[] elements = this.elements;
-    int length = elements.length;
+    var elements = this.elements;
+    var length = elements.length;
     if (a.length < length) {
       return (T[])Arrays.copyOf(elements, length, a.getClass());
     }
@@ -238,7 +223,7 @@ public final /*inline*/ class Array<E> implements List<E> {
   
   @Override
   public void replaceAll(UnaryOperator<E> operator) {
-    for(int i = 0; i < elements.length; i++) {
+    for(var i = 0; i < elements.length; i++) {
       elements[i] = operator.apply(elements[i]);
     }
   }

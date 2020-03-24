@@ -205,13 +205,13 @@ public /*inline*/ class RubyLikeInt implements Comparable<RubyLikeInt> {
   }
   
   public void downto(RubyLikeInt limit, Consumer<? super RubyLikeInt> consumer) {
-    for(RubyLikeInt i = this; i.compareTo(limit) >= 0; i = i.pred()) {
+    for(var i = this; i.compareTo(limit) >= 0; i = i.pred()) {
       consumer.accept(i);
     }
   }
   
   public void upto(RubyLikeInt limit, Consumer<? super RubyLikeInt> consumer) {
-    for(RubyLikeInt i = this; i.compareTo(limit) <= 0; i = i.succ()) {
+    for(var i = this; i.compareTo(limit) <= 0; i = i.succ()) {
       consumer.accept(i);
     }
   }
@@ -221,8 +221,8 @@ public /*inline*/ class RubyLikeInt implements Comparable<RubyLikeInt> {
   }
   
   public <T> T rangeReduce(RubyLikeInt to, T initial, BiFunction<? super T, ? super RubyLikeInt, ? extends T> reducer) {
-    T current = initial;
-    for(RubyLikeInt i = this; i.compareTo(to) < 0; i = i.succ()) {
+    var current = initial;
+    for(var i = this; i.compareTo(to) < 0; i = i.succ()) {
       current = reducer.apply(current, i);
     }
     return current;
