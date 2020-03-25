@@ -13,6 +13,8 @@
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src/main/java/fr.umlv.valuetype" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/src/test/java/fr.umlv.valuetype" isTestSource="false" />
+      <excludeFolder url="file://$MODULE_DIR$/pro" />
+      <excludeFolder url="file://$MODULE_DIR$/target" />
     </content>
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">
@@ -24,7 +26,7 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="jdk" jdkName="jdk-15-lworld" jdkType="JavaSDK" />
+    <orderEntry type="jdk" jdkName="pro-lworld" jdkType="JavaSDK" />
     <orderEntry type="module-library">
       <library name="org.openjdk.jmh.jar">
         <CLASSES>
