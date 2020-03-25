@@ -124,27 +124,22 @@ public @__inline__ final class CompactList<E> implements Iterable<E> {
 	@SuppressWarnings("unchecked")
 	public CompactList<E> append(E element) {
 		requireNonNull(element);
-		switch(size) {
-		case 0:
-			return CompactList.of(element);
-		case 1:
-			return CompactList.of(embedded0, element);
-		case 2:
-			return CompactList.of(embedded0, embedded1, element);
-		case 3:
-			return CompactList.of(embedded0, embedded1, embedded2, element);
-		case 4:
-			return CompactList.of((E[])new Object[] { embedded0, embedded1, embedded2, embedded3, element});
-	  default: {
-	  	var newLength = array.length + 1;
-	  	var newArray = copyOf(array, newLength);
-	  	newArray[array.length] = element;
-	  	return new CompactList<>(newArray, null, null, null, null, newLength);
-	  }
-		}
+		return switch(size) {
+		  case 0 -> of(element);
+		  case 1 -> of(embedded0, element);
+		  case 2 -> of(embedded0, embedded1, element);
+		  case 3 -> of(embedded0, embedded1, embedded2, element);
+		  case 4 -> of((E[])new Object[] { embedded0, embedded1, embedded2, embedded3, element});
+	    default -> {
+	  	  var newLength = array.length + 1;
+	  	  var newArray = copyOf(array, newLength);
+	  	  newArray[array.length] = element;
+	  	  yield new CompactList<>(newArray, null, null, null, null, newLength);
+	    }
+		};
 	}
   
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "fallthrough"})
 	public <T> T[] toArray(IntFunction<? extends T[]> arrayCreator) {
 		var size = this.size;
 		T[] array = arrayCreator.apply(size);  // implicit NPE
@@ -153,13 +148,10 @@ public @__inline__ final class CompactList<E> implements Iterable<E> {
 			return array;
 		case 4:
 			array[3] = (T)embedded3;
-			//$FALL-THROUGH$
 		case 3:
 			array[2] = (T)embedded2;
-			//$FALL-THROUGH$
 		case 2:
 			array[1] = (T)embedded1;
-			//$FALL-THROUGH$
 		case 1:
 			array[0] = (T)embedded0;
 			return array;
@@ -196,26 +188,20 @@ public @__inline__ final class CompactList<E> implements Iterable<E> {
   }
   @SafeVarargs
   public static <E> CompactList<E> of(E... elements) {
-  	switch(elements.length) {
-  	case 0:
-  		return of();
-  	case 1:
-  		return of(elements[0]);
-  	case 2:
-  		return of(elements[0], elements[1]);
-  	case 3:
-  		return of(elements[0], elements[1], elements[2]);
-  	case 4:
-  		return of(elements[0], elements[1], elements[2], elements[3]);
-  	default:
-  		return ofArray(elements);
-  	}
+		return switch (elements.length) {
+			case 0 -> of();
+			case 1 -> of(elements[0]);
+			case 2 -> of(elements[0], elements[1]);
+			case 3 -> of(elements[0], elements[1], elements[2]);
+			case 4 -> of(elements[0], elements[1], elements[2], elements[3]);
+			default -> ofArray(elements);
+		};
   }
   private static <E> CompactList<E> ofArray(E[] elements) {
   	var length = elements.length;
-		for(var i = 0; i < length; i++) {
-  		requireNonNull(elements[i]);
-  	}
+		for (var element : elements) {
+			requireNonNull(element);
+		}
   	return new CompactList<>(copyOf(elements, length), null, null, null, null, length);
   }
 }
