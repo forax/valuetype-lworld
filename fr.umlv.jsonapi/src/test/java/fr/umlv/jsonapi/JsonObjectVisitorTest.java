@@ -21,7 +21,6 @@ public class JsonObjectVisitorTest {
           "weight": 87.3,
           "balance": 123454554533, 
           "id": 1235345426364636494428583545,
-          "deep": 7778588577473855775335.7,
           "spouse": null,
           "address": { "skipped": "skipped" },
           "phoneNumbers": [ "skipped", "skipped", "skipped"]
@@ -83,13 +82,6 @@ public class JsonObjectVisitorTest {
           }
 
           @Override
-          public void visitMemberNumber(String name, BigDecimal value) {
-            methods.add("visitMemberNumberBigDecimal");
-            assertEquals("deep", name);
-            assertEquals(new BigDecimal("7778588577473855775335.7"), value);
-          }
-
-          @Override
           public void visitMemberBoolean(String name, boolean value) {
             methods.add("visitMemberBoolean");
             assertEquals("isAlive", name);
@@ -119,7 +111,7 @@ public class JsonObjectVisitorTest {
     assertEquals(
         List.of("visitMemberString", "visitMemberBoolean", "visitMemberNumberInt",
             "visitMemberNumberDouble", "visitMemberNumberLong",
-            "visitMemberNumberBigInteger", "visitMemberNumberBigDecimal", "visitMemberNull",
+            "visitMemberNumberBigInteger", "visitMemberNull",
             "visitMemberObject", "visitMemberArray", "visitEndObject"),
         visitor.methods);  // each method above is called once
   }
@@ -128,7 +120,7 @@ public class JsonObjectVisitorTest {
   public void testJsonReaderArrayVisitor() {
     var text = """
         [
-          "Jane", false, 72, 37.8,  123454554533, 1235345426364636494428583545, 7778588577473855775335.7, null,
+          "Jane", false, 72, 37.8,  123454554533, 1235345426364636494428583545, null,
           { "skipped": "skipped" }, [ "skipped", "skipped" ]
         ]
         """;
@@ -181,12 +173,6 @@ public class JsonObjectVisitorTest {
           }
 
           @Override
-          public void visitNumber(BigDecimal value) {
-            methods.add("visitNumberBigDecimal");
-            assertEquals(new BigDecimal("7778588577473855775335.7"), value);
-          }
-
-          @Override
           public void visitBoolean(boolean value) {
             methods.add("visitBoolean");
             assertFalse(value);
@@ -213,11 +199,12 @@ public class JsonObjectVisitorTest {
     JsonReader.parse(text, visitor);
     assertEquals(
         List.of("visitString", "visitBoolean", "visitNumberInt", "visitNumberDouble",
-            "visitNumberLong", "visitNumberBigInteger", "visitNumberBigDecimal", "visitNull",
+            "visitNumberLong", "visitNumberBigInteger", "visitNull",
             "visitObject", "visitArray", "visitEndArray"),
         visitor.methods);  // each method above is called once
   }
 
+  /*
   @Test
   public void testSimpleJSonObjectEquals() {
     var object = new JsonObject()
@@ -322,5 +309,5 @@ public class JsonObjectVisitorTest {
         () -> assertEquals(23, dataPoint.x),
         () -> assertEquals(7, dataPoint.y)
     );
-  }
+  }*/
 }

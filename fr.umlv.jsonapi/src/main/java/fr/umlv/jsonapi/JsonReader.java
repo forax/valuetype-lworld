@@ -145,7 +145,6 @@ public final class JsonReader {
             case LONG -> visitor.visitNumber(parser.getValueAsLong());
             case BIG_INTEGER -> visitor.visitNumber(new BigInteger(parser.getValueAsString()));
             case FLOAT, DOUBLE -> visitor.visitNumber(parser.getValueAsDouble());
-            case BIG_DECIMAL -> visitor.visitNumber(new BigDecimal(parser.getValueAsString()));
             default -> throw new IOException("invalid number " + parser.getValueAsString());
           }
         }
@@ -179,7 +178,6 @@ public final class JsonReader {
             case LONG -> visitor.visitMemberNumber(name, parser.getValueAsLong());
             case BIG_INTEGER -> visitor.visitMemberNumber(name, new BigInteger(parser.getValueAsString()));
             case FLOAT, DOUBLE -> visitor.visitMemberNumber(name, parser.getValueAsDouble());
-            case BIG_DECIMAL -> visitor.visitMemberNumber(name, new BigDecimal(parser.getValueAsString()));
             default -> throw new IOException("invalid number " + parser.getValueAsString());
           }
         }

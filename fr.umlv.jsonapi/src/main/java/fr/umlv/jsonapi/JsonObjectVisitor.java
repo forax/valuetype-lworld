@@ -17,7 +17,6 @@ public interface JsonObjectVisitor {
   void visitMemberNumber(String name, long value);
   void visitMemberNumber(String name, double value);
   void visitMemberNumber(String name, BigInteger value);
-  void visitMemberNumber(String name, BigDecimal value);
   void visitMemberBoolean(String name, boolean value);
   void visitMemberNull(String name);
   void visitEndObject();
@@ -50,9 +49,6 @@ public interface JsonObjectVisitor {
     }
     if (value instanceof BigInteger bigInteger) {
       return adding(name, bigInteger);
-    }
-    if (value instanceof BigDecimal bigDecimal) {
-      return adding(name, bigDecimal);
     }
     if (value instanceof Float floatValue) {
       return adding(name, (float) floatValue);
@@ -129,12 +125,6 @@ public interface JsonObjectVisitor {
     return this;
   }
   default JsonObjectVisitor adding(String name, BigInteger value) {
-    Objects.requireNonNull(name);
-    Objects.requireNonNull(value);
-    visitMemberNumber(name, value);
-    return this;
-  }
-  default JsonObjectVisitor adding(String name, BigDecimal value) {
     Objects.requireNonNull(name);
     Objects.requireNonNull(value);
     visitMemberNumber(name, value);

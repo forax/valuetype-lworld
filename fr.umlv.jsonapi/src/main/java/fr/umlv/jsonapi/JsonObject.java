@@ -175,11 +175,6 @@ public final class JsonObject extends AbstractMap<String, Object> implements Jso
     return this;
   }
   @Override
-  public JsonObject adding(String name, BigDecimal value) {
-    JsonObjectVisitor.super.adding(name, value);
-    return this;
-  }
-  @Override
   public JsonObject adding(String name, boolean value) {
     JsonObjectVisitor.super.adding(name, value);
     return this;
@@ -270,12 +265,6 @@ public final class JsonObject extends AbstractMap<String, Object> implements Jso
     safeAdd(name, value);
   }
   @Override
-  public void visitMemberNumber(String name, BigDecimal value) {
-    Objects.requireNonNull(name);
-    Objects.requireNonNull(value);
-    safeAdd(name, value);
-  }
-  @Override
   public void visitMemberBoolean(String name, boolean value) {
     Objects.requireNonNull(name);
     safeAdd(name, value);
@@ -329,10 +318,6 @@ public final class JsonObject extends AbstractMap<String, Object> implements Jso
       }
       if (value instanceof BigInteger bigInteger) {
         visitor.visitMemberNumber(name, bigInteger);
-        continue;
-      }
-      if (value instanceof BigDecimal bigDecimal) {
-        visitor.visitMemberNumber(name, bigDecimal);
         continue;
       }
       if (value instanceof Boolean booleanValue) {

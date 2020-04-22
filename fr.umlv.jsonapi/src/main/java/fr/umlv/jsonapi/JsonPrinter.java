@@ -93,16 +93,6 @@ public class JsonPrinter implements JsonObjectVisitor, JsonArrayVisitor {
   }
 
   @Override
-  public void visitMemberNumber(String name, BigDecimal value) {
-    Objects.requireNonNull(name);
-    Objects.requireNonNull(value);
-    builder.append(separator);
-    appendText(builder, name);
-    builder.append(": ").append(value);
-    separator = ", ";
-  }
-
-  @Override
   public void visitMemberBoolean(String name, boolean value) {
     Objects.requireNonNull(name);
     builder.append(separator);
@@ -168,13 +158,6 @@ public class JsonPrinter implements JsonObjectVisitor, JsonArrayVisitor {
 
   @Override
   public void visitNumber(BigInteger value) {
-    Objects.requireNonNull(value);
-    builder.append(separator).append(value);
-    separator = ", ";
-  }
-
-  @Override
-  public void visitNumber(BigDecimal value) {
     Objects.requireNonNull(value);
     builder.append(separator).append(value);
     separator = ", ";

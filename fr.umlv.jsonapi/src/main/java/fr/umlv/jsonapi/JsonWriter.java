@@ -115,18 +115,6 @@ public final class JsonWriter implements JsonObjectVisitor, JsonArrayVisitor, Cl
   }
 
   @Override
-  public void visitMemberNumber(String name, BigDecimal value) {
-    Objects.requireNonNull(name);
-    Objects.requireNonNull(value);
-    try {
-      generator.writeFieldName(name);
-      generator.writeNumber(value);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  @Override
   public void visitMemberBoolean(String name, boolean value) {
     Objects.requireNonNull(name);
     try {
@@ -214,16 +202,6 @@ public final class JsonWriter implements JsonObjectVisitor, JsonArrayVisitor, Cl
 
   @Override
   public void visitNumber(BigInteger value) {
-    Objects.requireNonNull(value);
-    try {
-      generator.writeNumber(value);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  @Override
-  public void visitNumber(BigDecimal value) {
     Objects.requireNonNull(value);
     try {
       generator.writeNumber(value);

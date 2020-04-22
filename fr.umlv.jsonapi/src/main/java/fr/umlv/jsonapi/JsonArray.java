@@ -125,11 +125,6 @@ public final class JsonArray<E> extends AbstractList<E> implements JsonArrayVisi
     return this;
   }
   @Override
-  public JsonArray<E> adding(BigDecimal value) {
-    JsonArrayVisitor.super.adding(value);
-    return this;
-  }
-  @Override
   public JsonArray<E> adding(boolean value) {
     JsonArrayVisitor.super.adding(value);
     return this;
@@ -205,11 +200,6 @@ public final class JsonArray<E> extends AbstractList<E> implements JsonArrayVisi
   }
   @Override
   public void visitNumber(BigInteger value) {
-    Objects.requireNonNull(value);
-    safeAppend(value);
-  }
-  @Override
-  public void visitNumber(BigDecimal value) {
     Objects.requireNonNull(value);
     safeAppend(value);
   }
@@ -307,10 +297,6 @@ public final class JsonArray<E> extends AbstractList<E> implements JsonArrayVisi
       }
       if (value instanceof BigInteger bigInteger) {
         visitor.visitNumber(bigInteger);
-        continue;
-      }
-      if (value instanceof BigDecimal bigDecimal) {
-        visitor.visitNumber(bigDecimal);
         continue;
       }
       if (value instanceof JsonArray.PrimitiveBoolean primitiveBoolean) {

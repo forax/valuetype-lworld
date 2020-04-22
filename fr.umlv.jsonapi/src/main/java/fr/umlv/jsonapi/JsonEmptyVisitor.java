@@ -36,11 +36,6 @@ public class JsonEmptyVisitor implements JsonObjectVisitor, JsonArrayVisitor {
     Objects.requireNonNull(value);
   }
   @Override
-  public void visitMemberNumber(String name, BigDecimal value) {
-    Objects.requireNonNull(name);
-    Objects.requireNonNull(value);
-  }
-  @Override
   public void visitMemberBoolean(String name, boolean value) {
     Objects.requireNonNull(name);
   }
@@ -79,10 +74,6 @@ public class JsonEmptyVisitor implements JsonObjectVisitor, JsonArrayVisitor {
   }
   @Override
   public void visitNumber(BigInteger value) {
-    Objects.requireNonNull(value);
-  }
-  @Override
-  public void visitNumber(BigDecimal value) {
     Objects.requireNonNull(value);
   }
   @Override

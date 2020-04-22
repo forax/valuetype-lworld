@@ -17,7 +17,6 @@ public interface JsonArrayVisitor extends JsonVisitor {
   void visitNumber(long value);
   void visitNumber(double value);
   void visitNumber(BigInteger value);
-  void visitNumber(BigDecimal value);
   void visitBoolean(boolean value);
   void visitNull();
   void visitEndArray();
@@ -49,9 +48,6 @@ public interface JsonArrayVisitor extends JsonVisitor {
     }
     if (value instanceof BigInteger bigInteger) {
       return adding(bigInteger);
-    }
-    if (value instanceof BigDecimal bigDecimal) {
-      return adding(bigDecimal);
     }
     if (value instanceof Float floatValue) {
       return adding((float) floatValue);
@@ -120,11 +116,6 @@ public interface JsonArrayVisitor extends JsonVisitor {
     return this;
   }
   default JsonArrayVisitor adding(BigInteger value) {
-    Objects.requireNonNull(value);
-    visitNumber(value);
-    return this;
-  }
-  default JsonArrayVisitor adding(BigDecimal value) {
     Objects.requireNonNull(value);
     visitNumber(value);
     return this;
