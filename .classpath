@@ -2,6 +2,8 @@
 <classpath>
 	<classpathentry excluding="module-info.java" kind="src" path="fr.umlv.valuetype/src/main/java"/>
 	<classpathentry excluding="module-info.java" kind="src" path="fr.umlv.valuetype/src/test/java"/>
+	<classpathentry excluding="module-info.java" kind="src" path="fr.umlv.jsonapi/src/main/java"/>
+	<classpathentry excluding="module-info.java" kind="src" path="fr.umlv.jsonapi/src/test/java"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/5">
 		<attributes>
 			<attribute name="module" value="true"/>
@@ -13,5 +15,6 @@
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="deps/org.openjdk.jmh.jar"/>
+	<classpathentry kind="lib" path="deps/com.fasterxml.jackson.core.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

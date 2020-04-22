@@ -6,6 +6,9 @@ pro.loglevel("verbose")
 resolver.
   // checkForUpdate(true).
   dependencies(
+    // Jackson
+    "com.fasterxml.jackson.core:2.10.3",
+
     // JUnit 5
     "org.junit.jupiter.api:5.6.2",
     "org.junit.jupiter.params:5.6.2",
@@ -22,9 +25,11 @@ resolver.
 
 compiler.
   sourceRelease(15).
+  enablePreview(true).
   processorModuleTestPath(path("deps")). // enable JMH annotation processor
   rawArguments(
-    "-Xlint:all",
+    "--default-module-for-created-files", "fr.umlv.valuetype",
+  //  "-Xlint:all",
     "-XDallowGenericsOverValues",
     "-XDallowEmptyValues",
     "-XDallowWithFieldOperator"   
