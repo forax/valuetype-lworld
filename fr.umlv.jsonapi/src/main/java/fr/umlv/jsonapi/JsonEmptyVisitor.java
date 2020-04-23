@@ -14,33 +14,15 @@ public class JsonEmptyVisitor implements JsonObjectVisitor, JsonArrayVisitor {
     return null;
   }
   @Override
-  public void visitMemberString(String name, String value) {
-    Objects.requireNonNull(name);
-    Objects.requireNonNull(value);
-  }
-  @Override
-  public void visitMemberNumber(String name, int value) {
+  public void visitMemberText(String name, JsonText text) {
     Objects.requireNonNull(name);
   }
   @Override
-  public void visitMemberNumber(String name, long value) {
+  public void visitMemberNumber(String name, JsonNumber number) {
     Objects.requireNonNull(name);
   }
   @Override
-  public void visitMemberNumber(String name, double value) {
-    Objects.requireNonNull(name);
-  }
-  @Override
-  public void visitMemberNumber(String name, BigInteger value) {
-    Objects.requireNonNull(name);
-    Objects.requireNonNull(value);
-  }
-  @Override
-  public void visitMemberBoolean(String name, boolean value) {
-    Objects.requireNonNull(name);
-  }
-  @Override
-  public void visitMemberNull(String name) {
+  public void visitMemberConstant(String name, JsonConstant constant) {
     Objects.requireNonNull(name);
   }
   @Override
@@ -57,31 +39,15 @@ public class JsonEmptyVisitor implements JsonObjectVisitor, JsonArrayVisitor {
     return null;
   }
   @Override
-  public void visitString(String value) {
+  public void visitText(JsonText text) {
     // empty
   }
   @Override
-  public void visitNumber(int value) {
+  public void visitNumber(JsonNumber number) {
     // empty
   }
   @Override
-  public void visitNumber(long value) {
-    // empty
-  }
-  @Override
-  public void visitNumber(double value) {
-    // empty
-  }
-  @Override
-  public void visitNumber(BigInteger value) {
-    Objects.requireNonNull(value);
-  }
-  @Override
-  public void visitBoolean(boolean value) {
-    // empty
-  }
-  @Override
-  public void visitNull() {
+  public void visitConstant(JsonConstant constant) {
     // empty
   }
   @Override

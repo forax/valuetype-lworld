@@ -4,8 +4,6 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.io.Writer;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -62,73 +60,38 @@ public final class JsonWriter implements JsonObjectVisitor, JsonArrayVisitor, Cl
   }
 
   @Override
-  public void visitMemberString(String name, String value) {
+  public void visitMemberText(String name, JsonText text) {
     Objects.requireNonNull(name);
-    Objects.requireNonNull(value);
     try {
-      generator.writeStringField(name, value);
+      generator.writeStringField(name, text.value());
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
   }
 
   @Override
-  public void visitMemberNumber(String name, int value) {
+  public void visitMemberNumber(String name, JsonNumber number) {
     Objects.requireNonNull(name);
     try {
-      generator.writeNumberField(name, value);
+      if (number.isDouble()) {
+        generator.writeNumberField(name, number.doubleValue());
+        return;
+      }
+      generator.writeNumberField(name, number.longValue());
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
   }
 
   @Override
-  public void visitMemberNumber(String name, long value) {
+  public void visitMemberConstant(String name, JsonConstant constant) {
     Objects.requireNonNull(name);
     try {
-      generator.writeNumberField(name, value);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  @Override
-  public void visitMemberNumber(String name, double value) {
-    Objects.requireNonNull(name);
-    try {
-      generator.writeNumberField(name, value);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  @Override
-  public void visitMemberNumber(String name, BigInteger value) {
-    Objects.requireNonNull(name);
-    Objects.requireNonNull(value);
-    try {
-      generator.writeFieldName(name);
-      generator.writeNumber(value);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  @Override
-  public void visitMemberBoolean(String name, boolean value) {
-    Objects.requireNonNull(name);
-    try {
-      generator.writeBooleanField(name, value);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  @Override
-  public void visitMemberNull(String name) {
-    Objects.requireNonNull(name);
-    try {
-      generator.writeNullField(name);
+      switch(constant) {  // implicit nullcheck
+        case NULL -> generator.writeNull();
+        case TRUE -> generator.writeBooleanField(name, true);
+        case FALSE -> generator.writeBooleanField(name, false);
+      }
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
@@ -164,65 +127,35 @@ public final class JsonWriter implements JsonObjectVisitor, JsonArrayVisitor, Cl
   }
 
   @Override
-  public void visitString(String value) {
-    Objects.requireNonNull(value);
+  public void visitText(JsonText text) {
     try {
-      generator.writeString(value);
+      generator.writeString(text.value());
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
   }
 
   @Override
-  public void visitNumber(int value) {
+  public void visitNumber(JsonNumber number) {
     try {
-      generator.writeNumber(value);
+      if (number.isDouble()) {
+        generator.writeNumber(number.doubleValue());
+        return;
+      }
+      generator.writeNumber(number.longValue());
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
   }
 
   @Override
-  public void visitNumber(long value) {
+  public void visitConstant(JsonConstant constant) {
     try {
-      generator.writeNumber(value);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  @Override
-  public void visitNumber(double value) {
-    try {
-      generator.writeNumber(value);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  @Override
-  public void visitNumber(BigInteger value) {
-    Objects.requireNonNull(value);
-    try {
-      generator.writeNumber(value);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  @Override
-  public void visitBoolean(boolean value) {
-    try {
-      generator.writeBoolean(value);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  @Override
-  public void visitNull() {
-    try {
-      generator.writeNull();
+      switch(constant) {  // implicit nullcheck
+        case NULL -> generator.writeNull();
+        case TRUE -> generator.writeBoolean(true);
+        case FALSE -> generator.writeBoolean(false);
+      }
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }

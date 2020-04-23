@@ -1,38 +1,74 @@
 package fr.umlv.jsonapi;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-@SuppressWarnings("preview")
+@SuppressWarnings({"preview", "OverloadedMethodsWithSameNumberOfParameters"})
 public interface JsonArrayVisitor extends JsonVisitor {
   @Override
   JsonObjectVisitor visitObject();
   @Override
   JsonArrayVisitor visitArray();
-  void visitString(String value);
-  void visitNumber(int value);
-  void visitNumber(long value);
-  void visitNumber(double value);
-  void visitNumber(BigInteger value);
-  void visitBoolean(boolean value);
-  void visitNull();
+  void visitText(JsonText text);
+  void visitNumber(JsonNumber number);
+  void visitConstant(JsonConstant constant);
   void visitEndArray();
 
-  default JsonArrayVisitor adding(Object value) {
-    if (value instanceof JsonObject object) {
+  default JsonArrayVisitor adding(JsonElement element) {
+    Objects.requireNonNull(element);
+    if (element instanceof JsonObject object) {
       return adding(object);
     }
-    if (value instanceof Map<?,?> map) {
-      return adding(map);
-    }
-    if (value instanceof JsonArray<?> array) {
+    if (element instanceof JsonArray array) {
       return adding(array);
     }
-    if (value instanceof List<?> list) {
-      return adding(list);
+    if (element instanceof JsonText text) {
+      return adding(text);
+    }
+    if (element instanceof JsonNumber number) {
+      return adding(number);
+    }
+    if (element instanceof JsonConstant constant) {
+      return adding(constant);
+    }
+    throw new IllegalArgumentException("invalid element " + element);
+  }
+  default JsonArrayVisitor adding(JsonObject object) {
+    Objects.requireNonNull(object);
+    var objVisitor = visitObject();
+    if (objVisitor != null) {
+      object.accept(objVisitor);
+    }
+    return this;
+  }
+  default JsonArrayVisitor adding(JsonArray array) {
+    Objects.requireNonNull(array);
+    var arrayVisitor = visitArray();
+    if (arrayVisitor != null) {
+      array.accept(arrayVisitor);
+    }
+    return this;
+  }
+  default JsonArrayVisitor adding(JsonText value) {
+    visitText(value);
+    return this;
+  }
+  default JsonArrayVisitor adding(JsonNumber number) {
+    visitNumber(number);
+    return this;
+  }
+  default JsonArrayVisitor adding(JsonConstant constant) {
+    Objects.requireNonNull(constant);
+    visitConstant(constant);
+    return this;
+  }
+
+  default JsonArrayVisitor adding(Object value) {
+    if (value == null) {
+      return adding(JsonConstant.NULL);
+    }
+    if (value instanceof JsonElement element) {
+      return adding(element);
     }
     if (value instanceof String string) {
       return adding(string);
@@ -46,9 +82,6 @@ public interface JsonArrayVisitor extends JsonVisitor {
     if (value instanceof Double doubleValue) {
       return adding((double) doubleValue);
     }
-    if (value instanceof BigInteger bigInteger) {
-      return adding(bigInteger);
-    }
     if (value instanceof Float floatValue) {
       return adding((float) floatValue);
     }
@@ -61,17 +94,37 @@ public interface JsonArrayVisitor extends JsonVisitor {
     if (value instanceof Byte byteValue) {
       return adding((byte) byteValue);
     }
-    if (value == null) {
-      return addingNull();
+    if (value instanceof Record record) {
+      return adding(record);
+    }
+    if (value instanceof Map<?,?> map) {
+      return adding(map);
+    }
+    if (value instanceof Iterable<?> iterable) {
+      return adding(iterable);
     }
     throw new IllegalArgumentException("invalid value " + value);
   }
-  default JsonArrayVisitor adding(JsonObject object) {
-    Objects.requireNonNull(object);
-    var objVisitor = visitObject();
-    if (objVisitor != null) {
-      object.accept(objVisitor);
-    }
+
+  default JsonArrayVisitor adding(String value) {
+    Objects.requireNonNull(value);
+    visitText(new JsonText(value));
+    return this;
+  }
+  default JsonArrayVisitor adding(int value) {
+    visitNumber(JsonNumber.from(value));
+    return this;
+  }
+  default JsonArrayVisitor adding(long value) {
+    visitNumber(JsonNumber.from(value));
+    return this;
+  }
+  default JsonArrayVisitor adding(double value) {
+    visitNumber(JsonNumber.from(value));
+    return this;
+  }
+  default JsonArrayVisitor adding(boolean value) {
+    visitConstant(value? JsonConstant.TRUE: JsonConstant.FALSE);
     return this;
   }
   default JsonArrayVisitor adding(Map<?,?> map) {
@@ -82,15 +135,7 @@ public interface JsonArrayVisitor extends JsonVisitor {
     }
     return this;
   }
-  default JsonArrayVisitor adding(JsonArray<?> array) {
-    Objects.requireNonNull(array);
-    var arrayVisitor = visitArray();
-    if (arrayVisitor != null) {
-      array.accept(arrayVisitor);
-    }
-    return this;
-  }
-  default JsonArrayVisitor adding(List<?> list) {
+  default JsonArrayVisitor adding(Iterable<?> list) {
     Objects.requireNonNull(list);
     var arrayVisitor = visitArray();
     if (arrayVisitor != null) {
@@ -98,39 +143,17 @@ public interface JsonArrayVisitor extends JsonVisitor {
     }
     return this;
   }
-  default JsonArrayVisitor adding(String value) {
-    Objects.requireNonNull(value);
-    visitString(value);
-    return this;
-  }
-  default JsonArrayVisitor adding(int value) {
-    visitNumber(value);
-    return this;
-  }
-  default JsonArrayVisitor adding(long value) {
-    visitNumber(value);
-    return this;
-  }
-  default JsonArrayVisitor adding(double value) {
-    visitNumber(value);
-    return this;
-  }
-  default JsonArrayVisitor adding(BigInteger value) {
-    Objects.requireNonNull(value);
-    visitNumber(value);
-    return this;
-  }
-  default JsonArrayVisitor adding(boolean value) {
-    visitBoolean(value);
-    return this;
-  }
-  default JsonArrayVisitor addingNull() {
-    visitNull();
+  default JsonArrayVisitor adding(Record record) {
+    Objects.requireNonNull(record);
+    var objVisitor = visitObject();
+    if (objVisitor != null) {
+      objVisitor.addingAll(record);
+    }
     return this;
   }
 
-  default JsonArrayVisitor addingAll(List<?> list) {
-    for(var value: list) {  // implicit null check
+  default JsonArrayVisitor addingAll(Iterable<?> iterable) {
+    for(var value: iterable) {  // implicit null check
       adding(value);
     }
     return this;

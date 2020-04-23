@@ -20,7 +20,7 @@ import java.util.Objects;
 import java.util.Set;
 
 @SuppressWarnings("preview")
-public final class JsonObject extends AbstractMap<String, Object> implements JsonObjectVisitor {
+public final class JsonObject extends AbstractMap<String, Object> implements JsonElement, JsonObjectVisitor {
   private static final class Shape {
     private final HashMap<String, Integer> slotMap;
     private final ArrayList<String> names;
@@ -124,9 +124,10 @@ public final class JsonObject extends AbstractMap<String, Object> implements Jso
     return printer.toString();
   }
 
+
   @Override
-  public JsonObject adding(String name, Object value) {
-    JsonObjectVisitor.super.adding(name, value);
+  public JsonObject adding(String name, JsonElement element) {
+    JsonObjectVisitor.super.adding(name, element);
     return this;
   }
   @Override
@@ -135,18 +136,30 @@ public final class JsonObject extends AbstractMap<String, Object> implements Jso
     return this;
   }
   @Override
-  public JsonObject adding(String name, Map<?,?> map) {
-    JsonObjectVisitor.super.adding(name, map);
-    return this;
-  }
-  @Override
-  public JsonObject adding(String name, JsonArray<?> array) {
+  public JsonObject adding(String name, JsonArray array) {
     JsonObjectVisitor.super.adding(name, array);
     return this;
   }
   @Override
-  public JsonObject adding(String name, List<?> list) {
-    JsonObjectVisitor.super.adding(name, list);
+  public JsonObject adding(String name, JsonText text) {
+    JsonObjectVisitor.super.adding(name, text);
+    return this;
+  }
+  @Override
+  public JsonObject adding(String name, JsonNumber number) {
+    JsonObjectVisitor.super.adding(name, number);
+    return this;
+  }
+  @Override
+  public JsonObject adding(String name, JsonConstant constant) {
+    JsonObjectVisitor.super.adding(name, constant);
+    return this;
+  }
+
+
+  @Override
+  public JsonObject adding(String name, Object value) {
+    JsonObjectVisitor.super.adding(name, value);
     return this;
   }
   @Override
@@ -170,20 +183,26 @@ public final class JsonObject extends AbstractMap<String, Object> implements Jso
     return this;
   }
   @Override
-  public JsonObject adding(String name, BigInteger value) {
-    JsonObjectVisitor.super.adding(name, value);
-    return this;
-  }
-  @Override
   public JsonObject adding(String name, boolean value) {
     JsonObjectVisitor.super.adding(name, value);
     return this;
   }
   @Override
-  public JsonObject addingNull(String name) {
-    JsonObjectVisitor.super.addingNull(name);
+  public JsonObject adding(String name, Map<?,?> map) {
+    JsonObjectVisitor.super.adding(name, map);
     return this;
   }
+  @Override
+  public JsonObject adding(String name, Record record) {
+    JsonObjectVisitor.super.adding(name, record);
+    return this;
+  }
+  @Override
+  public JsonObject adding(String name, Iterable<?> list) {
+    JsonObjectVisitor.super.adding(name, list);
+    return this;
+  }
+
 
   @Override
   public JsonObject addingAll(Map<?, ?> map) {
@@ -198,15 +217,15 @@ public final class JsonObject extends AbstractMap<String, Object> implements Jso
 
 
   public JsonObject freeze() {
-    if (shape.isFrozen()) {
-      throw new IllegalStateException("already frozen");
+    if (shape.isFrozen()) {  // idempotent
+      return this;
     }
     shape = shape.frozen();  // freeze the object
     return this;
   }
 
 
-  private void safeAdd(String name, Object value) {
+  private void safeAdd(String name, JsonElement value) {
     if (shape.isFrozen()) {
       throw new IllegalStateException("object is frozen");
     }
@@ -233,46 +252,25 @@ public final class JsonObject extends AbstractMap<String, Object> implements Jso
   @Override
   public JsonArrayVisitor visitMemberArray(String name) {
     Objects.requireNonNull(name);
-    var array = new JsonArray<>();
+    var array = new JsonArray();
     safeAdd(name, array);
     return array;
   }
   @Override
-  public void visitMemberString(String name, String value) {
+  public void visitMemberText(String name, JsonText text) {
     Objects.requireNonNull(name);
-    Objects.requireNonNull(value);
-    safeAdd(name, value);
+    safeAdd(name, text);
   }
   @Override
-  public void visitMemberNumber(String name, int value) {
+  public void visitMemberNumber(String name, JsonNumber number) {
     Objects.requireNonNull(name);
-    safeAdd(name, value);
+    safeAdd(name, number);
   }
   @Override
-  public void visitMemberNumber(String name, long value) {
+  public void visitMemberConstant(String name, JsonConstant constant) {
     Objects.requireNonNull(name);
-    safeAdd(name, value);
-  }
-  @Override
-  public void visitMemberNumber(String name, double value) {
-    Objects.requireNonNull(name);
-    safeAdd(name, value);
-  }
-  @Override
-  public void visitMemberNumber(String name, BigInteger value) {
-    Objects.requireNonNull(name);
-    Objects.requireNonNull(value);
-    safeAdd(name, value);
-  }
-  @Override
-  public void visitMemberBoolean(String name, boolean value) {
-    Objects.requireNonNull(name);
-    safeAdd(name, value);
-  }
-  @Override
-  public void visitMemberNull(String name) {
-    Objects.requireNonNull(name);
-    safeAdd(name, null);
+    Objects.requireNonNull(constant);
+    safeAdd(name, constant);
   }
   @Override
   public void visitEndObject() {
@@ -293,42 +291,26 @@ public final class JsonObject extends AbstractMap<String, Object> implements Jso
         }
         continue;
       }
-      if (value instanceof JsonArray<?> array) {
+      if (value instanceof JsonArray array) {
         var arrayVisitor = visitor.visitMemberArray(name);
         if (arrayVisitor != null) {
           array.accept(arrayVisitor);
         }
         continue;
       }
-      if (value instanceof String string) {
-        visitor.visitMemberString(name, string);
+      if (value instanceof JsonText text) {
+        visitor.visitMemberText(name, text);
         continue;
       }
-      if (value instanceof Integer intValue) {
-        visitor.visitMemberNumber(name, intValue);
+      if (value instanceof JsonNumber number) {
+        visitor.visitMemberNumber(name, number);
         continue;
       }
-      if (value instanceof Long longValue) {
-        visitor.visitMemberNumber(name, longValue);
+      if (value instanceof JsonConstant constant) {
+        visitor.visitMemberConstant(name, constant);
         continue;
       }
-      if (value instanceof Double doubleValue) {
-        visitor.visitMemberNumber(name, doubleValue);
-        continue;
-      }
-      if (value instanceof BigInteger bigInteger) {
-        visitor.visitMemberNumber(name, bigInteger);
-        continue;
-      }
-      if (value instanceof Boolean booleanValue) {
-        visitor.visitMemberBoolean(name, booleanValue);
-        continue;
-      }
-      if (value == null) {
-        visitor.visitMemberNull(name);
-        continue;
-      }
-      throw new IllegalStateException("invalid value " + value);
+      throw new AssertionError("invalid value");
     }
     visitor.visitEndObject();
   }

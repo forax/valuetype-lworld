@@ -1,13 +1,13 @@
 package fr.umlv.jsonapi;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 
-import java.lang.invoke.MethodHandles;
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 public class JsonObjectVisitorTest {
@@ -19,11 +19,9 @@ public class JsonObjectVisitorTest {
           "isAlive": true,
           "age": 27,
           "weight": 87.3,
-          "balance": 123454554533, 
-          "id": 1235345426364636494428583545,
           "spouse": null,
-          "address": { "skipped": "skipped" },
-          "phoneNumbers": [ "skipped", "skipped", "skipped"]
+          "address": { "skipped1": "skipped2" },
+          "phoneNumbers": [ "skipped3", "skipped4", "skipped5" ]
         }
         """;
     var visitor = new JsonVisitor() {
@@ -47,51 +45,39 @@ public class JsonObjectVisitorTest {
           }
 
           @Override
-          public void visitMemberString(String name, String value) {
-            methods.add("visitMemberString");
+          public void visitMemberText(String name, JsonText text) {
+            methods.add("visitMemberText");
             assertEquals("firstName", name);
-            assertEquals("John", value);
+            assertEquals("John", text.value());
           }
 
           @Override
-          public void visitMemberNumber(String name, int value) {
-            methods.add("visitMemberNumberInt");
-            assertEquals("age", name);
-            assertEquals(27, value);
+          public void visitMemberNumber(String name, JsonNumber number) {
+            methods.add("visitMemberNumber");
+            switch(name) {
+              case "weight" -> {
+                assertTrue(number.isDouble());
+                assertFalse(number.isLong());
+                assertEquals(87.3, number.doubleValue());
+              }
+              case "age" -> {
+                assertFalse(number.isDouble());
+                assertTrue(number.isLong());
+                assertEquals(27L, number.longValue());
+                assertEquals(27, number.convertToInt());
+              }
+              default -> fail(name);
+            }
           }
 
           @Override
-          public void visitMemberNumber(String name, long value) {
-            methods.add("visitMemberNumberLong");
-            assertEquals("balance", name);
-            assertEquals(123454554533L, value);
-          }
-
-          @Override
-          public void visitMemberNumber(String name, double value) {
-            methods.add("visitMemberNumberDouble");
-            assertEquals("weight", name);
-            assertEquals(87.3, value);
-          }
-
-          @Override
-          public void visitMemberNumber(String name, BigInteger value) {
-            methods.add("visitMemberNumberBigInteger");
-            assertEquals("id", name);
-            assertEquals(new BigInteger("1235345426364636494428583545"), value);
-          }
-
-          @Override
-          public void visitMemberBoolean(String name, boolean value) {
-            methods.add("visitMemberBoolean");
-            assertEquals("isAlive", name);
-            assertTrue(value);
-          }
-
-          @Override
-          public void visitMemberNull(String name) {
-            methods.add("visitMemberNull");
-            assertEquals("spouse", name);
+          public void visitMemberConstant(String name, JsonConstant constant) {
+            methods.add("visitMemberConstant");
+            switch (name) {
+              case "isAlive" -> assertEquals(JsonConstant.TRUE, constant);
+              case "spouse" -> assertEquals(JsonConstant.NULL, constant);
+              default -> fail(name);
+            }
           }
 
           @Override
@@ -109,10 +95,9 @@ public class JsonObjectVisitorTest {
     };
     JsonReader.parse(text, visitor);
     assertEquals(
-        List.of("visitMemberString", "visitMemberBoolean", "visitMemberNumberInt",
-            "visitMemberNumberDouble", "visitMemberNumberLong",
-            "visitMemberNumberBigInteger", "visitMemberNull",
-            "visitMemberObject", "visitMemberArray", "visitEndObject"),
+        List.of("visitMemberText", "visitMemberConstant", "visitMemberNumber",
+            "visitMemberNumber",  "visitMemberConstant", "visitMemberObject",
+            "visitMemberArray", "visitEndObject"),
         visitor.methods);  // each method above is called once
   }
 
@@ -120,8 +105,8 @@ public class JsonObjectVisitorTest {
   public void testJsonReaderArrayVisitor() {
     var text = """
         [
-          "Jane", false, 72, 37.8,  123454554533, 1235345426364636494428583545, null,
-          { "skipped": "skipped" }, [ "skipped", "skipped" ]
+          "Jane", false, 72, 37.8, null,
+          { "skipped1": "skipped2" }, [ "skipped3", "skipped4" ]
         ]
         """;
     var visitor = new JsonVisitor() {
@@ -143,44 +128,39 @@ public class JsonObjectVisitorTest {
           }
 
           @Override
-          public void visitString(String value) {
-            methods.add("visitString");
-            assertEquals("Jane", value);
+          public void visitText(JsonText text) {
+            methods.add("visitText");
+            assertEquals("Jane", text.value());
+            assertEquals("\"Jane\"", text.toString());
           }
 
           @Override
-          public void visitNumber(int value) {
-            methods.add("visitNumberInt");
-            assertEquals(72, value);
+          public void visitNumber(JsonNumber number) {
+            methods.add("visitNumber");
+            switch (number.toString()) {
+              case "72" -> {
+                assertTrue(number.isLong());
+                assertFalse(number.isDouble());
+                assertEquals(72L, number.longValue());
+                assertEquals(72, number.convertToInt());
+              }
+              case "37.8" -> {
+                assertFalse(number.isLong());
+                assertTrue(number.isDouble());
+                assertEquals(37.8, number.doubleValue());
+              }
+              default -> fail(number.toString());
+            }
           }
 
           @Override
-          public void visitNumber(long value) {
-            methods.add("visitNumberLong");
-            assertEquals(123454554533L, value);
-          }
-
-          @Override
-          public void visitNumber(double value) {
-            methods.add("visitNumberDouble");
-            assertEquals(37.8, value);
-          }
-
-          @Override
-          public void visitNumber(BigInteger value) {
-            methods.add("visitNumberBigInteger");
-            assertEquals(new BigInteger("1235345426364636494428583545"), value);
-          }
-
-          @Override
-          public void visitBoolean(boolean value) {
-            methods.add("visitBoolean");
-            assertFalse(value);
-          }
-
-          @Override
-          public void visitNull() {
-            methods.add("visitNull");
+          public void visitConstant(JsonConstant constant) {
+            methods.add("visitConstant");
+            switch(constant.toString()) {
+              case "false" -> assertFalse(constant.value());
+              case "null" -> assertNull(constant.value());
+              default -> fail(constant.toString());
+            }
           }
 
           @Override
@@ -198,9 +178,8 @@ public class JsonObjectVisitorTest {
     };
     JsonReader.parse(text, visitor);
     assertEquals(
-        List.of("visitString", "visitBoolean", "visitNumberInt", "visitNumberDouble",
-            "visitNumberLong", "visitNumberBigInteger", "visitNull",
-            "visitObject", "visitArray", "visitEndArray"),
+        List.of("visitText", "visitConstant", "visitNumber", "visitNumber",
+            "visitConstant", "visitObject", "visitArray", "visitEndArray"),
         visitor.methods);  // each method above is called once
   }
 

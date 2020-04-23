@@ -1,7 +1,5 @@
 package fr.umlv.jsonapi;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.util.Objects;
 
 public class JsonPrinter implements JsonObjectVisitor, JsonArrayVisitor {
@@ -21,7 +19,7 @@ public class JsonPrinter implements JsonObjectVisitor, JsonArrayVisitor {
   }
 
   private static void appendText(StringBuilder builder, String text) {
-    builder.append("\"").append(text).append("\""); //FIXME
+    builder.append('"').append(text).append('"'); //FIXME escape ?
   }
 
   @Override
@@ -45,68 +43,36 @@ public class JsonPrinter implements JsonObjectVisitor, JsonArrayVisitor {
   }
 
   @Override
-  public void visitMemberString(String name, String value) {
+  public void visitMemberText(String name, JsonText text) {
     Objects.requireNonNull(name);
-    Objects.requireNonNull(value);
     builder.append(separator);
     appendText(builder, name);
     builder.append(": ");
-    appendText(builder, value);
+    appendText(builder, text.value());
     separator = ", ";
   }
 
   @Override
-  public void visitMemberNumber(String name, int value) {
+  public void visitMemberNumber(String name, JsonNumber number) {
     Objects.requireNonNull(name);
     builder.append(separator);
     appendText(builder, name);
-    builder.append(": ").append(value);
+    builder.append(": ");
+    if (number.isDouble()) {
+      builder.append(number.doubleValue());
+    } else {
+      builder.append(number.longValue());
+    }
     separator = ", ";
   }
 
   @Override
-  public void visitMemberNumber(String name, long value) {
+  public void visitMemberConstant(String name, JsonConstant constant) {
+    Objects.requireNonNull(constant);
     Objects.requireNonNull(name);
     builder.append(separator);
     appendText(builder, name);
-    builder.append(": ").append(value);
-    separator = ", ";
-  }
-
-  @Override
-  public void visitMemberNumber(String name, double value) {
-    Objects.requireNonNull(name);
-    builder.append(separator);
-    appendText(builder, name);
-    builder.append(": ").append(value);
-    separator = ", ";
-  }
-
-  @Override
-  public void visitMemberNumber(String name, BigInteger value) {
-    Objects.requireNonNull(name);
-    Objects.requireNonNull(value);
-    builder.append(separator);
-    appendText(builder, name);
-    builder.append(": ").append(value);
-    separator = ", ";
-  }
-
-  @Override
-  public void visitMemberBoolean(String name, boolean value) {
-    Objects.requireNonNull(name);
-    builder.append(separator);
-    appendText(builder, name);
-    builder.append(": ").append(value);
-    separator = ", ";
-  }
-
-  @Override
-  public void visitMemberNull(String name) {
-    Objects.requireNonNull(name);
-    builder.append(separator);
-    appendText(builder, name);
-    builder.append(": null");
+    builder.append(": ").append(constant);
     separator = ", ";
   }
 
@@ -131,47 +97,27 @@ public class JsonPrinter implements JsonObjectVisitor, JsonArrayVisitor {
   }
 
   @Override
-  public void visitString(String value) {
-    Objects.requireNonNull(value);
+  public void visitText(JsonText text) {
     builder.append(separator);
-    appendText(builder, value);
+    appendText(builder, text.value());
     separator = ", ";
   }
 
   @Override
-  public void visitNumber(int value) {
-    builder.append(separator).append(value);
+  public void visitNumber(JsonNumber number) {
+    builder.append(separator);
+    if (number.isDouble()) {
+      builder.append(number.doubleValue());
+    } else {
+      builder.append(number.longValue());
+    }
     separator = ", ";
   }
 
   @Override
-  public void visitNumber(long value) {
-    builder.append(separator).append(value);
-    separator = ", ";
-  }
-
-  @Override
-  public void visitNumber(double value) {
-    builder.append(separator).append(value);
-    separator = ", ";
-  }
-
-  @Override
-  public void visitNumber(BigInteger value) {
-    Objects.requireNonNull(value);
-    builder.append(separator).append(value);
-    separator = ", ";
-  }
-
-  @Override
-  public void visitBoolean(boolean value) {
-    builder.append(separator).append(value);
-    separator = ", ";
-  }
-
-  @Override
-  public void visitNull() {
-    builder.append(separator).append("null");
+  public void visitConstant(JsonConstant constant) {
+    Objects.requireNonNull(constant);
+    builder.append(separator).append(constant);
     separator = ", ";
   }
 

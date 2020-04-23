@@ -5,22 +5,18 @@ import static com.fasterxml.jackson.core.JsonToken.END_OBJECT;
 import static com.fasterxml.jackson.core.JsonToken.FIELD_NAME;
 import static com.fasterxml.jackson.core.JsonToken.START_ARRAY;
 import static com.fasterxml.jackson.core.JsonToken.START_OBJECT;
-import static com.fasterxml.jackson.core.JsonToken.VALUE_TRUE;
-
-import java.io.IOException;
-import java.io.Reader;
-import java.io.StringReader;
-import java.io.UncheckedIOException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayDeque;
-import java.util.Objects;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import java.io.IOException;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayDeque;
+import java.util.Objects;
 
 public final class JsonReader {
   private JsonReader() {
@@ -138,18 +134,17 @@ public final class JsonReader {
       switch(token) {
         case START_OBJECT -> parseOrSkipObject(parser, visitor.visitObject(), stack);
         case START_ARRAY -> parseOrSkipArray(parser, visitor.visitArray(), stack);
-        case VALUE_STRING -> visitor.visitString(parser.getValueAsString());
+        case VALUE_STRING -> visitor.visitText(new JsonText(parser.getValueAsString()));
         case VALUE_NUMBER_INT, VALUE_NUMBER_FLOAT -> {
           switch(parser.getNumberType()) {
-            case INT -> visitor.visitNumber(parser.getValueAsInt());
-            case LONG -> visitor.visitNumber(parser.getValueAsLong());
-            case BIG_INTEGER -> visitor.visitNumber(new BigInteger(parser.getValueAsString()));
-            case FLOAT, DOUBLE -> visitor.visitNumber(parser.getValueAsDouble());
+            case INT, LONG -> visitor.visitNumber(JsonNumber.from(parser.getValueAsLong()));
+            case FLOAT, DOUBLE -> visitor.visitNumber(JsonNumber.from(parser.getValueAsDouble()));
             default -> throw new IOException("invalid number " + parser.getValueAsString());
           }
         }
-        case VALUE_TRUE, VALUE_FALSE -> visitor.visitBoolean(token == VALUE_TRUE);
-        case VALUE_NULL -> visitor.visitNull();
+        case VALUE_TRUE -> visitor.visitConstant(JsonConstant.TRUE);
+        case VALUE_FALSE -> visitor.visitConstant(JsonConstant.FALSE);
+        case VALUE_NULL -> visitor.visitConstant(JsonConstant.NULL);
         case END_ARRAY -> { visitor.visitEndArray(); return; }
         default -> throw new IOException("invalid token " + token);
       }
@@ -171,18 +166,17 @@ public final class JsonReader {
       switch(token) {
         case START_OBJECT -> parseOrSkipObject(parser, visitor.visitMemberObject(name), stack);
         case START_ARRAY -> parseOrSkipArray(parser, visitor.visitMemberArray(name), stack);
-        case VALUE_STRING -> visitor.visitMemberString(name, parser.getValueAsString());
+        case VALUE_STRING -> visitor.visitMemberText(name, new JsonText(parser.getValueAsString()));
         case VALUE_NUMBER_INT, VALUE_NUMBER_FLOAT -> {
           switch(parser.getNumberType()) {
-            case INT -> visitor.visitMemberNumber(name, parser.getValueAsInt());
-            case LONG -> visitor.visitMemberNumber(name, parser.getValueAsLong());
-            case BIG_INTEGER -> visitor.visitMemberNumber(name, new BigInteger(parser.getValueAsString()));
-            case FLOAT, DOUBLE -> visitor.visitMemberNumber(name, parser.getValueAsDouble());
+            case INT, LONG -> visitor.visitMemberNumber(name, JsonNumber.from(parser.getValueAsLong()));
+            case FLOAT, DOUBLE -> visitor.visitMemberNumber(name, JsonNumber.from(parser.getValueAsDouble()));
             default -> throw new IOException("invalid number " + parser.getValueAsString());
           }
         }
-        case VALUE_TRUE, VALUE_FALSE -> visitor.visitMemberBoolean(name, token == VALUE_TRUE);
-        case VALUE_NULL -> visitor.visitMemberNull(name);
+        case VALUE_TRUE -> visitor.visitMemberConstant(name, JsonConstant.TRUE);
+        case VALUE_FALSE -> visitor.visitMemberConstant(name, JsonConstant.FALSE);
+        case VALUE_NULL -> visitor.visitMemberConstant(name, JsonConstant.NULL);
         default -> throw new IOException("invalid token " + token);
       }
     }

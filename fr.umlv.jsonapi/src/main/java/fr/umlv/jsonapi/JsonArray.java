@@ -1,7 +1,6 @@
 package fr.umlv.jsonapi;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
+import java.lang.reflect.Array;
 import java.util.AbstractList;
 import java.util.Arrays;
 import java.util.List;
@@ -10,25 +9,25 @@ import java.util.Objects;
 import java.util.RandomAccess;
 
 @SuppressWarnings("preview")
-public final class JsonArray<E> extends AbstractList<E> implements JsonArrayVisitor {
-  private Object[] array;  // if FROZEN_ARRAY => frozen
+public final class JsonArray extends AbstractList<JsonElement> implements JsonElement, JsonArrayVisitor {
+  private JsonElement[] array;  // if FROZEN_ARRAY => frozen
   private int size;   // if negative => frozen
 
-  private JsonArray(Object[] array) {
+  private JsonArray(JsonElement[] array) {
     this.array = array;
   }
   public JsonArray() {
     this(OBJECT_EXEMPLAR);
   }
-  public JsonArray(List<? extends E> list) {
-    array = new Object[list.size()];   // implicit nullcheck
+  public JsonArray(List<?> list) {
+    array = new JsonElement[list.size()];   // implicit nullcheck
     addingAll(list);
   }
 
 
   @Override
   public boolean equals(Object o) {
-    return (o instanceof JsonArray<?> jsonArray
+    return (o instanceof JsonArray jsonArray
         && (size & 0x7FFFFFFF) == (jsonArray.size & 0x7FFFFFFF)
         && Arrays.equals(array, 0, size, jsonArray.array, 0, size))
         || (o instanceof List<?> list && equalsList(list));
@@ -42,7 +41,7 @@ public final class JsonArray<E> extends AbstractList<E> implements JsonArrayVisi
       return equalsIterator(list, size);
     }
     for(var i = 0; i < size; i++) {
-      if (!Objects.equals(unwrap(array[i]), list.get(i))) {
+      if (!Objects.equals(array[i], list.get(i))) {
         return false;
       }
     }
@@ -51,7 +50,7 @@ public final class JsonArray<E> extends AbstractList<E> implements JsonArrayVisi
   private boolean equalsIterator(List<?> list, int size) {
     var it = list.iterator();
     for(var i = 0; i < size; i++) {
-      if (!Objects.equals(unwrap(array[i]), it.next())) {
+      if (!Objects.equals(array[i], it.next())) {
         return false;
       }
     }
@@ -75,89 +74,96 @@ public final class JsonArray<E> extends AbstractList<E> implements JsonArrayVisi
 
 
   @Override
-  public JsonArray<E> adding(Object value) {
-    JsonArrayVisitor.super.adding(value);
+  public JsonArray adding(JsonElement element) {
+    JsonArrayVisitor.super.adding(element);
     return this;
   }
   @Override
-  public JsonArray<E> adding(JsonObject object) {
+  public JsonArray adding(JsonObject object) {
     JsonArrayVisitor.super.adding(object);
     return this;
   }
   @Override
-  public JsonArray<E> adding(Map<?,?> map) {
-    JsonArrayVisitor.super.adding(map);
-    return this;
-  }
-  @Override
-  public JsonArray<E> adding(JsonArray<?> array) {
+  public JsonArray adding(JsonArray array) {
     JsonArrayVisitor.super.adding(array);
     return this;
   }
   @Override
-  public JsonArray<E> adding(List<?> list) {
-    JsonArrayVisitor.super.adding(list);
+  public  JsonArray adding(JsonText value) {
+    JsonArrayVisitor.super.adding(array);
     return this;
   }
   @Override
-  public JsonArray<E> adding(String value) {
-    JsonArrayVisitor.super.adding(value);
+  public  JsonArray adding(JsonNumber number) {
+    JsonArrayVisitor.super.adding(array);
     return this;
   }
   @Override
-  public JsonArray<E> adding(int value) {
-    JsonArrayVisitor.super.adding(value);
-    return this;
-  }
-  @Override
-  public JsonArray<E> adding(long value) {
-    JsonArrayVisitor.super.adding(value);
-    return this;
-  }
-  @Override
-  public JsonArray<E> adding(double value) {
-    JsonArrayVisitor.super.adding(value);
-    return this;
-  }
-  @Override
-  public JsonArray<E> adding(BigInteger value) {
-    JsonArrayVisitor.super.adding(value);
-    return this;
-  }
-  @Override
-  public JsonArray<E> adding(boolean value) {
-    JsonArrayVisitor.super.adding(value);
-    return this;
-  }
-  @Override
-  public JsonArray<E> addingNull() {
-    JsonArrayVisitor.super.addingNull();
-    return this;
-  }
-
-  @Override
-  public JsonArray<E> addingAll(List<?> list) {
-    JsonArrayVisitor.super.addingAll(list);
+  public  JsonArray adding(JsonConstant constant) {
+    JsonArrayVisitor.super.adding(array);
     return this;
   }
 
 
-  private void safeAppend(Object object) {
-    if (isFrozen()) {
-      throw new IllegalStateException("array is frozen");
-    }
-    if (array.length == size) {
-      array = Arrays.copyOf(array, Math.max(8, (int)(size * 1.5)));
-    }
-    array[size++] = object;
+  @Override
+  public JsonArray adding(Object value) {
+    JsonArrayVisitor.super.adding(value);
+    return this;
+  }
+  @Override
+  public JsonArray adding(String value) {
+    JsonArrayVisitor.super.adding(value);
+    return this;
+  }
+  @Override
+  public JsonArray adding(int value) {
+    JsonArrayVisitor.super.adding(value);
+    return this;
+  }
+  @Override
+  public JsonArray adding(long value) {
+    JsonArrayVisitor.super.adding(value);
+    return this;
+  }
+  @Override
+  public JsonArray adding(double value) {
+    JsonArrayVisitor.super.adding(value);
+    return this;
+  }
+  @Override
+  public JsonArray adding(boolean value) {
+    JsonArrayVisitor.super.adding(value);
+    return this;
+  }
+  @Override
+  public JsonArray adding(Record record) {
+    JsonArrayVisitor.super.adding(record);
+    return this;
+  }
+  @Override
+  public JsonArray adding(Map<?,?> map) {
+    JsonArrayVisitor.super.adding(map);
+    return this;
+  }
+  @Override
+  public JsonArray adding(Iterable<?> iterable) {
+    JsonArrayVisitor.super.adding(iterable);
+    return this;
+  }
+
+
+  @Override
+  public JsonArray addingAll(Iterable<?> iterable) {
+    JsonArrayVisitor.super.addingAll(iterable);
+    return this;
   }
 
   private boolean isFrozen() {
     return size < 0 || array == FROZEN_ARRAY;
   }
-  public JsonArray<E> freeze() {
+  public JsonArray freeze() {
     if (isFrozen()) {
-      throw new IllegalStateException("already frozen");
+      return this;  // idempotent
     }
     // freeze: if size == 0, use a specific array, otherwise use the sign bit
     if (size == 0) {
@@ -168,7 +174,15 @@ public final class JsonArray<E> extends AbstractList<E> implements JsonArrayVisi
     return this;
   }
 
-
+  private void safeAppend(JsonElement element) {
+    if (isFrozen()) {
+      throw new IllegalStateException("array is frozen");
+    }
+    if (array.length == size) {
+      array = Arrays.copyOf(array, Math.max(8, (int)(size * 1.5)));
+    }
+    array[size++] = element;
+  }
   @Override
   public JsonObjectVisitor visitObject() {
     var object =  new JsonObject();
@@ -177,39 +191,21 @@ public final class JsonArray<E> extends AbstractList<E> implements JsonArrayVisi
   }
   @Override
   public JsonArrayVisitor visitArray() {
-    var array = new JsonArray<>();
+    var array = new JsonArray();
     safeAppend(array);
     return array;
   }
   @Override
-  public void visitString(String value) {
-    Objects.requireNonNull(value);
+  public void visitText(JsonText text) {
+    safeAppend(text);
+  }
+  @Override
+  public void visitNumber(JsonNumber number) {
+    safeAppend(number);
+  }
+  @Override
+  public void visitConstant(JsonConstant value) {
     safeAppend(value);
-  }
-  @Override
-  public void visitNumber(int value) {
-    safeAppend(new PrimitiveInt(value));
-  }
-  @Override
-  public void visitNumber(long value) {
-    safeAppend(new PrimitiveLong(value));
-  }
-  @Override
-  public void visitNumber(double value) {
-    safeAppend(new PrimitiveDouble(value));
-  }
-  @Override
-  public void visitNumber(BigInteger value) {
-    Objects.requireNonNull(value);
-    safeAppend(value);
-  }
-  @Override
-  public void visitBoolean(boolean value) {
-    safeAppend(value? PrimitiveBoolean.TRUE: PrimitiveBoolean.FALSE);
-  }
-  @Override
-  public void visitNull() {
-    safeAppend(null);
   }
   @Override
   public void visitEndArray() {
@@ -221,44 +217,30 @@ public final class JsonArray<E> extends AbstractList<E> implements JsonArrayVisi
     return size & 0x7FFFFFFF;
   }
 
-  @SuppressWarnings("unchecked")
-  private E unwrap(Object value) {
-    if (value instanceof JsonArray.PrimitiveInt primitiveInt) {
-      return (E)(Integer)primitiveInt.value;
-    }
-    if (value instanceof JsonArray.PrimitiveLong primitiveLong) {
-      return (E)(Long)primitiveLong.value;
-    }
-    if (value instanceof JsonArray.PrimitiveDouble primitiveDouble) {
-      return (E)(Double)primitiveDouble.value;
-    }
-    if (value instanceof JsonArray.PrimitiveBoolean primitiveBoolean) {
-      return (E)(Boolean)primitiveBoolean.value;
-    }
-    return (E)value;
-  }
   @Override
-  public E get(int index) {
+  public JsonElement get(int index) {
     Objects.checkIndex(0, size & 0x7FFFFFFF);
-    return unwrap(array[index]);
+    return array[index];
   }
-  public long getInt(int index) {
+  private <E extends JsonElement> E get(int index, Class<? extends E> type) {
     Objects.checkIndex(0, size & 0x7FFFFFFF);
-    return ((JsonArray.PrimitiveInt)array[index]).value;
+    return type.cast(array[index]);
   }
-  public long getLong(int index) {
-    Objects.checkIndex(0, size & 0x7FFFFFFF);
-    return ((JsonArray.PrimitiveLong)array[index]).value;
+  public JsonObject getObject(int index) {
+    return get(index, JsonObject.class);
   }
-  public double getDouble(int index) {
-    Objects.checkIndex(0, size & 0x7FFFFFFF);
-    return ((JsonArray.PrimitiveDouble)array[index]).value;
+  public JsonArray getArray(int index) {
+    return get(index, JsonArray.class);
   }
-  public boolean getBoolean(int index) {
-    Objects.checkIndex(0, size & 0x7FFFFFFF);
-    return ((JsonArray.PrimitiveBoolean)array[index]).value;
+  public JsonText getText(int index) {
+    return get(index, JsonText.class);
   }
-
+  public JsonNumber getNumber(int index) {
+    return get(index, JsonNumber.class);
+  }
+  public JsonConstant getConstant(int index) {
+    return get(index, JsonConstant.class);
+  }
 
   public void accept(JsonArrayVisitor visitor) {
     Objects.requireNonNull(visitor);
@@ -272,110 +254,49 @@ public final class JsonArray<E> extends AbstractList<E> implements JsonArrayVisi
         }
         continue;
       }
-      if (value instanceof JsonArray<?> array) {
+      if (value instanceof JsonArray array) {
         var arrayVisitor = visitor.visitArray();
         if (arrayVisitor != null) {
           array.accept(arrayVisitor);
         }
         continue;
       }
-      if (value instanceof String string) {
-        visitor.visitString(string);
+      if (value instanceof JsonText text) {
+        visitor.visitText(text);
         continue;
       }
-      if (value instanceof JsonArray.PrimitiveInt primitiveInt) {
-        visitor.visitNumber(primitiveInt.value);
+      if (value instanceof JsonNumber number) {
+        visitor.visitNumber(number);
         continue;
       }
-      if (value instanceof JsonArray.PrimitiveLong primitiveLong) {
-        visitor.visitNumber(primitiveLong.value);
+      if (value instanceof JsonConstant constant) {
+        visitor.visitConstant(constant);
         continue;
       }
-      if (value instanceof JsonArray.PrimitiveDouble primitiveDouble) {
-        visitor.visitNumber(primitiveDouble.value);
-        continue;
-      }
-      if (value instanceof BigInteger bigInteger) {
-        visitor.visitNumber(bigInteger);
-        continue;
-      }
-      if (value instanceof JsonArray.PrimitiveBoolean primitiveBoolean) {
-        visitor.visitBoolean(primitiveBoolean.value);
-        continue;
-      }
-      if (value == null) {
-        visitor.visitNull();
-        continue;
-      }
-      throw new IllegalStateException("invalid value " + value);
+      throw new AssertionError("invalid value");
     }
     visitor.visitEndArray();
   }
 
 
-  static final Object[] OBJECT_EXEMPLAR = new Object[0];
-  private static final Object[] FROZEN_ARRAY = new Object[0];
+  static final JsonElement[] OBJECT_EXEMPLAR = new JsonElement[0];
+  private static final JsonElement[] FROZEN_ARRAY = new JsonElement[0];
 
-  public static JsonArray<Object> objectArray() {
-    return new JsonArray<>();
-  }
-  public static <T> JsonArray<T> objectArray(T[] emptyArray) {
-    if (emptyArray.length != 0) {  // implicit nullcheck
-      throw new IllegalArgumentException();
-    }
-    return new JsonArray<>(emptyArray);
-  }
-  public static JsonArray<Long> intArray() {
-    return new JsonArray<>(PrimitiveInt.EXEMPLAR);
-  }
-  public static JsonArray<Long> longArray() {
-    return new JsonArray<>(PrimitiveLong.EXEMPLAR);
-  }
-  public static JsonArray<Long> doubleArray() {
-    return new JsonArray<>(PrimitiveDouble.EXEMPLAR);
-  }
-  public static JsonArray<Long> booleanArray() {
-    return new JsonArray<>(PrimitiveBoolean.EXEMPLAR);
-  }
-
-  @SafeVarargs
-  public static <E> JsonArray<E> of(E... elements) {
-    var array = new JsonArray<E>(new Object[elements.length]);  // implicit nullcheck
+  public static JsonArray of(Object... elements) {
+    var array = new JsonArray(new JsonElement[elements.length]);  // implicit nullcheck
     for(var element: elements) {
       array.adding(element);
     }
     return array.freeze();
   }
-
-
-  private static final @__inline__ class PrimitiveInt {
-    private final int value;
-
-    private PrimitiveInt(int value) { this.value = value; }
-
-    private static final JsonArray.PrimitiveInt[] EXEMPLAR = new JsonArray.PrimitiveInt[0];
-  }
-  private static final @__inline__ class PrimitiveLong {
-    private final long value;
-
-    private PrimitiveLong(long value) { this.value = value; }
-
-    private static final JsonArray.PrimitiveLong[] EXEMPLAR = new JsonArray.PrimitiveLong[0];
-  }
-  private static final @__inline__ class PrimitiveDouble {
-    private final double value;
-
-    private PrimitiveDouble(double value) { this.value = value; }
-
-    private static final JsonArray.PrimitiveDouble[] EXEMPLAR = new JsonArray.PrimitiveDouble[0];
-  }
-  private static final @__inline__ class PrimitiveBoolean {
-    private final boolean value;
-
-    private PrimitiveBoolean(boolean value) { this.value = value; }
-
-    private static final JsonArray.PrimitiveBoolean TRUE = new PrimitiveBoolean(true);
-    private static final JsonArray.PrimitiveBoolean FALSE = new PrimitiveBoolean(false);
-    private static final JsonArray.PrimitiveBoolean[] EXEMPLAR = new JsonArray.PrimitiveBoolean[0];
+  @SafeVarargs
+  public static <E extends JsonElement> JsonArray of(E... elements) {
+    // ask for flattening if it's an array of JsonNumber or JsonText
+    var array = (JsonElement[]) Array.newInstance(elements.getClass().getComponentType(), elements.length);  // implicit nullcheck
+    var jsonArray = new JsonArray(array);
+    for(var element: elements) {
+      jsonArray.adding(element);
+    }
+    return jsonArray.freeze();
   }
 }

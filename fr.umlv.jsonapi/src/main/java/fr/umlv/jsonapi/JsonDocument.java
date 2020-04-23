@@ -1,7 +1,7 @@
 package fr.umlv.jsonapi;
 
 public final class JsonDocument implements JsonVisitor {
-  private Object element;
+  private JsonElement element;
 
   @Override
   public JsonObjectVisitor visitObject() {
@@ -12,12 +12,12 @@ public final class JsonDocument implements JsonVisitor {
 
   @Override
   public JsonArrayVisitor visitArray() {
-    var array = new JsonArray<>();
+    var array = new JsonArray();
     element = array;
     return array;
   }
 
-  public Object toElement() {
+  public JsonElement toElement() {
     return element;
   }
 }

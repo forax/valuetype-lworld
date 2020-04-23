@@ -2,70 +2,38 @@ package fr.umlv.jsonapi;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.UndeclaredThrowableException;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
-@SuppressWarnings("preview")
+@SuppressWarnings({"preview", "ChainOfInstanceofChecks",
+    "OverloadedMethodsWithSameNumberOfParameters"})
 public interface JsonObjectVisitor {
   JsonObjectVisitor visitMemberObject(String name);
   JsonArrayVisitor visitMemberArray(String name);
-  void visitMemberString(String name, String value);
-  void visitMemberNumber(String name, int value);
-  void visitMemberNumber(String name, long value);
-  void visitMemberNumber(String name, double value);
-  void visitMemberNumber(String name, BigInteger value);
-  void visitMemberBoolean(String name, boolean value);
-  void visitMemberNull(String name);
+  void visitMemberText(String name, JsonText text);
+  void visitMemberNumber(String name, JsonNumber number);
+  void visitMemberConstant(String name, JsonConstant constant);
   void visitEndObject();
 
-  default JsonObjectVisitor adding(String name, Object value) {
+  default JsonObjectVisitor adding(String name, JsonElement element) {
     Objects.requireNonNull(name);
-    if (value instanceof JsonObject object) {
+    Objects.requireNonNull(element);
+    if (element instanceof JsonObject object) {
       return adding(name, object);
     }
-    if (value instanceof Map<?,?> map) {
-      return adding(name, map);
-    }
-    if (value instanceof JsonArray<?> array) {
+    if (element instanceof JsonArray array) {
       return adding(name, array);
     }
-    if (value instanceof List<?> list) {
-      return adding(name, list);
+    if (element instanceof JsonText text) {
+      return adding(name, text);
     }
-    if (value instanceof String string) {
-      return adding(name, string);
+    if (element instanceof JsonNumber number) {
+      return adding(name, number);
     }
-    if (value instanceof Integer intValue) {
-      return adding(name, (int) intValue);
+    if (element instanceof JsonConstant constant) {
+      return adding(name, constant);
     }
-    if (value instanceof Long longValue) {
-      return adding(name, (long) longValue);
-    }
-    if (value instanceof Double doubleValue) {
-      return adding(name, (double) doubleValue);
-    }
-    if (value instanceof BigInteger bigInteger) {
-      return adding(name, bigInteger);
-    }
-    if (value instanceof Float floatValue) {
-      return adding(name, (float) floatValue);
-    }
-    if (value instanceof Boolean booleanValue) {
-      return adding(name, (boolean) booleanValue);
-    }
-    if (value instanceof Short shortValue) {
-      return adding(name, (short) shortValue);
-    }
-    if (value instanceof Byte byteValue) {
-      return adding(name, (byte) byteValue);
-    }
-    if (value == null) {
-      return addingNull(name);
-    }
-    throw new IllegalArgumentException("invalid value " + value);
+    throw new IllegalArgumentException("invalid element " + element);
   }
   default JsonObjectVisitor adding(String name, JsonObject object) {
     Objects.requireNonNull(name);
@@ -76,16 +44,7 @@ public interface JsonObjectVisitor {
     }
     return this;
   }
-  default JsonObjectVisitor adding(String name, Map<?,?> map) {
-    Objects.requireNonNull(name);
-    Objects.requireNonNull(map);
-    var objVisitor = visitMemberObject(name);
-    if (objVisitor != null) {
-      objVisitor.addingAll(map);
-    }
-    return this;
-  }
-  default JsonObjectVisitor adding(String name, JsonArray<?> array) {
+  default JsonObjectVisitor adding(String name, JsonArray array) {
     Objects.requireNonNull(name);
     Objects.requireNonNull(array);
     var arrayVisitor = visitMemberArray(name);
@@ -94,50 +53,102 @@ public interface JsonObjectVisitor {
     }
     return this;
   }
-  default JsonObjectVisitor adding(String name, List<?> list) {
+  default JsonObjectVisitor adding(String name, JsonText text) {
     Objects.requireNonNull(name);
-    Objects.requireNonNull(list);
-    var arrayVisitor = visitMemberArray(name);
-    if (arrayVisitor != null) {
-      arrayVisitor.addingAll(list);
+    visitMemberText(name, text);
+    return this;
+  }
+  default JsonObjectVisitor adding(String name, JsonNumber number) {
+    Objects.requireNonNull(name);
+    visitMemberNumber(name, number);
+    return this;
+  }
+  default JsonObjectVisitor adding(String name, JsonConstant constant) {
+    Objects.requireNonNull(name);
+    visitMemberConstant(name, constant);
+    return this;
+  }
+
+  default JsonObjectVisitor adding(String name, Object o) {
+    Objects.requireNonNull(name);
+    if (o == null) {
+      return adding(name, JsonConstant.NULL);
+    }
+    if (o instanceof JsonElement element) {
+      return adding(name, element);
+    }
+    if (o instanceof String value) {
+      return adding(name, value);
+    }
+    if (o instanceof Integer intValue) {
+      return adding(name, (int) intValue);
+    }
+    if (o instanceof Long longValue) {
+      return adding(name, (long) longValue);
+    }
+    if (o instanceof Double doubleValue) {
+      return adding(name, (double) doubleValue);
+    }
+    if (o instanceof Float floatValue) {
+      return adding(name, (float) floatValue);
+    }
+    if (o instanceof Boolean value) {
+      return adding(name, (boolean)value);
+    }
+    if (o instanceof Short shortValue) {
+      return adding(name, (short) shortValue);
+    }
+    if (o instanceof Byte byteValue) {
+      return adding(name, (byte) byteValue);
+    }
+    if (o instanceof Record record) {
+      return adding(name, record);
+    }
+    if (o instanceof Map<?,?> map) {
+      return adding(name, map);
+    }
+    if (o instanceof Iterable<?> list) {
+      return adding(name, list);
+    }
+    throw new IllegalArgumentException("invalid object " + o);
+  }
+  default JsonObjectVisitor adding(String name, String string) {
+    return adding(name, new JsonText(string));
+  }
+  default JsonObjectVisitor adding(String name, int value) {
+    return adding(name, JsonNumber.from(value));
+  }
+  default JsonObjectVisitor adding(String name, long value) {
+    return adding(name, JsonNumber.from(value));
+  }
+  default JsonObjectVisitor adding(String name, double value) {
+    return adding(name, JsonNumber.from(value));
+  }
+  default JsonObjectVisitor adding(String name, boolean value) {
+    return adding(name, value? JsonConstant.TRUE: JsonConstant.FALSE);
+  }
+  default JsonObjectVisitor adding(String name, Record record) {
+    var objectVisitor = visitMemberObject(name);
+    if (objectVisitor != null) {
+      objectVisitor.addingAll(record);
+      objectVisitor.visitEndObject();
     }
     return this;
   }
-  default JsonObjectVisitor adding(String name, String value) {
-    Objects.requireNonNull(name);
-    Objects.requireNonNull(value);
-    visitMemberString(name, value);
+  default JsonObjectVisitor adding(String name, Map<?, ?> map) {
+    var objectVisitor = visitMemberObject(name);
+    if (objectVisitor != null) {
+      objectVisitor.addingAll(map);
+      objectVisitor.visitEndObject();
+    }
     return this;
   }
-  default JsonObjectVisitor adding(String name, int value) {
-    Objects.requireNonNull(name);
-    visitMemberNumber(name, value);
-    return this;
-  }
-  default JsonObjectVisitor adding(String name, long value) {
-    Objects.requireNonNull(name);
-    visitMemberNumber(name, value);
-    return this;
-  }
-  default JsonObjectVisitor adding(String name, double value) {
-    Objects.requireNonNull(name);
-    visitMemberNumber(name, value);
-    return this;
-  }
-  default JsonObjectVisitor adding(String name, BigInteger value) {
-    Objects.requireNonNull(name);
-    Objects.requireNonNull(value);
-    visitMemberNumber(name, value);
-    return this;
-  }
-  default JsonObjectVisitor adding(String name, boolean value) {
-    Objects.requireNonNull(name);
-    visitMemberBoolean(name, value);
-    return this;
-  }
-  default JsonObjectVisitor addingNull(String name) {
-    Objects.requireNonNull(name);
-    visitMemberNull(name);
+  default JsonObjectVisitor adding(String name, Iterable<?> iterable) {
+    var arrayVisitor = visitMemberArray(name);
+    if (arrayVisitor != null) {
+      arrayVisitor.addingAll(iterable);
+      arrayVisitor.visitEndArray();
+    }
     return this;
   }
 
