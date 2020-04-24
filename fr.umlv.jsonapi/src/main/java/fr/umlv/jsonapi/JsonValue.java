@@ -143,22 +143,6 @@ public final @__inline__ class JsonValue {
     return new BigDecimal(string);
   }
 
-  public void accept(JsonValueVisitor valueVisitor) {
-    requireNonNull(valueVisitor);
-    switch(kind) {
-      case NULL -> valueVisitor.visitNull();
-      case TRUE -> valueVisitor.visitBoolean(true);
-      case FALSE -> valueVisitor.visitBoolean(false);
-      case INT -> valueVisitor.visitInt((int) data);
-      case LONG-> valueVisitor.visitLong(data);
-      case DOUBLE -> valueVisitor.visitDouble(Double.longBitsToDouble(data));
-      case STRING -> valueVisitor.visitString(string);
-      case BIG_INTEGER -> valueVisitor.visitBigInteger(new BigInteger(string));
-      case BIG_DECIMAL -> valueVisitor.visitBigDecimal(new BigDecimal(string));
-      default -> throw new AssertionError();
-    };
-  }
-
   public Object asObject() {
     return switch(kind) {
       case NULL -> null;

@@ -19,18 +19,18 @@ import java.nio.file.Path;
 import java.util.ArrayDeque;
 
 public final class JsonReader {
-  private record RootVisitor(int kind, JsonObjectVisitor objectVisitor, JsonArrayVisitor arrayVisitor) {
+  private record RootVisitor(int kind, ObjectVisitor objectVisitor, ArrayVisitor arrayVisitor) {
     private static final int OBJECT = 1;
     private static final int ARRAY = 2;
     private static final int BOTH = 3;
 
-    public JsonObjectVisitor visitObject() {
+    public ObjectVisitor visitObject() {
       if ((kind & OBJECT) == 0) {
         throw new IllegalStateException("illegal root object");
       }
       return objectVisitor;
     }
-    public JsonArrayVisitor visitArray() {
+    public ArrayVisitor visitArray() {
       if ((kind & ARRAY) == 0) {
         throw new IllegalStateException("illegal root array");
       }
@@ -42,15 +42,15 @@ public final class JsonReader {
     throw new AssertionError();
   }
 
-  public static Object parse(Path path, JsonObjectVisitor objectVisitor) throws IOException {
+  public static Object parse(Path path, ObjectVisitor objectVisitor) throws IOException {
     requireNonNull(objectVisitor);
     return parse(path, new RootVisitor(RootVisitor.OBJECT, objectVisitor, null));
   }
-  public static Object parse(Path path, JsonArrayVisitor arrayVisitor) throws IOException {
+  public static Object parse(Path path, ArrayVisitor arrayVisitor) throws IOException {
     requireNonNull(arrayVisitor);
     return parse(path, new RootVisitor(RootVisitor.ARRAY, null, arrayVisitor));
   }
-  public static Object parse(Path path, JsonObjectVisitor objectVisitor, JsonArrayVisitor arrayVisitor) throws IOException {
+  public static Object parse(Path path, ObjectVisitor objectVisitor, ArrayVisitor arrayVisitor) throws IOException {
     requireNonNull(objectVisitor);
     requireNonNull(arrayVisitor);
     return parse(path, new RootVisitor(RootVisitor.BOTH, objectVisitor, arrayVisitor));
@@ -62,15 +62,15 @@ public final class JsonReader {
     }
   }
 
-  public static Object parse(String text, JsonObjectVisitor objectVisitor) {
+  public static Object parse(String text, ObjectVisitor objectVisitor) {
     requireNonNull(objectVisitor);
     return parse(text, new RootVisitor(RootVisitor.OBJECT, objectVisitor, null));
   }
-  public static Object parse(String text, JsonArrayVisitor arrayVisitor) {
+  public static Object parse(String text, ArrayVisitor arrayVisitor) {
     requireNonNull(arrayVisitor);
     return parse(text, new RootVisitor(RootVisitor.ARRAY, null, arrayVisitor));
   }
-  public static Object parse(String text, JsonObjectVisitor objectVisitor, JsonArrayVisitor arrayVisitor) {
+  public static Object parse(String text, ObjectVisitor objectVisitor, ArrayVisitor arrayVisitor) {
     requireNonNull(objectVisitor);
     requireNonNull(arrayVisitor);
     return parse(text, new RootVisitor(RootVisitor.BOTH, objectVisitor, arrayVisitor));
@@ -84,15 +84,15 @@ public final class JsonReader {
     }
   }
 
-  public static Object parse(Reader reader, JsonObjectVisitor objectVisitor) throws IOException {
+  public static Object parse(Reader reader, ObjectVisitor objectVisitor) throws IOException {
     requireNonNull(objectVisitor);
     return parse(reader, new RootVisitor(RootVisitor.OBJECT, objectVisitor, null));
   }
-  public static Object parse(Reader reader, JsonArrayVisitor arrayVisitor) throws IOException {
+  public static Object parse(Reader reader, ArrayVisitor arrayVisitor) throws IOException {
     requireNonNull(arrayVisitor);
     return parse(reader, new RootVisitor(RootVisitor.ARRAY, null, arrayVisitor));
   }
-  public static Object parse(Reader reader, JsonObjectVisitor objectVisitor, JsonArrayVisitor arrayVisitor) throws IOException {
+  public static Object parse(Reader reader, ObjectVisitor objectVisitor, ArrayVisitor arrayVisitor) throws IOException {
     requireNonNull(objectVisitor);
     requireNonNull(arrayVisitor);
     return parse(reader, new RootVisitor(RootVisitor.BOTH, objectVisitor, arrayVisitor));
@@ -140,14 +140,14 @@ public final class JsonReader {
     }
   }
 
-  private static Object parseOrSkipObject(JsonParser parser, JsonObjectVisitor objectVisitor, ArrayDeque<JsonToken> stack) throws IOException {
+  private static Object parseOrSkipObject(JsonParser parser, ObjectVisitor objectVisitor, ArrayDeque<JsonToken> stack) throws IOException {
     if (objectVisitor == null) {
       skipUntil(parser, END_OBJECT, stack);
       return null;
     }
     return readObject(parser, objectVisitor, stack);
   }
-  private static Object parseOrSkipArray(JsonParser parser, JsonArrayVisitor arrayVisitor, ArrayDeque<JsonToken> stack) throws IOException {
+  private static Object parseOrSkipArray(JsonParser parser, ArrayVisitor arrayVisitor, ArrayDeque<JsonToken> stack) throws IOException {
     if (arrayVisitor == null) {
       skipUntil(parser, END_ARRAY, stack);
       return null;
@@ -155,7 +155,7 @@ public final class JsonReader {
     return readArray(parser, arrayVisitor, stack);
   }
 
-  private static Object readArray(JsonParser parser, JsonArrayVisitor visitor, ArrayDeque<JsonToken> stack) throws IOException {
+  private static Object readArray(JsonParser parser, ArrayVisitor visitor, ArrayDeque<JsonToken> stack) throws IOException {
     for(;;) {
       var token = parser.nextToken();
       switch(token) {
@@ -181,7 +181,7 @@ public final class JsonReader {
     }
   }
 
-  private static Object readObject(JsonParser parser, JsonObjectVisitor visitor, ArrayDeque<JsonToken> stack) throws IOException {
+  private static Object readObject(JsonParser parser, ObjectVisitor visitor, ArrayDeque<JsonToken> stack) throws IOException {
     for(;;) {
       var token = parser.nextToken();
       if (token == END_OBJECT) {

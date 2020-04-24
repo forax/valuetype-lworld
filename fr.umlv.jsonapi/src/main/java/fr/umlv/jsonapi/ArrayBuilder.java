@@ -2,7 +2,7 @@ package fr.umlv.jsonapi;
 
 import static java.util.Objects.requireNonNull;
 
-import fr.umlv.jsonapi.JsonObjectBuilder.Factory;
+import fr.umlv.jsonapi.ObjectBuilder.Factory;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -14,34 +14,34 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
-public final class JsonArrayBuilder implements JsonArrayVisitor {
+public final class ArrayBuilder implements ArrayVisitor {
   private final List<Object> list;
   private final Factory factory;
   private final Consumer<List<Object>> postOp;
 
-  JsonArrayBuilder(Factory factory, Consumer<List<Object>> postOp) {
+  ArrayBuilder(Factory factory, Consumer<List<Object>> postOp) {
     this.list = requireNonNull(factory.listSupplier().get());
     this.factory = factory;
     this.postOp = postOp;
   }
 
-  public JsonArrayBuilder(Supplier<? extends Map<String, Object>> mapSupplier,
+  public ArrayBuilder(Supplier<? extends Map<String, Object>> mapSupplier,
       UnaryOperator<Map<String, Object>> transformMapOp,
       Supplier<? extends List<Object>> listSupplier,
       UnaryOperator<List<Object>> transformListOp) {
     this(new Factory(mapSupplier, transformMapOp, listSupplier, transformListOp), __ -> {});
   }
-  public JsonArrayBuilder(Supplier<? extends Map<String, Object>> mapSupplier, Supplier<? extends List<Object>> listSupplier) {
+  public ArrayBuilder(Supplier<? extends Map<String, Object>> mapSupplier, Supplier<? extends List<Object>> listSupplier) {
     this(mapSupplier, UnaryOperator.identity(), listSupplier, UnaryOperator.identity());
   }
-  public JsonArrayBuilder() {
+  public ArrayBuilder() {
     this(HashMap::new, ArrayList::new);
   }
 
 
   @Override
   public boolean equals(Object o) {
-    return o instanceof JsonArrayBuilder builder && list.equals(builder.list);
+    return o instanceof ArrayBuilder builder && list.equals(builder.list);
   }
   @Override
   public int hashCode() {
@@ -53,17 +53,17 @@ public final class JsonArrayBuilder implements JsonArrayVisitor {
     return list.stream().map(String::valueOf).collect(Collectors.joining(", ", "[", "]"));
   }
 
-  public JsonArrayBuilder add(Object value) {
+  public ArrayBuilder add(Object value) {
     requireNonNull(value);
     list.add(value);
     return this;
   }
 
-  public JsonArrayBuilder addAll(List<?> list) {
+  public ArrayBuilder addAll(List<?> list) {
     list.forEach(this.list::add);  // implicit nullcheck
     return this;
   }
-  public JsonArrayBuilder addAll(Object... values) {
+  public ArrayBuilder addAll(Object... values) {
     for(var value: values) {   // implicit nullcheck
       list.add(value);
     }
@@ -77,13 +77,13 @@ public final class JsonArrayBuilder implements JsonArrayVisitor {
   }
 
   @Override
-  public JsonObjectBuilder visitObject() {
-    return new JsonObjectBuilder(factory, list::add);
+  public ObjectBuilder visitObject() {
+    return new ObjectBuilder(factory, list::add);
   }
 
   @Override
-  public JsonArrayBuilder visitArray() {
-    return new JsonArrayBuilder(factory, list::add);
+  public ArrayBuilder visitArray() {
+    return new ArrayBuilder(factory, list::add);
   }
 
   @Override
@@ -96,7 +96,7 @@ public final class JsonArrayBuilder implements JsonArrayVisitor {
     return toList();
   }
 
-  static Object visitList(List<?> list, JsonArrayVisitor arrayVisitor) {
+  static Object visitList(List<?> list, ArrayVisitor arrayVisitor) {
     for(Object element: list) {
       if (element == null) {
         arrayVisitor.visitValue(JsonValue.nullValue());
@@ -133,7 +133,7 @@ public final class JsonArrayBuilder implements JsonArrayVisitor {
       if (element instanceof Map<?,?> map) {
         var visitor = arrayVisitor.visitObject();
         if (visitor != null) {
-          JsonObjectBuilder.visitMap(map, visitor);
+          ObjectBuilder.visitMap(map, visitor);
           visitor.visitEndObject();
         }
         continue;
@@ -151,7 +151,7 @@ public final class JsonArrayBuilder implements JsonArrayVisitor {
     return arrayVisitor.visitEndArray();
   }
 
-  public Object accept(JsonArrayVisitor arrayVisitor) {
+  public Object accept(ArrayVisitor arrayVisitor) {
     requireNonNull(arrayVisitor);
     return visitList(list, arrayVisitor);
   }

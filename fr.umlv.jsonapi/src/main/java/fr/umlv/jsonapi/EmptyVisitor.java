@@ -2,18 +2,14 @@ package fr.umlv.jsonapi;
 
 import static java.util.Objects.requireNonNull;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.Objects;
-
-public class JsonEmptyVisitor implements JsonObjectVisitor, JsonArrayVisitor {
+public class EmptyVisitor implements ObjectVisitor, ArrayVisitor {
   @Override
-  public JsonObjectVisitor visitMemberObject(String name) {
+  public ObjectVisitor visitMemberObject(String name) {
     requireNonNull(name);
     return null;
   }
   @Override
-  public JsonArrayVisitor visitMemberArray(String name) {
+  public ArrayVisitor visitMemberArray(String name) {
     requireNonNull(name);
     return null;
   }
@@ -27,11 +23,11 @@ public class JsonEmptyVisitor implements JsonObjectVisitor, JsonArrayVisitor {
   }
 
   @Override
-  public JsonObjectVisitor visitObject() {
+  public ObjectVisitor visitObject() {
     return null;
   }
   @Override
-  public JsonArrayVisitor visitArray() {
+  public ArrayVisitor visitArray() {
     return null;
   }
   @Override

@@ -13,7 +13,7 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
-public final class JsonObjectBuilder implements JsonObjectVisitor {
+public final class ObjectBuilder implements ObjectVisitor {
   private final Map<String, Object> map;
   private final Factory factory;
   private final Consumer<Map<String, Object>> postOp;
@@ -31,28 +31,28 @@ public final class JsonObjectBuilder implements JsonObjectVisitor {
     }
   }
 
-  JsonObjectBuilder(Factory factory, Consumer<Map<String, Object>> postOp) {
+  ObjectBuilder(Factory factory, Consumer<Map<String, Object>> postOp) {
     this.map = requireNonNull(factory.mapSupplier.get());
     this.factory = factory;
     this.postOp = postOp;
   }
 
-  public JsonObjectBuilder(Supplier<? extends Map<String, Object>> mapSupplier,
+  public ObjectBuilder(Supplier<? extends Map<String, Object>> mapSupplier,
       UnaryOperator<Map<String, Object>> transformMapOp,
       Supplier<? extends List<Object>> listSupplier,
       UnaryOperator<List<Object>> transformListOp) {
     this(new Factory(mapSupplier, transformMapOp, listSupplier, transformListOp), __ -> {});
   }
-  public JsonObjectBuilder(Supplier<? extends Map<String, Object>> mapSupplier, Supplier<? extends List<Object>> listSupplier) {
+  public ObjectBuilder(Supplier<? extends Map<String, Object>> mapSupplier, Supplier<? extends List<Object>> listSupplier) {
     this(mapSupplier, UnaryOperator.identity(), listSupplier, UnaryOperator.identity());
   }
-  public JsonObjectBuilder() {
+  public ObjectBuilder() {
     this(HashMap::new, ArrayList::new);
   }
 
   @Override
   public boolean equals(Object o) {
-    return o instanceof JsonObjectBuilder builder && map.equals(builder.map);
+    return o instanceof ObjectBuilder builder && map.equals(builder.map);
   }
   @Override
   public int hashCode() {
@@ -64,13 +64,13 @@ public final class JsonObjectBuilder implements JsonObjectVisitor {
     return map.entrySet().stream().map(e -> '"' + e.getKey() + "\": " + e.getValue()).collect(Collectors.joining(", ", "{", "}"));
   }
 
-  public JsonObjectBuilder add(String name, Object value) {
+  public ObjectBuilder add(String name, Object value) {
     requireNonNull(name);
     map.put(name, value);
     return this;
   }
 
-  public JsonObjectBuilder addAll(Map<String, ?> map) {
+  public ObjectBuilder addAll(Map<String, ?> map) {
     map.forEach(this.map::put);  // implicit nullcheck
     return this;
   }
@@ -82,15 +82,15 @@ public final class JsonObjectBuilder implements JsonObjectVisitor {
   }
 
   @Override
-  public JsonObjectBuilder visitMemberObject(String name) {
+  public ObjectBuilder visitMemberObject(String name) {
     requireNonNull(name);
-    return new JsonObjectBuilder(factory, _map -> map.put(name, _map));
+    return new ObjectBuilder(factory, _map -> map.put(name, _map));
   }
 
   @Override
-  public JsonArrayBuilder visitMemberArray(String name) {
+  public ArrayBuilder visitMemberArray(String name) {
     requireNonNull(name);
-    return new JsonArrayBuilder(factory, list -> map.put(name, list));
+    return new ArrayBuilder(factory, list -> map.put(name, list));
   }
 
   @Override
@@ -104,7 +104,7 @@ public final class JsonObjectBuilder implements JsonObjectVisitor {
     return toMap();
   }
 
-  static Object visitMap(Map<?,?> map, JsonObjectVisitor objectVisitor) {
+  static Object visitMap(Map<?,?> map, ObjectVisitor objectVisitor) {
     for(var entry: map.entrySet()) {
       var name = (String) entry.getKey();
       var element = entry.getValue();
@@ -152,7 +152,7 @@ public final class JsonObjectBuilder implements JsonObjectVisitor {
       if (element instanceof List<?> list) {
         var visitor = objectVisitor.visitMemberArray(name);
         if (visitor != null) {
-          JsonArrayBuilder.visitList(list, visitor);
+          ArrayBuilder.visitList(list, visitor);
           visitor.visitEndArray();
         }
         continue;
@@ -162,7 +162,7 @@ public final class JsonObjectBuilder implements JsonObjectVisitor {
     return objectVisitor.visitEndObject();
   }
 
-  public Object accept(JsonObjectVisitor objectVisitor) {
+  public Object accept(ObjectVisitor objectVisitor) {
     requireNonNull(objectVisitor);
      return visitMap(map, objectVisitor);
   }

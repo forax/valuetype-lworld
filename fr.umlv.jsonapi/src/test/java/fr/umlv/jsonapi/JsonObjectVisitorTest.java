@@ -2,12 +2,15 @@ package fr.umlv.jsonapi;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 import org.junit.jupiter.api.Test;
 
 public class JsonObjectVisitorTest {
@@ -25,16 +28,16 @@ public class JsonObjectVisitorTest {
         }
         """;
     var methods = new ArrayList<String>();
-    var visitor = new JsonObjectVisitor() {
+    var visitor = new ObjectVisitor() {
       @Override
-      public JsonObjectVisitor visitMemberObject(String name) {
+      public ObjectVisitor visitMemberObject(String name) {
         methods.add("visitMemberObject");
         assertEquals("address", name);
         return null;
       }
 
       @Override
-      public JsonArrayVisitor visitMemberArray(String name) {
+      public ArrayVisitor visitMemberArray(String name) {
         methods.add("visitMemberArray");
         assertEquals("phoneNumbers", name);
         return null;
@@ -47,26 +50,31 @@ public class JsonObjectVisitorTest {
           case NULL -> {
             assertEquals("spouse", name);
             assertEquals(JsonValue.nullValue(), value);
+            assertTrue(value.isNull());
           }
           case TRUE -> {
             assertEquals("isAlive", name);
             assertEquals(JsonValue.trueValue(), value);
             assertTrue(value.booleanValue());
+            assertTrue(value.isTrue());
           }
           case INT -> {
             assertEquals("age", name);
             assertEquals(JsonValue.from(27), value);
             assertEquals(27, value.intValue());
+            assertTrue(value.isInt());
           }
           case DOUBLE -> {
             assertEquals("weight", name);
             assertEquals(JsonValue.from(87.3), value);
             assertEquals(87.3, value.doubleValue());
+            assertTrue(value.isDouble());
           }
           case STRING -> {
             assertEquals("firstName", name);
             assertEquals(JsonValue.from("John"), value);
             assertEquals("John", value.stringValue());
+            assertTrue(value.isString());
           }
           case FALSE, LONG, BIG_INTEGER, BIG_DECIMAL -> fail();
         }
@@ -96,15 +104,15 @@ public class JsonObjectVisitorTest {
         ]
         """;
     var methods = new ArrayList<String>();
-    var visitor = new JsonArrayVisitor() {
+    var visitor = new ArrayVisitor() {
           @Override
-          public JsonObjectVisitor visitObject() {
+          public ObjectVisitor visitObject() {
             methods.add("visitObject");
             return null;
           }
 
           @Override
-          public JsonArrayVisitor visitArray() {
+          public ArrayVisitor visitArray() {
             methods.add("visitArray");
             return null;
           }
@@ -117,18 +125,22 @@ public class JsonObjectVisitorTest {
               case FALSE -> {
                 assertEquals(JsonValue.falseValue(), value);
                 assertFalse(value.booleanValue());
+                assertTrue(value.isFalse());
               }
               case INT -> {
                 assertEquals(JsonValue.from(72), value);
                 assertEquals(72, value.intValue());
+                assertTrue(value.isInt());
               }
               case DOUBLE -> {
                 assertEquals(JsonValue.from(37.8), value);
                 assertEquals(37.8, value.doubleValue());
+                assertTrue(value.isDouble());
               }
               case STRING -> {
                 assertEquals(JsonValue.from("Jane"), value);
                 assertEquals("Jane", value.stringValue());
+                assertTrue(value.isString());
               }
               case TRUE, LONG, BIG_INTEGER, BIG_DECIMAL -> fail();
             }
@@ -151,111 +163,106 @@ public class JsonObjectVisitorTest {
 
 
   @Test
-  public void testSimpleJSonObjectToMap() {
-    var object = new JsonObjectBuilder()
-        .add("firstName", "Bob")
-        .add("age", 21);
-    var object2 = new JsonObjectBuilder();
-    object.accept(object2);
+  public void testSimpleObjectParsingToMap() {
+    var text = """
+        {
+          "foo": 3,
+          "bar": "whizz"
+        }
+        """;
+    var builder = new ObjectBuilder();
+    JsonReader.parse(text, builder);
     assertEquals(
-        Map.of("firstName", "Bob", "age", 21),
-        object2.toMap());
+        Map.of("foo", 3, "bar", "whizz"),
+        builder.toMap());
   }
 
-  /*
   @Test
-  public void testSimpleJSonArrayEquals() {
-    var array = JsonArray.of(1, 5, 43, 7, 56);
-    assertEquals(List.of(1, 5, 43, 7, 56), array);
-  }
-
-  private static final String DATA = """
+  public void testSimpleObjectRenaming() {
+    var text = """
         {
           "firstName": "John",
           "lastName": "Smith",
-          "isAlive": true,
           "age": 27,
-          "weight": 87.3,
-          "balance": 123454554533, 
-          "id": 1235345426364636494428583545,
+          "personal-address": {
+            "streetAddress": "21 2nd Street",
+            "city": "New York",
+            "state": "NY",
+            "postalCode": "10021-3100"
+          }
+        }
+        """;
+    var builder = new ObjectBuilder();
+    JsonReader.parse(text, builder.mapName(name -> switch (name) {
+      case "personal-address" -> "address";
+      default -> name;
+    }));
+    assertEquals(
+        Map.of("streetAddress", "21 2nd Street", "city", "New York", "state", "NY", "postalCode", "10021-3100"),
+        builder.toMap().get("address"));
+  }
+
+  @Test
+  public void testSimpleObjectFiltering() {
+    var text = """
+        {
+          "firstName": "John",
+          "lastName": "Smith",
+          "age": 27,
           "address": {
             "streetAddress": "21 2nd Street",
             "city": "New York",
             "state": "NY",
             "postalCode": "10021-3100"
-          },
-          "phoneNumbers": [
-            {
-              "type": "home",
-              "number": "212 555-1234"
-            },
-            {
-              "type": "office",
-              "number": "646 555-4567"
-            }
-          ],
-          "children": [],
-          "spouse": null
+          }
         }
         """;
-
-  @Test
-  public void testComplexJsonObject() {
-    var jsonObject = new JsonObject();
-    JsonReader.parse(DATA, jsonObject);
-    assertAll(
-        () -> assertEquals("John", jsonObject.get("firstName")),
-        () -> assertEquals("Smith", jsonObject.get("lastName")),
-        () -> assertTrue(jsonObject.getOrDefaultBoolean("isAlive", false)),
-        () -> assertEquals(27, jsonObject.getOrDefaultInt("age", 0)),
-        () -> assertEquals(123454554533L, jsonObject.getOrDefaultLong("balance", 0)),
-        () -> assertEquals(87.3, jsonObject.getOrDefaultDouble("weight", 0)),
-        () -> assertEquals(new BigInteger("1235345426364636494428583545"), jsonObject.getOrDefault("id", BigInteger.ZERO)),
-        () -> assertEquals(
-            Map.of("streetAddress", "21 2nd Street",
-                   "city", "New York",
-                   "state", "NY",
-                   "postalCode", "10021-3100"),
-            jsonObject.get("address")),
-        () -> assertEquals(
-            List.of(Map.of("type", "home", "number", "212 555-1234"),
-                Map.of("type", "office", "number", "646 555-4567")),
-            jsonObject.get("phoneNumbers")),
-        () -> assertEquals(List.of(), jsonObject.get("children")),
-        () -> assertTrue(jsonObject.isNull("spouse"))
-    );
+    var builder = new ObjectBuilder();
+    JsonReader.parse(text, builder.filterName(name -> switch (name) {
+      case "address", "firstName" -> false;
+      default -> true;
+    }));
+    assertEquals(
+        Map.of("lastName", "Smith", "age", 27),
+        builder.toMap());
   }
 
   @Test
-  public void testRecordJsonObject() {
-    record DataPoint(String name, int x, int y) {}
-    var dataPoint = new DataPoint("origin", 23, 7);
-    var jsonObject = new JsonObject(dataPoint);
-    assertAll(
-        () -> assertEquals(3, jsonObject.size()),
-        () -> assertEquals("origin", jsonObject.get("name")),
-        () -> assertEquals(23, jsonObject.get("x")),
-        () -> assertEquals(23, jsonObject.getOrDefaultInt("x", 0)),
-        () -> assertEquals(7, jsonObject.get("y")),
-        () -> assertEquals(7, jsonObject.getOrDefaultInt("y", 0)),
-        () -> assertEquals("""
-         { "name": "origin", "x": 23, "y": 7 }\
-         """, jsonObject.toString())
-    );
+  public void testSimpleArrayParsingToList() {
+    var text = """
+        [ "foo", 42, { "bar": 66.6 } ]
+        """;
+    var builder = new ArrayBuilder(HashMap::new, Map::copyOf, ArrayList::new, List::copyOf);
+    JsonReader.parse(text, builder);
+    assertEquals(
+        List.of("foo", 42, Map.of("bar", 66.6)),
+        builder.toList());
   }
 
   @Test
-  public void testJsonObjectToRecord() {
-    var jsonObject = new JsonObject()
-        .adding("name", "origin")
-        .adding("x", 23)
-        .adding("y", 7);
-    record DataPoint(String name, int x, int y) {}
-    var dataPoint = jsonObject.toRecord(MethodHandles.lookup(), DataPoint.class);
-    assertAll(
-        () -> assertEquals("origin", dataPoint.name),
-        () -> assertEquals(23, dataPoint.x),
-        () -> assertEquals(7, dataPoint.y)
-    );
-  }*/
+  public void testSimpleJSonObjectToMap() {
+    var builder = new ObjectBuilder()
+        .add("firstName", "Bob")
+        .add("age", 21);
+    var object2 = new ObjectBuilder();
+    builder.accept(object2);
+    assertEquals(
+        Map.of("firstName", "Bob", "age", 21),
+        object2.toMap());
+  }
+
+  @Test
+  public void testSimpleJSonObjectToSortedMap() {
+    var builder = new ObjectBuilder()
+        .add("firstName", "Bob")
+        .add("age", 21)
+        .add("weight", 70.2)
+        .add("spouse", null)
+        .add("children", true);
+    var object2 = new ObjectBuilder(TreeMap::new, ArrayList::new);
+    builder.accept(object2);
+    assertEquals(
+        List.of("age", "children", "firstName", "spouse", "weight"),
+        new ArrayList<>(object2.toMap().keySet()));
+  }
 }

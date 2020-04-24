@@ -11,7 +11,7 @@ import java.util.Objects;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonGenerator;
 
-public final class JsonWriter implements JsonObjectVisitor, JsonArrayVisitor, Closeable {
+public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable {
   private final JsonGenerator generator;
 
   public JsonWriter(Writer writer) throws IOException {
@@ -36,7 +36,7 @@ public final class JsonWriter implements JsonObjectVisitor, JsonArrayVisitor, Cl
   }
 
   @Override
-  public JsonObjectVisitor visitMemberObject(String name) {
+  public ObjectVisitor visitMemberObject(String name) {
     Objects.requireNonNull(name);
     try {
       generator.writeFieldName(name);
@@ -48,7 +48,7 @@ public final class JsonWriter implements JsonObjectVisitor, JsonArrayVisitor, Cl
   }
 
   @Override
-  public JsonArrayVisitor visitMemberArray(String name) {
+  public ArrayVisitor visitMemberArray(String name) {
     Objects.requireNonNull(name);
     try {
       generator.writeFieldName(name);
@@ -88,7 +88,7 @@ public final class JsonWriter implements JsonObjectVisitor, JsonArrayVisitor, Cl
   }
 
   @Override
-  public JsonObjectVisitor visitObject() {
+  public ObjectVisitor visitObject() {
     try {
       generator.writeStartObject();
     } catch (IOException e) {
@@ -98,7 +98,7 @@ public final class JsonWriter implements JsonObjectVisitor, JsonArrayVisitor, Cl
   }
 
   @Override
-  public JsonArrayVisitor visitArray() {
+  public ArrayVisitor visitArray() {
     try {
       generator.writeStartArray();
     } catch (IOException e) {
