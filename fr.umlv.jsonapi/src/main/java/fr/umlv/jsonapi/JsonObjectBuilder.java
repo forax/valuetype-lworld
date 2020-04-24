@@ -96,7 +96,7 @@ public final class JsonObjectBuilder implements JsonObjectVisitor {
   @Override
   public void visitMemberValue(String name, JsonValue value) {
     requireNonNull(name);
-    map.put(name, value);
+    map.put(name, value.asObject());
   }
 
   @Override

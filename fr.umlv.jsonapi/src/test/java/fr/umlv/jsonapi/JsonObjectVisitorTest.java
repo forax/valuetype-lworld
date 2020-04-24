@@ -155,9 +155,11 @@ public class JsonObjectVisitorTest {
     var object = new JsonObjectBuilder()
         .add("firstName", "Bob")
         .add("age", 21);
+    var object2 = new JsonObjectBuilder();
+    object.accept(object2);
     assertEquals(
         Map.of("firstName", "Bob", "age", 21),
-        object.toMap());
+        object2.toMap());
   }
 
   /*
