@@ -1,5 +1,7 @@
 package fr.umlv.jsonapi;
 
+import static java.util.Objects.requireNonNull;
+
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Objects;
@@ -7,27 +9,21 @@ import java.util.Objects;
 public class JsonEmptyVisitor implements JsonObjectVisitor, JsonArrayVisitor {
   @Override
   public JsonObjectVisitor visitMemberObject(String name) {
+    requireNonNull(name);
     return null;
   }
   @Override
   public JsonArrayVisitor visitMemberArray(String name) {
+    requireNonNull(name);
     return null;
   }
   @Override
-  public void visitMemberText(String name, JsonText text) {
-    Objects.requireNonNull(name);
+  public void visitMemberValue(String name, JsonValue value) {
+    requireNonNull(name);
   }
   @Override
-  public void visitMemberNumber(String name, JsonNumber number) {
-    Objects.requireNonNull(name);
-  }
-  @Override
-  public void visitMemberConstant(String name, JsonConstant constant) {
-    Objects.requireNonNull(name);
-  }
-  @Override
-  public void visitEndObject() {
-    // empty
+  public Object visitEndObject() {
+    return null;
   }
 
   @Override
@@ -39,19 +35,11 @@ public class JsonEmptyVisitor implements JsonObjectVisitor, JsonArrayVisitor {
     return null;
   }
   @Override
-  public void visitText(JsonText text) {
+  public void visitValue(JsonValue value) {
     // empty
   }
   @Override
-  public void visitNumber(JsonNumber number) {
-    // empty
-  }
-  @Override
-  public void visitConstant(JsonConstant constant) {
-    // empty
-  }
-  @Override
-  public void visitEndArray() {
-    // empty
+  public Object visitEndArray() {
+    return null;
   }
 }

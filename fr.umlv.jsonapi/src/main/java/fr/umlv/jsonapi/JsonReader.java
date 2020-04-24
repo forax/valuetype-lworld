@@ -5,6 +5,7 @@ import static com.fasterxml.jackson.core.JsonToken.END_OBJECT;
 import static com.fasterxml.jackson.core.JsonToken.FIELD_NAME;
 import static com.fasterxml.jackson.core.JsonToken.START_ARRAY;
 import static com.fasterxml.jackson.core.JsonToken.START_OBJECT;
+import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -16,76 +17,102 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
-import java.util.Objects;
 
 public final class JsonReader {
+  private record RootVisitor(int kind, JsonObjectVisitor objectVisitor, JsonArrayVisitor arrayVisitor) {
+    private static final int OBJECT = 1;
+    private static final int ARRAY = 2;
+    private static final int BOTH = 3;
+
+    public JsonObjectVisitor visitObject() {
+      if ((kind & OBJECT) == 0) {
+        throw new IllegalStateException("illegal root object");
+      }
+      return objectVisitor;
+    }
+    public JsonArrayVisitor visitArray() {
+      if ((kind & ARRAY) == 0) {
+        throw new IllegalStateException("illegal root array");
+      }
+      return arrayVisitor;
+    }
+  }
+
   private JsonReader() {
     throw new AssertionError();
   }
 
-  public static void parse(Path path, JsonVisitor visitor) throws IOException {
-    Objects.requireNonNull(path);
-    Objects.requireNonNull(visitor);
+  public static Object parse(Path path, JsonObjectVisitor objectVisitor) throws IOException {
+    requireNonNull(objectVisitor);
+    return parse(path, new RootVisitor(RootVisitor.OBJECT, objectVisitor, null));
+  }
+  public static Object parse(Path path, JsonArrayVisitor arrayVisitor) throws IOException {
+    requireNonNull(arrayVisitor);
+    return parse(path, new RootVisitor(RootVisitor.ARRAY, null, arrayVisitor));
+  }
+  public static Object parse(Path path, JsonObjectVisitor objectVisitor, JsonArrayVisitor arrayVisitor) throws IOException {
+    requireNonNull(objectVisitor);
+    requireNonNull(arrayVisitor);
+    return parse(path, new RootVisitor(RootVisitor.BOTH, objectVisitor, arrayVisitor));
+  }
+  private static Object parse(Path path, RootVisitor rootVisitor) throws IOException {
+    requireNonNull(path);
     try(var reader = Files.newBufferedReader(path)) {
-      parse(reader, visitor);
+      return parse(reader, rootVisitor);
     }
   }
-  public static void parse(Path path, JsonObjectVisitor visitor) throws IOException {
-    Objects.requireNonNull(path);
-    Objects.requireNonNull(visitor);
-    parse(path, asJsonVisitor(visitor));
+
+  public static Object parse(String text, JsonObjectVisitor objectVisitor) {
+    requireNonNull(objectVisitor);
+    return parse(text, new RootVisitor(RootVisitor.OBJECT, objectVisitor, null));
   }
-  public static void parse(String text, JsonVisitor visitor) {
-    Objects.requireNonNull(text);
-    Objects.requireNonNull(visitor);
+  public static Object parse(String text, JsonArrayVisitor arrayVisitor) {
+    requireNonNull(arrayVisitor);
+    return parse(text, new RootVisitor(RootVisitor.ARRAY, null, arrayVisitor));
+  }
+  public static Object parse(String text, JsonObjectVisitor objectVisitor, JsonArrayVisitor arrayVisitor) {
+    requireNonNull(objectVisitor);
+    requireNonNull(arrayVisitor);
+    return parse(text, new RootVisitor(RootVisitor.BOTH, objectVisitor, arrayVisitor));
+  }
+  private static Object parse(String text, RootVisitor rootVisitor) {
+    requireNonNull(text);
     try {
-      parse(new StringReader(text), visitor);
+      return parse(new StringReader(text), rootVisitor);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
   }
-  public static void parse(String text, JsonObjectVisitor visitor) {
-    Objects.requireNonNull(text);
-    Objects.requireNonNull(visitor);
-    parse(text, asJsonVisitor(visitor));
+
+  public static Object parse(Reader reader, JsonObjectVisitor objectVisitor) throws IOException {
+    requireNonNull(objectVisitor);
+    return parse(reader, new RootVisitor(RootVisitor.OBJECT, objectVisitor, null));
   }
-  public static void parse(Reader reader, JsonVisitor visitor) throws IOException {
-    Objects.requireNonNull(reader);
-    Objects.requireNonNull(visitor);
+  public static Object parse(Reader reader, JsonArrayVisitor arrayVisitor) throws IOException {
+    requireNonNull(arrayVisitor);
+    return parse(reader, new RootVisitor(RootVisitor.ARRAY, null, arrayVisitor));
+  }
+  public static Object parse(Reader reader, JsonObjectVisitor objectVisitor, JsonArrayVisitor arrayVisitor) throws IOException {
+    requireNonNull(objectVisitor);
+    requireNonNull(arrayVisitor);
+    return parse(reader, new RootVisitor(RootVisitor.BOTH, objectVisitor, arrayVisitor));
+  }
+  private static Object parse(Reader reader, RootVisitor rootVisitor) throws IOException {
+    requireNonNull(reader);
     try(var parser = new JsonFactory().createParser(reader)) {
-      parseJson(parser, visitor);
+      return parseJson(parser, rootVisitor);
     }
   }
-  public static void parse(Reader reader, JsonObjectVisitor visitor) throws IOException {
-    Objects.requireNonNull(reader);
-    Objects.requireNonNull(visitor);
-    parse(reader, asJsonVisitor(visitor));
-  }
 
-  private static JsonVisitor asJsonVisitor(JsonObjectVisitor objectVisitor) {
-    return new JsonVisitor() {
-      @Override
-      public JsonObjectVisitor visitObject() {
-        return objectVisitor;
-      }
-
-      @Override
-      public JsonArrayVisitor visitArray() {
-        throw new IllegalStateException("only a json object is supported");
-      }
-    };
-  }
-
-  private static void parseJson(JsonParser parser, JsonVisitor visitor) throws IOException {
+  private static Object parseJson(JsonParser parser, RootVisitor visitor) throws IOException {
     var stack = new ArrayDeque<JsonToken>();
     var token = parser.nextToken();
     if (token == START_OBJECT) {
-      parseOrSkipObject(parser, visitor.visitObject(), stack);
-      return;
+      return parseOrSkipObject(parser, visitor.visitObject(), stack);
     }
     if (token == START_ARRAY) {
       parseOrSkipArray(parser, visitor.visitArray(), stack);
-      return;
+      return null;
     }
     throw new IOException("invalid token " + token);
   }
@@ -113,50 +140,52 @@ public final class JsonReader {
     }
   }
 
-  private static void parseOrSkipObject(JsonParser parser, JsonObjectVisitor objectVisitor, ArrayDeque<JsonToken> stack) throws IOException {
+  private static Object parseOrSkipObject(JsonParser parser, JsonObjectVisitor objectVisitor, ArrayDeque<JsonToken> stack) throws IOException {
     if (objectVisitor == null) {
       skipUntil(parser, END_OBJECT, stack);
-    } else {
-      readObject(parser, objectVisitor, stack);
+      return null;
     }
+    return readObject(parser, objectVisitor, stack);
   }
-  private static void parseOrSkipArray(JsonParser parser, JsonArrayVisitor arrayVisitor, ArrayDeque<JsonToken> stack) throws IOException {
+  private static Object parseOrSkipArray(JsonParser parser, JsonArrayVisitor arrayVisitor, ArrayDeque<JsonToken> stack) throws IOException {
     if (arrayVisitor == null) {
       skipUntil(parser, END_ARRAY, stack);
-    } else {
-      readArray(parser, arrayVisitor, stack);
+      return null;
     }
+    return readArray(parser, arrayVisitor, stack);
   }
 
-  private static void readArray(JsonParser parser, JsonArrayVisitor visitor, ArrayDeque<JsonToken> stack) throws IOException {
+  private static Object readArray(JsonParser parser, JsonArrayVisitor visitor, ArrayDeque<JsonToken> stack) throws IOException {
     for(;;) {
       var token = parser.nextToken();
       switch(token) {
         case START_OBJECT -> parseOrSkipObject(parser, visitor.visitObject(), stack);
         case START_ARRAY -> parseOrSkipArray(parser, visitor.visitArray(), stack);
-        case VALUE_STRING -> visitor.visitText(new JsonText(parser.getValueAsString()));
+        case VALUE_STRING -> visitor.visitValue(JsonValue.from(parser.getValueAsString()));
         case VALUE_NUMBER_INT, VALUE_NUMBER_FLOAT -> {
           switch(parser.getNumberType()) {
-            case INT, LONG -> visitor.visitNumber(JsonNumber.from(parser.getValueAsLong()));
-            case FLOAT, DOUBLE -> visitor.visitNumber(JsonNumber.from(parser.getValueAsDouble()));
+            case INT -> visitor.visitValue(JsonValue.from(parser.getValueAsInt()));
+            case LONG -> visitor.visitValue(JsonValue.from(parser.getValueAsLong()));
+            case FLOAT, DOUBLE -> visitor.visitValue(JsonValue.from(parser.getValueAsDouble()));
+            case BIG_INTEGER -> visitor.visitValue(JsonValue.fromBigInteger(parser.getValueAsString()));
+            case BIG_DECIMAL -> visitor.visitValue(JsonValue.fromBigDecimal(parser.getValueAsString()));
             default -> throw new IOException("invalid number " + parser.getValueAsString());
           }
         }
-        case VALUE_TRUE -> visitor.visitConstant(JsonConstant.TRUE);
-        case VALUE_FALSE -> visitor.visitConstant(JsonConstant.FALSE);
-        case VALUE_NULL -> visitor.visitConstant(JsonConstant.NULL);
-        case END_ARRAY -> { visitor.visitEndArray(); return; }
+        case VALUE_TRUE -> visitor.visitValue(JsonValue.trueValue());
+        case VALUE_FALSE -> visitor.visitValue(JsonValue.falseValue());
+        case VALUE_NULL -> visitor.visitValue(JsonValue.nullValue());
+        case END_ARRAY -> { return visitor.visitEndArray(); }
         default -> throw new IOException("invalid token " + token);
       }
     }
   }
 
-  private static void readObject(JsonParser parser, JsonObjectVisitor visitor, ArrayDeque<JsonToken> stack) throws IOException {
+  private static Object readObject(JsonParser parser, JsonObjectVisitor visitor, ArrayDeque<JsonToken> stack) throws IOException {
     for(;;) {
       var token = parser.nextToken();
       if (token == END_OBJECT) {
-        visitor.visitEndObject();
-        return;
+        return visitor.visitEndObject();
       }
       if (token != FIELD_NAME) {
         throw new IOException("invalid token " + token);
@@ -166,17 +195,20 @@ public final class JsonReader {
       switch(token) {
         case START_OBJECT -> parseOrSkipObject(parser, visitor.visitMemberObject(name), stack);
         case START_ARRAY -> parseOrSkipArray(parser, visitor.visitMemberArray(name), stack);
-        case VALUE_STRING -> visitor.visitMemberText(name, new JsonText(parser.getValueAsString()));
+        case VALUE_STRING -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsString()));
         case VALUE_NUMBER_INT, VALUE_NUMBER_FLOAT -> {
           switch(parser.getNumberType()) {
-            case INT, LONG -> visitor.visitMemberNumber(name, JsonNumber.from(parser.getValueAsLong()));
-            case FLOAT, DOUBLE -> visitor.visitMemberNumber(name, JsonNumber.from(parser.getValueAsDouble()));
+            case INT -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsInt()));
+            case LONG -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsLong()));
+            case FLOAT, DOUBLE -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsDouble()));
+            case BIG_INTEGER -> visitor.visitMemberValue(name, JsonValue.fromBigInteger(parser.getValueAsString()));
+            case BIG_DECIMAL -> visitor.visitMemberValue(name, JsonValue.fromBigDecimal(parser.getValueAsString()));
             default -> throw new IOException("invalid number " + parser.getValueAsString());
           }
         }
-        case VALUE_TRUE -> visitor.visitMemberConstant(name, JsonConstant.TRUE);
-        case VALUE_FALSE -> visitor.visitMemberConstant(name, JsonConstant.FALSE);
-        case VALUE_NULL -> visitor.visitMemberConstant(name, JsonConstant.NULL);
+        case VALUE_TRUE -> visitor.visitMemberValue(name, JsonValue.trueValue());
+        case VALUE_FALSE -> visitor.visitMemberValue(name, JsonValue.falseValue());
+        case VALUE_NULL -> visitor.visitMemberValue(name, JsonValue.nullValue());
         default -> throw new IOException("invalid token " + token);
       }
     }

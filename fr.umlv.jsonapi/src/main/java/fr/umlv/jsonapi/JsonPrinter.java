@@ -43,43 +43,19 @@ public class JsonPrinter implements JsonObjectVisitor, JsonArrayVisitor {
   }
 
   @Override
-  public void visitMemberText(String name, JsonText text) {
+  public void visitMemberValue(String name, JsonValue value) {
     Objects.requireNonNull(name);
     builder.append(separator);
     appendText(builder, name);
-    builder.append(": ");
-    appendText(builder, text.value());
+    builder.append(": ").append(value);
     separator = ", ";
   }
 
   @Override
-  public void visitMemberNumber(String name, JsonNumber number) {
-    Objects.requireNonNull(name);
-    builder.append(separator);
-    appendText(builder, name);
-    builder.append(": ");
-    if (number.isDouble()) {
-      builder.append(number.doubleValue());
-    } else {
-      builder.append(number.longValue());
-    }
-    separator = ", ";
-  }
-
-  @Override
-  public void visitMemberConstant(String name, JsonConstant constant) {
-    Objects.requireNonNull(constant);
-    Objects.requireNonNull(name);
-    builder.append(separator);
-    appendText(builder, name);
-    builder.append(": ").append(constant);
-    separator = ", ";
-  }
-
-  @Override
-  public void visitEndObject() {
+  public Object visitEndObject() {
     builder.append(" }");
     separator = ", ";
+    return null;
   }
 
   @Override
@@ -97,33 +73,15 @@ public class JsonPrinter implements JsonObjectVisitor, JsonArrayVisitor {
   }
 
   @Override
-  public void visitText(JsonText text) {
-    builder.append(separator);
-    appendText(builder, text.value());
+  public void visitValue(JsonValue value) {
+    builder.append(separator).append(value);
     separator = ", ";
   }
 
   @Override
-  public void visitNumber(JsonNumber number) {
-    builder.append(separator);
-    if (number.isDouble()) {
-      builder.append(number.doubleValue());
-    } else {
-      builder.append(number.longValue());
-    }
-    separator = ", ";
-  }
-
-  @Override
-  public void visitConstant(JsonConstant constant) {
-    Objects.requireNonNull(constant);
-    builder.append(separator).append(constant);
-    separator = ", ";
-  }
-
-  @Override
-  public void visitEndArray() {
+  public Object visitEndArray() {
     builder.append(" ]");
     separator = ", ";
+    return null;
   }
 }

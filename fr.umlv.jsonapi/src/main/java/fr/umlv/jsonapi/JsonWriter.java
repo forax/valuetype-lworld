@@ -60,37 +60,17 @@ public final class JsonWriter implements JsonObjectVisitor, JsonArrayVisitor, Cl
   }
 
   @Override
-  public void visitMemberText(String name, JsonText text) {
+  public void visitMemberValue(String name, JsonValue value) {
     Objects.requireNonNull(name);
     try {
-      generator.writeStringField(name, text.value());
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  @Override
-  public void visitMemberNumber(String name, JsonNumber number) {
-    Objects.requireNonNull(name);
-    try {
-      if (number.isDouble()) {
-        generator.writeNumberField(name, number.doubleValue());
-        return;
-      }
-      generator.writeNumberField(name, number.longValue());
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  @Override
-  public void visitMemberConstant(String name, JsonConstant constant) {
-    Objects.requireNonNull(name);
-    try {
-      switch(constant) {  // implicit nullcheck
-        case NULL -> generator.writeNull();
-        case TRUE -> generator.writeBooleanField(name, true);
-        case FALSE -> generator.writeBooleanField(name, false);
+      switch(value.kind()) {
+        case NULL -> generator.writeNullField(name);
+        case TRUE, FALSE -> generator.writeBooleanField(name, value.booleanValue());
+        case INT -> generator.writeNumberField(name, value.intValue());
+        case LONG -> generator.writeNumberField(name, value.longValue());
+        case DOUBLE -> generator.writeNumberField(name, value.doubleValue());
+        case BIG_INTEGER -> { generator.writeFieldName(name); generator.writeNumber(value.bigIntegerValue()); }
+        case BIG_DECIMAL -> generator.writeNumberField(name, value.bigDecimalValue());
       }
     } catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -98,9 +78,10 @@ public final class JsonWriter implements JsonObjectVisitor, JsonArrayVisitor, Cl
   }
 
   @Override
-  public void visitEndObject() {
+  public Object visitEndObject() {
     try {
       generator.writeEndObject();
+      return null;
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
@@ -127,34 +108,16 @@ public final class JsonWriter implements JsonObjectVisitor, JsonArrayVisitor, Cl
   }
 
   @Override
-  public void visitText(JsonText text) {
+  public void visitValue(JsonValue value) {
     try {
-      generator.writeString(text.value());
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  @Override
-  public void visitNumber(JsonNumber number) {
-    try {
-      if (number.isDouble()) {
-        generator.writeNumber(number.doubleValue());
-        return;
-      }
-      generator.writeNumber(number.longValue());
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-  }
-
-  @Override
-  public void visitConstant(JsonConstant constant) {
-    try {
-      switch(constant) {  // implicit nullcheck
+      switch(value.kind()) {
         case NULL -> generator.writeNull();
-        case TRUE -> generator.writeBoolean(true);
-        case FALSE -> generator.writeBoolean(false);
+        case TRUE, FALSE -> generator.writeBoolean(value.booleanValue());
+        case INT -> generator.writeNumber(value.intValue());
+        case LONG -> generator.writeNumber(value.longValue());
+        case DOUBLE -> generator.writeNumber(value.doubleValue());
+        case BIG_INTEGER -> generator.writeNumber(value.bigIntegerValue());
+        case BIG_DECIMAL -> generator.writeNumber(value.bigDecimalValue());
       }
     } catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -162,9 +125,10 @@ public final class JsonWriter implements JsonObjectVisitor, JsonArrayVisitor, Cl
   }
 
   @Override
-  public void visitEndArray() {
+  public Object visitEndArray() {
     try {
       generator.writeEndArray();
+      return null;
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
