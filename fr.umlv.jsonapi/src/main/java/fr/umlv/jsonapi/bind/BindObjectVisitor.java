@@ -19,12 +19,8 @@ public final class BindObjectVisitor implements ObjectVisitor {
     this.postOp = postOp;
   }
 
-  public BindObjectVisitor(ObjectSpec spec, ObjectBuilder objectBuilder) {
+  BindObjectVisitor(ObjectSpec spec, ObjectBuilder objectBuilder) {
     this(spec, objectBuilder, __ -> {});
-  }
-
-  public BindObjectVisitor(ObjectSpec spec) {
-    this(spec, new ObjectBuilder(), __ -> {});
   }
 
   public Map<String, Object> toMap() {

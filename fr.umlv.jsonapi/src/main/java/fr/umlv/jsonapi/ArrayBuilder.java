@@ -2,11 +2,8 @@ package fr.umlv.jsonapi;
 
 import static java.util.Objects.requireNonNull;
 
-import fr.umlv.jsonapi.ObjectBuilder.Factory;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -16,26 +13,30 @@ import java.util.stream.Collectors;
 
 public final class ArrayBuilder implements ArrayVisitor {
   private final List<Object> list;
-  private final Factory factory;
+  final BuilderConfig config;
   private final Consumer<List<Object>> postOp;
 
-  ArrayBuilder(Factory factory, Consumer<List<Object>> postOp) {
-    this.list = requireNonNull(factory.listSupplier().get());
-    this.factory = factory;
+  ArrayBuilder(BuilderConfig config, Consumer<List<Object>> postOp) {
+    this.list = requireNonNull(config.listSupplier().get());
+    this.config = config;
     this.postOp = postOp;
+  }
+
+  ArrayBuilder(BuilderConfig config) {
+    this(config, __ -> {});
   }
 
   public ArrayBuilder(Supplier<? extends Map<String, Object>> mapSupplier,
       UnaryOperator<Map<String, Object>> transformMapOp,
       Supplier<? extends List<Object>> listSupplier,
       UnaryOperator<List<Object>> transformListOp) {
-    this(new Factory(mapSupplier, transformMapOp, listSupplier, transformListOp), __ -> {});
+    this(new BuilderConfig(mapSupplier, transformMapOp, listSupplier, transformListOp));
   }
   public ArrayBuilder(Supplier<? extends Map<String, Object>> mapSupplier, Supplier<? extends List<Object>> listSupplier) {
-    this(mapSupplier, UnaryOperator.identity(), listSupplier, UnaryOperator.identity());
+    this(new BuilderConfig(mapSupplier, listSupplier));
   }
   public ArrayBuilder() {
-    this(HashMap::new, ArrayList::new);
+    this(BuilderConfig.DEFAULT);
   }
 
 
@@ -71,19 +72,19 @@ public final class ArrayBuilder implements ArrayVisitor {
   }
 
   public List<Object> toList() {
-    var resultList = factory.transformListOp().apply(list);
+    var resultList = config.transformListOp().apply(list);
     postOp.accept(resultList);
     return resultList;
   }
 
   @Override
   public ObjectBuilder visitObject() {
-    return new ObjectBuilder(factory, list::add);
+    return new ObjectBuilder(config, list::add);
   }
 
   @Override
   public ArrayBuilder visitArray() {
-    return new ArrayBuilder(factory, list::add);
+    return new ArrayBuilder(config, list::add);
   }
 
   @Override

@@ -5,6 +5,7 @@ import static java.util.Objects.requireNonNull;
 
 import fr.umlv.jsonapi.ArrayBuilder;
 import fr.umlv.jsonapi.ArrayVisitor;
+import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonReader;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectBuilder;
@@ -32,10 +33,32 @@ public class Binder {
     default Spec array() { return new ArraySpec(this); }
     default Spec object() { return new ObjectSpec(this); }
 
+    default <V, B> V createBindVisitor(Class<V> visitorType) {
+      return createBindVisitor(visitorType, DEFAULT_CONFIG);
+    }
+    default <V, B> V createBindVisitor(Class<V> visitorType, BuilderConfig config) {
+      requireNonNull(visitorType);
+      requireNonNull(config);
+      if (this instanceof ClassSpec classSpec) {
+        return visitorType.cast(new BindClassVisitor(classSpec, config));
+      }
+      if (this instanceof ArraySpec arraySpec) {
+        return visitorType.cast(new BindArrayVisitor(arraySpec, config.newArrayBuilder()));
+      }
+      if (this instanceof ObjectSpec objectSpec) {
+        return visitorType.cast(new BindObjectVisitor(objectSpec, config.newObjectBuilder()));
+      }
+      throw new IllegalArgumentException("unknown type of visitor " + visitorType.getName());
+    }
+
     static Spec objectClass(String name, ClassInfo<?> classInfo) {
+      requireNonNull(name);
+      requireNonNull(classInfo);
       return new ClassSpec(name, classInfo);
     }
     static Spec valueClass(String name, UnaryOperator<JsonValue> converter) {
+      requireNonNull(name);
+      requireNonNull(converter);
       return new ValueSpec(name, converter);
     }
   }
@@ -62,7 +85,7 @@ public class Binder {
         return new BindObjectVisitor(objectSpec, arrayBuilder.visitObject());
       }
       if (component instanceof ClassSpec classSpec) {
-        return new BindClassVisitor(classSpec, arrayBuilder::add);
+        return new BindClassVisitor(classSpec, BuilderConfig.from(arrayBuilder), arrayBuilder::add);
       }
       throw new IllegalStateException("invalid component for an object " + component);
     }
@@ -85,7 +108,7 @@ public class Binder {
         return new BindObjectVisitor(objectSpec, objectBuilder.visitMemberObject(name));
       }
       if (component instanceof ClassSpec classSpec) {
-        return new BindClassVisitor(classSpec, o -> objectBuilder.add(name, o));
+        return new BindClassVisitor(classSpec, BuilderConfig.from(objectBuilder), o -> objectBuilder.add(name, o));
       }
       throw new IllegalStateException("invalid component for an object " + component);
     }
@@ -114,21 +137,21 @@ public class Binder {
       return name;
     }
 
-    ObjectVisitor newMemberObject(String name, Consumer<Object> postOp) {
+    ObjectVisitor newMemberObject(String name, BuilderConfig config, Consumer<Object> postOp) {
       var spec = classInfo.elementSpec(name);
       if (spec instanceof ObjectSpec objectSpec) {
-        return new BindObjectVisitor(objectSpec, new ObjectBuilder(), postOp);
+        return new BindObjectVisitor(objectSpec, config.newObjectBuilder(), postOp);
       }
       if (spec instanceof ClassSpec classSpec) {
-        return new BindClassVisitor(classSpec, postOp);
+        return new BindClassVisitor(classSpec, config, postOp);
       }
       throw new IllegalStateException("invalid component for an object " + spec + " for element " + name);
     }
 
-    ArrayVisitor newMemberArray(String name, Consumer<Object> postOp) {
+    ArrayVisitor newMemberArray(String name, BuilderConfig config, Consumer<Object> postOp) {
       var spec = classInfo.elementSpec(name);
       if (spec instanceof ArraySpec arraySpec) {
-        return new BindArrayVisitor(arraySpec, new ArrayBuilder(), postOp);
+        return new BindArrayVisitor(arraySpec, config.newArrayBuilder(), postOp);
       }
       throw new IllegalStateException("invalid component for an array " + spec + " for element " + name);
     }
@@ -327,6 +350,7 @@ public class Binder {
     }
   }
 
+  private static final BuilderConfig DEFAULT_CONFIG = new BuilderConfig();
 
   public /*sealed*/ interface ArrayToken { }
   private record ArrayTokenEmpty() implements ArrayToken { }
@@ -337,37 +361,41 @@ public class Binder {
   public static final ArrayToken ARRAY = new ArrayTokenEmpty();
   public static final ObjectToken OBJECT = new ObjectTokenEmpty();
 
-
   public <T> T read(Reader reader, Class<T> type) throws IOException {
     requireNonNull(reader);
     requireNonNull(type);
-    return type.cast(read(reader, findSpecOrThrow(type)));
+    return read(reader, type, DEFAULT_CONFIG);
+  }
+  public <T> T read(Reader reader, Class<T> type, BuilderConfig config) throws IOException {
+    requireNonNull(reader);
+    requireNonNull(type);
+    return type.cast(read(reader, findSpecOrThrow(type), config));
   }
   @SuppressWarnings("unchecked")
   public <T> List<T> read(Reader reader, Class<T> type, ArrayToken _1) throws IOException {
     requireNonNull(reader);
     requireNonNull(type);
-    return (List<T>) read(reader, findSpecOrThrow(type).array());
+    return (List<T>) read(reader, findSpecOrThrow(type).array(), DEFAULT_CONFIG);
   }
   @SuppressWarnings("unchecked")
   public <T> Map<String, T> read(Reader reader, Class<T> type, ObjectToken _1) throws IOException {
     requireNonNull(reader);
     requireNonNull(type);
-    return (Map<String, T>) read(reader, findSpecOrThrow(type).object());
+    return (Map<String, T>) read(reader, findSpecOrThrow(type).object(), DEFAULT_CONFIG);
   }
-  public static Object read(Reader reader, Spec spec) throws IOException {
+  public static Object read(Reader reader, Spec spec, BuilderConfig config) throws IOException {
     requireNonNull(reader);
     requireNonNull(spec);
     if (spec instanceof ObjectSpec objectSpec) {
-      var visitor = new BindObjectVisitor(objectSpec);
+      var visitor = new BindObjectVisitor(objectSpec, config.newObjectBuilder());
       return JsonReader.parse(reader, visitor);
     }
     if (spec instanceof ArraySpec arraySpec) {
-      var visitor = new BindArrayVisitor(arraySpec);
+      var visitor = new BindArrayVisitor(arraySpec, config.newArrayBuilder());
       return JsonReader.parse(reader, visitor);
     }
     if (spec instanceof ClassSpec classSpec) {
-      var visitor = new BindClassVisitor(classSpec);
+      var visitor = new BindClassVisitor(classSpec, config);
       return JsonReader.parse(reader, visitor);
     }
     throw new AssertionError();
@@ -376,33 +404,38 @@ public class Binder {
   public <T> T read(String text, Class<T> type) {
     requireNonNull(text);
     requireNonNull(type);
-    return type.cast(read(text, findSpecOrThrow(type)));
+    return read(text, type, DEFAULT_CONFIG);
+  }
+  public <T> T read(String text, Class<T> type, BuilderConfig config) {
+    requireNonNull(text);
+    requireNonNull(type);
+    return type.cast(read(text, findSpecOrThrow(type), config));
   }
   @SuppressWarnings("unchecked")
   public <T> List<T> read(String text, Class<T> type, ArrayToken _1) {
     requireNonNull(text);
     requireNonNull(type);
-    return (List<T>) read(text, findSpecOrThrow(type).array());
+    return (List<T>) read(text, findSpecOrThrow(type).array(), DEFAULT_CONFIG);
   }
   @SuppressWarnings("unchecked")
   public <T> Map<String, T> read(String text, Class<T> type, ObjectToken _1) {
     requireNonNull(text);
     requireNonNull(type);
-    return (Map<String, T>) read(text, findSpecOrThrow(type).object());
+    return (Map<String, T>) read(text, findSpecOrThrow(type).object(), DEFAULT_CONFIG);
   }
-  public static Object read(String text, Spec spec) {
+  public static Object read(String text, Spec spec, BuilderConfig config) {
     requireNonNull(text);
     requireNonNull(spec);
     if (spec instanceof ObjectSpec objectSpec) {
-      var visitor = new BindObjectVisitor(objectSpec);
+      var visitor = new BindObjectVisitor(objectSpec, config.newObjectBuilder());
       return JsonReader.parse(text, visitor);
     }
     if (spec instanceof ArraySpec arraySpec) {
-      var visitor = new BindArrayVisitor(arraySpec);
+      var visitor = new BindArrayVisitor(arraySpec, config.newArrayBuilder());
       return JsonReader.parse(text, visitor);
     }
     if (spec instanceof ClassSpec classSpec) {
-      var visitor = new BindClassVisitor(classSpec);
+      var visitor = new BindClassVisitor(classSpec, config);
       return JsonReader.parse(text, visitor);
     }
     throw new AssertionError();
@@ -411,33 +444,38 @@ public class Binder {
   public <T> T read(Path path, Class<T> type) throws IOException {
     requireNonNull(path);
     requireNonNull(type);
-    return type.cast(read(path, findSpecOrThrow(type)));
+    return read(path, type, DEFAULT_CONFIG);
+  }
+  public <T> T read(Path path, Class<T> type, BuilderConfig config) throws IOException {
+    requireNonNull(path);
+    requireNonNull(type);
+    return type.cast(read(path, findSpecOrThrow(type), config));
   }
   @SuppressWarnings("unchecked")
   public <T> List<T> read(Path path, Class<T> type, ArrayToken _1) throws IOException {
     requireNonNull(path);
     requireNonNull(type);
-    return (List<T>) read(path, findSpecOrThrow(type).array());
+    return (List<T>) read(path, findSpecOrThrow(type).array(), DEFAULT_CONFIG);
   }
   @SuppressWarnings("unchecked")
   public <T> Map<String, T> read(Path path, Class<T> type, ObjectToken _1) throws IOException {
     requireNonNull(path);
     requireNonNull(type);
-    return (Map<String, T>) read(path, findSpecOrThrow(type).object());
+    return (Map<String, T>) read(path, findSpecOrThrow(type).object(), DEFAULT_CONFIG);
   }
-  public static Object read(Path path, Spec spec) throws IOException {
+  public static Object read(Path path, Spec spec, BuilderConfig config) throws IOException {
     requireNonNull(path);
     requireNonNull(spec);
     if (spec instanceof ObjectSpec objectSpec) {
-      var visitor = new BindObjectVisitor(objectSpec);
+      var visitor = new BindObjectVisitor(objectSpec, config.newObjectBuilder());
       return JsonReader.parse(path, visitor);
     }
     if (spec instanceof ArraySpec arraySpec) {
-      var visitor = new BindArrayVisitor(arraySpec);
+      var visitor = new BindArrayVisitor(arraySpec, config.newArrayBuilder());
       return JsonReader.parse(path, visitor);
     }
     if (spec instanceof ClassSpec classSpec) {
-      var visitor = new BindClassVisitor(classSpec);
+      var visitor = new BindClassVisitor(classSpec, config);
       return JsonReader.parse(path, visitor);
     }
     throw new AssertionError();

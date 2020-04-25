@@ -4,8 +4,6 @@ import static java.util.Objects.requireNonNull;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
@@ -15,39 +13,30 @@ import java.util.stream.Collectors;
 
 public final class ObjectBuilder implements ObjectVisitor {
   private final Map<String, Object> map;
-  private final Factory factory;
+  final BuilderConfig config;
   private final Consumer<Map<String, Object>> postOp;
 
-
-  record Factory(Supplier<? extends Map<String, Object>> mapSupplier,
-                 UnaryOperator<Map<String, Object>> transformMapOp,
-                 Supplier<? extends List<Object>> listSupplier,
-                 UnaryOperator<List<Object>> transformListOp) {
-    public Factory {
-      requireNonNull(mapSupplier, "mapSupplier");
-      requireNonNull(mapSupplier, "transformMapOp");
-      requireNonNull(mapSupplier, "listSupplier");
-      requireNonNull(mapSupplier, "transformListOp");
-    }
+  ObjectBuilder(BuilderConfig config, Consumer<Map<String, Object>> postOp) {
+    this.map = requireNonNull(config.mapSupplier().get());
+    this.config = config;
+    this.postOp = postOp;
   }
 
-  ObjectBuilder(Factory factory, Consumer<Map<String, Object>> postOp) {
-    this.map = requireNonNull(factory.mapSupplier.get());
-    this.factory = factory;
-    this.postOp = postOp;
+  ObjectBuilder(BuilderConfig config) {
+    this(config, __ -> {});
   }
 
   public ObjectBuilder(Supplier<? extends Map<String, Object>> mapSupplier,
       UnaryOperator<Map<String, Object>> transformMapOp,
       Supplier<? extends List<Object>> listSupplier,
       UnaryOperator<List<Object>> transformListOp) {
-    this(new Factory(mapSupplier, transformMapOp, listSupplier, transformListOp), __ -> {});
+    this(new BuilderConfig(mapSupplier, transformMapOp, listSupplier, transformListOp));
   }
   public ObjectBuilder(Supplier<? extends Map<String, Object>> mapSupplier, Supplier<? extends List<Object>> listSupplier) {
-    this(mapSupplier, UnaryOperator.identity(), listSupplier, UnaryOperator.identity());
+    this(new BuilderConfig(mapSupplier, listSupplier));
   }
   public ObjectBuilder() {
-    this(HashMap::new, ArrayList::new);
+    this(BuilderConfig.DEFAULT);
   }
 
   @Override
@@ -85,7 +74,7 @@ public final class ObjectBuilder implements ObjectVisitor {
   }
 
   public Map<String, Object> toMap() {
-    var resultMap = factory.transformMapOp.apply(map);
+    var resultMap = config.transformMapOp().apply(map);
     postOp.accept(resultMap);
     return resultMap;
   }
@@ -93,13 +82,13 @@ public final class ObjectBuilder implements ObjectVisitor {
   @Override
   public ObjectBuilder visitMemberObject(String name) {
     requireNonNull(name);
-    return new ObjectBuilder(factory, _map -> map.put(name, _map));
+    return new ObjectBuilder(config, _map -> map.put(name, _map));
   }
 
   @Override
   public ArrayBuilder visitMemberArray(String name) {
     requireNonNull(name);
-    return new ArrayBuilder(factory, list -> map.put(name, list));
+    return new ArrayBuilder(config, list -> map.put(name, list));
   }
 
   @Override
@@ -173,6 +162,6 @@ public final class ObjectBuilder implements ObjectVisitor {
 
   public Object accept(ObjectVisitor objectVisitor) {
     requireNonNull(objectVisitor);
-     return visitMap(map, objectVisitor);
+    return visitMap(map, objectVisitor);
   }
 }

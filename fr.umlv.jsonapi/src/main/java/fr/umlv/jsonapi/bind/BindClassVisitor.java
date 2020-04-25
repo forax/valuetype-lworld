@@ -1,6 +1,7 @@
 package fr.umlv.jsonapi.bind;
 
 import fr.umlv.jsonapi.ArrayVisitor;
+import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.bind.Binder.ClassInfo;
@@ -9,31 +10,33 @@ import java.util.function.Consumer;
 
 public final class BindClassVisitor implements ObjectVisitor {
   private final ClassSpec spec;
+  private final BuilderConfig config;
   private Object builder;
   private final Consumer<Object> postOp;
 
-  BindClassVisitor(ClassSpec spec, Consumer<Object> postOp) {
+  BindClassVisitor(ClassSpec spec, BuilderConfig config, Consumer<Object> postOp) {
     this.spec = spec;
+    this.config = config;
     this.postOp = postOp;
     this.builder = spec.classInfo().newBuilder();
   }
 
-  public BindClassVisitor(ClassSpec spec) {
-    this(spec, __ -> {});
+  BindClassVisitor(ClassSpec spec, BuilderConfig config) {
+    this(spec, config, __ -> {});
   }
 
   @Override
   public ObjectVisitor visitMemberObject(String name) {
     @SuppressWarnings("unchecked")
     var classInfo = (ClassInfo<Object>) spec.classInfo();
-    return spec.newMemberObject(name, o -> builder = classInfo.addObject(builder, name, o));
+    return spec.newMemberObject(name, config, o -> builder = classInfo.addObject(builder, name, o));
   }
 
   @Override
   public ArrayVisitor visitMemberArray(String name) {
     @SuppressWarnings("unchecked")
     var classInfo = (ClassInfo<Object>) spec.classInfo();
-    return spec.newMemberArray(name, a -> builder = classInfo.addArray(builder, name, a));
+    return spec.newMemberArray(name, config, a -> builder = classInfo.addArray(builder, name, a));
   }
 
   @Override

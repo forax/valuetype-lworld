@@ -3,12 +3,20 @@ package fr.umlv.jsonapi.bind;
 import static fr.umlv.jsonapi.bind.Binder.ARRAY;
 import static fr.umlv.jsonapi.bind.Binder.OBJECT;
 import static java.lang.invoke.MethodHandles.lookup;
+import static java.util.function.Predicate.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import fr.umlv.jsonapi.BuilderConfig;
+import fr.umlv.jsonapi.JsonReader;
+import fr.umlv.jsonapi.bind.Binder.SpecFinder;
 import java.net.URI;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 public class BinderTest {
@@ -103,11 +111,65 @@ public class BinderTest {
         [ { "color": "red", "lines": 3 }, { "color": "blue", "lines": 1 } ]
         """;
     var any = binder.findSpec(Object.class).orElseThrow();
-    Object o = Binder.read(json, any.object().array());
+    Object o = Binder.read(json, any.object().array(), new BuilderConfig());
     assertEquals(
         List.of(
             Map.of("color", "red", "lines", 3),
             Map.of("color", "blue", "lines", 1)),
         o);
+  }
+
+  @Test
+  public void readSecurity() {
+    record Authorized() { }
+    record Unauthorized() { }
+    var binder = Binder.noDefaults();  // no finder registered !
+    var recordFinder = SpecFinder.recordFinder(lookup(), binder);
+    var restrictedSet = Set.of(Authorized.class);
+    // register the finder filtered !
+    binder.register(recordFinder.filter(restrictedSet::contains));
+
+    var json = "{}";
+    var authorized = binder.read(json, Authorized.class);
+    assertEquals(new Authorized(), authorized);
+
+    assertThrows(IllegalStateException.class, () -> binder.read(json, Unauthorized.class));
+  }
+
+  @Test
+  public void readAndFilter() {
+    var binder = new Binder(lookup());
+    var json = """
+        {
+          "name": "James Joyce",
+          "age": 38,
+          "books": [
+            "Finnegans Wake"
+          ]
+        }
+        """;
+    record Author(String name, List<String> books) { }
+    var authorSpec = binder.findSpec(Author.class).orElseThrow();
+    var classVisitor = authorSpec.createBindVisitor(BindClassVisitor.class);
+    var author = (Author)JsonReader.parse(json, classVisitor.filterName(not("age"::equals)));
+    assertEquals(new Author("James Joyce", List.of("Finnegans Wake")), author);
+  }
+
+  @Test
+  public void readImmutable() {
+    var binder = new Binder(lookup());
+    var json = """
+        {
+          "name": "James Joyce",
+          "age": 38,
+          "books": [
+            "Finnegans Wake"
+          ]
+        }
+        """;
+    record Author(String name, int age, List<String> books) { }
+    var config = new BuilderConfig(HashMap::new, Map::copyOf, ArrayList::new, List::copyOf);
+    var author = binder.read(json, Author.class, config);
+    assertThrows(UnsupportedOperationException.class, () -> author.books().add("foo"));
   }
 }

@@ -19,12 +19,8 @@ public final class BindArrayVisitor implements ArrayVisitor {
     this.postOp = postOp;
   }
 
-  public BindArrayVisitor(ArraySpec spec, ArrayBuilder arrayBuilder) {
+  BindArrayVisitor(ArraySpec spec, ArrayBuilder arrayBuilder) {
     this(spec, arrayBuilder, __ -> {});
-  }
-
-  public BindArrayVisitor(ArraySpec spec) {
-    this(spec, new ArrayBuilder());
   }
 
   public List<Object> toList() {
