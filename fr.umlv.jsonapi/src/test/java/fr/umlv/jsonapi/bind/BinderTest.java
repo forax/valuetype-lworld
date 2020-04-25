@@ -5,12 +5,12 @@ import static fr.umlv.jsonapi.bind.Binder.OBJECT;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.function.Predicate.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonReader;
-
+import fr.umlv.jsonapi.bind.Binder.NoSpecFoundException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,9 +23,9 @@ public class BinderTest {
   @Test
   public void noDefaults() {
     var binder = Binder.noDefaults();
-    assertTrue(binder.findSpec(int.class).isPresent());
-    assertTrue(binder.findSpec(String.class).isPresent());
-    assertTrue(binder.findSpec(URI.class).isEmpty());
+    assertNotNull(binder.lookupSpec(int.class));
+    assertNotNull(binder.lookupSpec(String.class));
+    assertThrows(NoSpecFoundException.class, () -> binder.lookupSpec(URI.class));
   }
 
   /*@Test
@@ -46,7 +46,7 @@ public class BinderTest {
   public void findSpec() {
     var binder = new Binder(lookup());
     record Point(int x, int y) { }
-    var spec = binder.findSpec(Point.class).orElseThrow();
+    var spec = binder.lookupSpec(Point.class);
     assertEquals("Point", spec.toString());
   }
 
@@ -110,7 +110,7 @@ public class BinderTest {
     var json = """
         [ { "color": "red", "lines": 3 }, { "color": "blue", "lines": 1 } ]
         """;
-    var any = binder.findSpec(Object.class).orElseThrow();
+    var any = binder.lookupSpec(Object.class);
     Object o = Binder.read(json, any.object().array(), new BuilderConfig());
     assertEquals(
         List.of(
@@ -133,7 +133,7 @@ public class BinderTest {
     var authorized = binder.read(json, Authorized.class);
     assertEquals(new Authorized(), authorized);
 
-    assertThrows(IllegalStateException.class, () -> binder.read(json, Unauthorized.class));
+    assertThrows(NoSpecFoundException.class, () -> binder.read(json, Unauthorized.class));
   }
 
   @Test
@@ -149,7 +149,7 @@ public class BinderTest {
         }
         """;
     record Author(String name, List<String> books) { }
-    var authorSpec = binder.findSpec(Author.class).orElseThrow();
+    var authorSpec = binder.lookupSpec(Author.class);
     var classVisitor = authorSpec.createBindVisitor(BindClassVisitor.class);
     var author = (Author)JsonReader.parse(json, classVisitor.filterName(not("age"::equals)));
     assertEquals(new Author("James Joyce", List.of("Finnegans Wake")), author);

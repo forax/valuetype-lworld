@@ -20,7 +20,6 @@ import java.math.BigInteger;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
@@ -132,13 +131,16 @@ public class Binder {
     throw new IllegalStateException(spec + "." + name + " can not convert " + value + " to " + elementSpec);
   }
 
-  @SuppressWarnings("serial")
-  private static final class NoSpecFoundException extends RuntimeException {
-    private NoSpecFoundException() {
-      super(null, null, false, false);
+  public static final class NoSpecFoundException extends RuntimeException {
+    public NoSpecFoundException(String message) {
+      super(message);
     }
-
-    private static final NoSpecFoundException INSTANCE = new NoSpecFoundException();
+    public NoSpecFoundException(String message, Throwable cause) {
+      super(message, cause);
+    }
+    public NoSpecFoundException(Throwable cause) {
+      super(cause);
+    }
   }
 
   private final ClassValue<Spec> specMap = new ClassValue<>() {
@@ -156,7 +158,7 @@ public class Binder {
           return optSpec.orElseThrow();
         }
       }
-      throw NoSpecFoundException.INSTANCE;
+      throw new NoSpecFoundException("no finder can resolve type " + type.getName());
     }
   };
   private final CopyOnWriteArrayList<SpecFinder> finders = new CopyOnWriteArrayList<>();
@@ -180,32 +182,28 @@ public class Binder {
     return this;
   }
 
-  Spec findSpecOrThrow(Type type) {
-    return findSpec(type).orElseThrow(() -> new IllegalStateException("no spec for type " + type.getTypeName() + " found"));
+  private Spec specForClass(Class<?> type) {
+    return specMap.get(type);
   }
-  public Optional<Spec> findSpec(Type type) {
+  public Spec lookupSpec(Type type) throws NoSpecFoundException {
     requireNonNull(type);
     if (type instanceof Class<?> clazz) {
-      return lookupSpec(clazz);
+      return specForClass(clazz);
     }
     if (type instanceof ParameterizedType parameterizedType) {
       var rawType = parameterizedType.getRawType();
+      var actualTypeArguments = parameterizedType.getActualTypeArguments();
       if (rawType == Map.class) {
-        //FIXME (first type argument should be a String)
-        return findSpec(parameterizedType.getActualTypeArguments()[1]).map(Spec::object);
+        if (actualTypeArguments[0] != String.class) {  //FIXME wildcard ?
+          throw new NoSpecFoundException("can not decode " + type.getTypeName());
+        }
+        return lookupSpec(actualTypeArguments[1]).object();
       }
       if (rawType == List.class) {
-        return findSpec(parameterizedType.getActualTypeArguments()[0]).map(Spec::array);
+        return lookupSpec(actualTypeArguments[0]).array();
       }
     }
-    return Optional.empty();
-  }
-  private Optional<Spec> lookupSpec(Class<?> type) {
-    try {
-      return Optional.of(specMap.get(type));
-    } catch(@SuppressWarnings("unused") NoSpecFoundException e) {
-      return Optional.empty();
-    }
+    throw new NoSpecFoundException("can not decode unknown type " + type.getTypeName());
   }
 
   static final BuilderConfig DEFAULT_CONFIG = new BuilderConfig();
@@ -227,19 +225,19 @@ public class Binder {
   public <T> T read(Reader reader, Class<T> type, BuilderConfig config) throws IOException {
     requireNonNull(reader);
     requireNonNull(type);
-    return type.cast(read(reader, findSpecOrThrow(type), config));
+    return type.cast(read(reader, specForClass(type), config));
   }
   @SuppressWarnings("unchecked")
   public <T> List<T> read(Reader reader, Class<T> type, @SuppressWarnings("unused") ArrayToken __) throws IOException {
     requireNonNull(reader);
     requireNonNull(type);
-    return (List<T>) read(reader, findSpecOrThrow(type).array(), DEFAULT_CONFIG);
+    return (List<T>) read(reader, specForClass(type).array(), DEFAULT_CONFIG);
   }
   @SuppressWarnings("unchecked")
   public <T> Map<String, T> read(Reader reader, Class<T> type, @SuppressWarnings("unused") ObjectToken __) throws IOException {
     requireNonNull(reader);
     requireNonNull(type);
-    return (Map<String, T>) read(reader, findSpecOrThrow(type).object(), DEFAULT_CONFIG);
+    return (Map<String, T>) read(reader, specForClass(type).object(), DEFAULT_CONFIG);
   }
   public static Object read(Reader reader, Spec spec, BuilderConfig config) throws IOException {
     requireNonNull(reader);
@@ -267,19 +265,19 @@ public class Binder {
   public <T> T read(String text, Class<T> type, BuilderConfig config) {
     requireNonNull(text);
     requireNonNull(type);
-    return type.cast(read(text, findSpecOrThrow(type), config));
+    return type.cast(read(text, specForClass(type), config));
   }
   @SuppressWarnings("unchecked")
   public <T> List<T> read(String text, Class<T> type, @SuppressWarnings("unused") ArrayToken __) {
     requireNonNull(text);
     requireNonNull(type);
-    return (List<T>) read(text, findSpecOrThrow(type).array(), DEFAULT_CONFIG);
+    return (List<T>) read(text, specForClass(type).array(), DEFAULT_CONFIG);
   }
   @SuppressWarnings("unchecked")
   public <T> Map<String, T> read(String text, Class<T> type, @SuppressWarnings("unused") ObjectToken __) {
     requireNonNull(text);
     requireNonNull(type);
-    return (Map<String, T>) read(text, findSpecOrThrow(type).object(), DEFAULT_CONFIG);
+    return (Map<String, T>) read(text, specForClass(type).object(), DEFAULT_CONFIG);
   }
   public static Object read(String text, Spec spec, BuilderConfig config) {
     requireNonNull(text);
@@ -307,19 +305,19 @@ public class Binder {
   public <T> T read(Path path, Class<T> type, BuilderConfig config) throws IOException {
     requireNonNull(path);
     requireNonNull(type);
-    return type.cast(read(path, findSpecOrThrow(type), config));
+    return type.cast(read(path, specForClass(type), config));
   }
   @SuppressWarnings("unchecked")
   public <T> List<T> read(Path path, Class<T> type, @SuppressWarnings("unused") ArrayToken __) throws IOException {
     requireNonNull(path);
     requireNonNull(type);
-    return (List<T>) read(path, findSpecOrThrow(type).array(), DEFAULT_CONFIG);
+    return (List<T>) read(path, specForClass(type).array(), DEFAULT_CONFIG);
   }
   @SuppressWarnings("unchecked")
   public <T> Map<String, T> read(Path path, Class<T> type, @SuppressWarnings("unused") ObjectToken __) throws IOException {
     requireNonNull(path);
     requireNonNull(type);
-    return (Map<String, T>) read(path, findSpecOrThrow(type).object(), DEFAULT_CONFIG);
+    return (Map<String, T>) read(path, specForClass(type).object(), DEFAULT_CONFIG);
   }
   public static Object read(Path path, Spec spec, BuilderConfig config) throws IOException {
     requireNonNull(path);
