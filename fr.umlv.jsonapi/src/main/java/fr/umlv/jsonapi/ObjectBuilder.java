@@ -75,6 +75,15 @@ public final class ObjectBuilder implements ObjectVisitor {
     return this;
   }
 
+  public ObjectBuilder with(String name, Consumer<? super ObjectBuilder> consumer) {
+    requireNonNull(name);
+    requireNonNull(consumer);
+    var builder = new ObjectBuilder();
+    consumer.accept(builder);
+    add(name, builder.toMap());
+    return this;
+  }
+
   public Map<String, Object> toMap() {
     var resultMap = factory.transformMapOp.apply(map);
     postOp.accept(resultMap);

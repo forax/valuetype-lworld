@@ -111,8 +111,7 @@ public final class JsonReader {
       return parseOrSkipObject(parser, visitor.visitObject(), stack);
     }
     if (token == START_ARRAY) {
-      parseOrSkipArray(parser, visitor.visitArray(), stack);
-      return null;
+      return parseOrSkipArray(parser, visitor.visitArray(), stack);
     }
     throw new IOException("invalid token " + token);
   }
