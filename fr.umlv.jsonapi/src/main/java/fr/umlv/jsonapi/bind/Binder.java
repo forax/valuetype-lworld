@@ -1,6 +1,5 @@
 package fr.umlv.jsonapi.bind;
 
-import static java.lang.invoke.MethodType.methodType;
 import static java.util.Objects.requireNonNull;
 
 import fr.umlv.jsonapi.ArrayBuilder;
@@ -10,60 +9,24 @@ import fr.umlv.jsonapi.JsonReader;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectBuilder;
 import fr.umlv.jsonapi.ObjectVisitor;
+
 import java.io.IOException;
 import java.io.Reader;
-import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
-import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
 
 public class Binder {
-  public /*sealed*/ interface Spec {
-    default Spec array() { return new ArraySpec(this); }
-    default Spec object() { return new ObjectSpec(this); }
-
-    default <V, B> V createBindVisitor(Class<V> visitorType) {
-      return createBindVisitor(visitorType, DEFAULT_CONFIG);
-    }
-    default <V, B> V createBindVisitor(Class<V> visitorType, BuilderConfig config) {
-      requireNonNull(visitorType);
-      requireNonNull(config);
-      if (this instanceof ClassSpec classSpec) {
-        return visitorType.cast(new BindClassVisitor(classSpec, config));
-      }
-      if (this instanceof ArraySpec arraySpec) {
-        return visitorType.cast(new BindArrayVisitor(arraySpec, config.newArrayBuilder()));
-      }
-      if (this instanceof ObjectSpec objectSpec) {
-        return visitorType.cast(new BindObjectVisitor(objectSpec, config.newObjectBuilder()));
-      }
-      throw new IllegalArgumentException("unknown type of visitor " + visitorType.getName());
-    }
-
-    static Spec objectClass(String name, ClassInfo<?> classInfo) {
-      requireNonNull(name);
-      requireNonNull(classInfo);
-      return new ClassSpec(name, classInfo);
-    }
-    static Spec valueClass(String name, UnaryOperator<JsonValue> converter) {
-      requireNonNull(name);
-      requireNonNull(converter);
-      return new ValueSpec(name, converter);
-    }
-  }
-
-  private record ValueSpec(String name, UnaryOperator<JsonValue> converter) implements Spec {
+  record ValueSpec(String name, UnaryOperator<JsonValue> converter) implements Spec {
     @Override
     public String toString() {
       return name;
@@ -92,7 +55,7 @@ public class Binder {
 
     ArrayVisitor newArrayFrom(ArrayBuilder arrayBuilder) {
       if (component instanceof ArraySpec arraySpec) {
-        return new BindArrayVisitor(arraySpec, arrayBuilder.visitArray(), __ -> {});
+        return new BindArrayVisitor(arraySpec, arrayBuilder.visitArray());
       }
       throw new IllegalStateException("invalid component for an array " + component);
     }
@@ -119,16 +82,6 @@ public class Binder {
       }
       throw new IllegalStateException("invalid component for an array " + component);
     }
-  }
-
-  public interface ClassInfo<B> {
-    Spec elementSpec(String name);
-
-    B newBuilder();
-    B addObject(B builder, String name, Object object);
-    B addArray(B builder, String name, Object array);
-    B addValue(B builder, String name, JsonValue value);
-    Object build(B builder);
   }
 
   record ClassSpec(String name, ClassInfo<?>classInfo) implements Spec {
@@ -179,102 +132,7 @@ public class Binder {
     throw new IllegalStateException(spec + "." + name + " can not convert " + value + " to " + elementSpec);
   }
 
-  @FunctionalInterface
-  public interface SpecFinder {
-    Optional<Spec> findSpec(Class<?> type);
-
-    default SpecFinder filter(Predicate<? super Class<?>> predicate) {
-      return type -> {
-        if (!predicate.test(type)) {
-          return Optional.empty();
-        }
-        return findSpec(type);
-      };
-    }
-
-    static SpecFinder from(Map<Class<?>, Spec> specMap) {
-      return type -> Optional.ofNullable(specMap.get(type));
-    }
-
-    static SpecFinder recordFinder(Lookup lookup, Binder binder) {
-      requireNonNull(lookup);
-      requireNonNull(binder);
-      return type -> {
-        var components = type.getRecordComponents();
-        if (components == null) {
-          return Optional.empty();
-        }
-        int length = components.length;
-        record RecordElement(int index, Spec spec) {}
-        var constructorTypes = new Class<?>[length];
-        var componentMap = new HashMap<String, RecordElement>();
-        for(var i = 0; i < length; i++) {
-          var component = components[i];
-          constructorTypes[i] = component.getType();
-
-          var componentType = component.getGenericType();
-          var componentSpec = binder.findSpecOrThrow(componentType);
-          componentMap.put(component.getName(), new RecordElement(i, componentSpec));
-        }
-
-        MethodHandle constructor;
-        try {
-          constructor = lookup.findConstructor(type, methodType(void.class, constructorTypes));
-        } catch (NoSuchMethodException e) {
-          throw (NoSuchMethodError) new NoSuchMethodError().initCause(e);
-        } catch (IllegalAccessException e) {
-          throw (IllegalAccessError) new IllegalAccessError().initCause(e);
-        }
-        return Optional.of(Spec.objectClass(type.getSimpleName(), new ClassInfo<Object[]>() {
-          private RecordElement element(String name) {
-            var recordElement = componentMap.get(name);
-            if (recordElement == null) {
-              throw new IllegalStateException("no element " + name + " for class " + type);
-            }
-            return recordElement;
-          }
-
-          @Override
-          public Spec elementSpec(String name) {
-            return element(name).spec;
-          }
-
-          @Override
-          public Object[] newBuilder() {
-            return new Object[length];
-          }
-
-          @Override
-          public Object[] addObject(Object[] builder, String name, Object object) {
-            builder[element(name).index] = object;
-            return builder;
-          }
-          @Override
-          public Object[] addArray(Object[] builder, String name, Object array) {
-            builder[element(name).index] = array;
-            return builder;
-          }
-          @Override
-          public Object[] addValue(Object[] builder, String name, JsonValue value) {
-            builder[element(name).index] = value.asObject();
-            return builder;
-          }
-
-          @Override
-          public Object build(Object[] builder) {
-            try {
-              return constructor.invokeWithArguments(builder);
-            } catch(RuntimeException | Error e) {
-              throw e;
-            } catch (Throwable throwable) { // a record constructor can not throw a checked exception !
-              throw new AssertionError(throwable);
-            }
-          }
-        }));
-      };
-    }
-  }
-
+  @SuppressWarnings("serial")
   private static final class NoSpecFoundException extends RuntimeException {
     private NoSpecFoundException() {
       super(null, null, false, false);
@@ -283,7 +141,7 @@ public class Binder {
     private static final NoSpecFoundException INSTANCE = new NoSpecFoundException();
   }
 
-  private final ClassValue<Spec> specMap = new ClassValue<Spec>() {
+  private final ClassValue<Spec> specMap = new ClassValue<>() {
     @Override
     protected Spec computeValue(Class<?> type) {
       if (type.isPrimitive() || type == Object.class || type == String.class
@@ -322,7 +180,7 @@ public class Binder {
     return this;
   }
 
-  private Spec findSpecOrThrow(Type type) {
+  Spec findSpecOrThrow(Type type) {
     return findSpec(type).orElseThrow(() -> new IllegalStateException("no spec for type " + type.getTypeName() + " found"));
   }
   public Optional<Spec> findSpec(Type type) {
@@ -345,18 +203,18 @@ public class Binder {
   private Optional<Spec> lookupSpec(Class<?> type) {
     try {
       return Optional.of(specMap.get(type));
-    } catch(NoSpecFoundException e) {
+    } catch(@SuppressWarnings("unused") NoSpecFoundException e) {
       return Optional.empty();
     }
   }
 
-  private static final BuilderConfig DEFAULT_CONFIG = new BuilderConfig();
+  static final BuilderConfig DEFAULT_CONFIG = new BuilderConfig();
 
-  public /*sealed*/ interface ArrayToken { }
-  private record ArrayTokenEmpty() implements ArrayToken { }
+  public /*sealed*/ interface ArrayToken { /* empty */ }
+  private record ArrayTokenEmpty() implements ArrayToken { /* empty */ }
 
-  public /*sealed*/ interface ObjectToken {}
-  private record ObjectTokenEmpty() implements ObjectToken { }
+  public /*sealed*/ interface ObjectToken { /* empty */ }
+  private record ObjectTokenEmpty() implements ObjectToken { /* empty */ }
 
   public static final ArrayToken ARRAY = new ArrayTokenEmpty();
   public static final ObjectToken OBJECT = new ObjectTokenEmpty();
@@ -372,13 +230,13 @@ public class Binder {
     return type.cast(read(reader, findSpecOrThrow(type), config));
   }
   @SuppressWarnings("unchecked")
-  public <T> List<T> read(Reader reader, Class<T> type, ArrayToken _1) throws IOException {
+  public <T> List<T> read(Reader reader, Class<T> type, @SuppressWarnings("unused") ArrayToken __) throws IOException {
     requireNonNull(reader);
     requireNonNull(type);
     return (List<T>) read(reader, findSpecOrThrow(type).array(), DEFAULT_CONFIG);
   }
   @SuppressWarnings("unchecked")
-  public <T> Map<String, T> read(Reader reader, Class<T> type, ObjectToken _1) throws IOException {
+  public <T> Map<String, T> read(Reader reader, Class<T> type, @SuppressWarnings("unused") ObjectToken __) throws IOException {
     requireNonNull(reader);
     requireNonNull(type);
     return (Map<String, T>) read(reader, findSpecOrThrow(type).object(), DEFAULT_CONFIG);
@@ -412,13 +270,13 @@ public class Binder {
     return type.cast(read(text, findSpecOrThrow(type), config));
   }
   @SuppressWarnings("unchecked")
-  public <T> List<T> read(String text, Class<T> type, ArrayToken _1) {
+  public <T> List<T> read(String text, Class<T> type, @SuppressWarnings("unused") ArrayToken __) {
     requireNonNull(text);
     requireNonNull(type);
     return (List<T>) read(text, findSpecOrThrow(type).array(), DEFAULT_CONFIG);
   }
   @SuppressWarnings("unchecked")
-  public <T> Map<String, T> read(String text, Class<T> type, ObjectToken _1) {
+  public <T> Map<String, T> read(String text, Class<T> type, @SuppressWarnings("unused") ObjectToken __) {
     requireNonNull(text);
     requireNonNull(type);
     return (Map<String, T>) read(text, findSpecOrThrow(type).object(), DEFAULT_CONFIG);
@@ -452,13 +310,13 @@ public class Binder {
     return type.cast(read(path, findSpecOrThrow(type), config));
   }
   @SuppressWarnings("unchecked")
-  public <T> List<T> read(Path path, Class<T> type, ArrayToken _1) throws IOException {
+  public <T> List<T> read(Path path, Class<T> type, @SuppressWarnings("unused") ArrayToken __) throws IOException {
     requireNonNull(path);
     requireNonNull(type);
     return (List<T>) read(path, findSpecOrThrow(type).array(), DEFAULT_CONFIG);
   }
   @SuppressWarnings("unchecked")
-  public <T> Map<String, T> read(Path path, Class<T> type, ObjectToken _1) throws IOException {
+  public <T> Map<String, T> read(Path path, Class<T> type, @SuppressWarnings("unused") ObjectToken __) throws IOException {
     requireNonNull(path);
     requireNonNull(type);
     return (Map<String, T>) read(path, findSpecOrThrow(type).object(), DEFAULT_CONFIG);

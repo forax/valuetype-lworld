@@ -20,7 +20,7 @@ public final class BindObjectVisitor implements ObjectVisitor {
   }
 
   BindObjectVisitor(ObjectSpec spec, ObjectBuilder objectBuilder) {
-    this(spec, objectBuilder, __ -> {});
+    this(spec, objectBuilder, __ -> { /* empty */ });
   }
 
   public Map<String, Object> toMap() {

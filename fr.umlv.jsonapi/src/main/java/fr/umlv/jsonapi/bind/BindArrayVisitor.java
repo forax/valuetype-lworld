@@ -20,7 +20,7 @@ public final class BindArrayVisitor implements ArrayVisitor {
   }
 
   BindArrayVisitor(ArraySpec spec, ArrayBuilder arrayBuilder) {
-    this(spec, arrayBuilder, __ -> {});
+    this(spec, arrayBuilder, __ -> { /* empty */ });
   }
 
   public List<Object> toList() {

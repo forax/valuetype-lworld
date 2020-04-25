@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonReader;
-import fr.umlv.jsonapi.bind.Binder.SpecFinder;
+
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;

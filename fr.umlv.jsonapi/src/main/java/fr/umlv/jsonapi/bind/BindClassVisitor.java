@@ -1,12 +1,13 @@
 package fr.umlv.jsonapi.bind;
 
+import java.util.function.Consumer;
+
 import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
-import fr.umlv.jsonapi.bind.Binder.ClassInfo;
 import fr.umlv.jsonapi.bind.Binder.ClassSpec;
-import java.util.function.Consumer;
+import fr.umlv.jsonapi.bind.Spec.ClassInfo;
 
 public final class BindClassVisitor implements ObjectVisitor {
   private final ClassSpec spec;
@@ -22,7 +23,7 @@ public final class BindClassVisitor implements ObjectVisitor {
   }
 
   BindClassVisitor(ClassSpec spec, BuilderConfig config) {
-    this(spec, config, __ -> {});
+    this(spec, config, __ -> { /* empty */ });
   }
 
   @Override
