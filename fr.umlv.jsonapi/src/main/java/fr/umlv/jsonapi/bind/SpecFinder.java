@@ -47,7 +47,7 @@ public interface SpecFinder {
         constructorTypes[i] = component.getType();
 
         var componentType = component.getGenericType();
-        var componentSpec = binder.lookupSpec(componentType);
+        var componentSpec = binder.spec(componentType);
         componentMap.put(component.getName(), new RecordElement(i, componentSpec));
       }
 

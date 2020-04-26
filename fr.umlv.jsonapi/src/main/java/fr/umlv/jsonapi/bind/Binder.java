@@ -22,7 +22,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
+import java.util.stream.Stream;
 
 public final class Binder {
   record ValueSpec(String name, UnaryOperator<JsonValue> converter) implements Spec {
@@ -56,6 +58,35 @@ public final class Binder {
       if (component instanceof ArraySpec arraySpec) {
         return new BindArrayVisitor(arraySpec, arrayBuilder.visitArray());
       }
+      if (component instanceof StreamSpec streamSpec) {
+        return new BindStreamVisitor(streamSpec, BuilderConfig.from(arrayBuilder), arrayBuilder::add);
+      }
+      throw new IllegalStateException("invalid component for an array " + component);
+    }
+  }
+  record StreamSpec(Spec component, Function<? super Stream<Object>, ?> aggregator) implements Spec {
+    @Override
+    public String toString() {
+      return component + ".stream(aggregator)";
+    }
+
+    ObjectVisitor newObjectFrom(BuilderConfig config) {
+      if (component instanceof ObjectSpec objectSpec) {
+        return new BindObjectVisitor(objectSpec, config.newObjectBuilder());
+      }
+      if (component instanceof ClassSpec classSpec) {
+        return new BindClassVisitor(classSpec, config);
+      }
+      throw new IllegalStateException("invalid component for an object " + component);
+    }
+
+    ArrayVisitor newArrayFrom(BuilderConfig config) {
+      if (component instanceof ArraySpec arraySpec) {
+        return new BindArrayVisitor(arraySpec, config.newArrayBuilder());
+      }
+      if (component instanceof StreamSpec streamSpec) {
+        return new BindStreamVisitor(streamSpec, config);
+      }
       throw new IllegalStateException("invalid component for an array " + component);
     }
   }
@@ -78,6 +109,9 @@ public final class Binder {
     ArrayVisitor newMemberArrayFrom(String name, ObjectBuilder objectBuilder) {
       if (component instanceof ArraySpec arraySpec) {
         return new BindArrayVisitor(arraySpec, objectBuilder.visitMemberArray(name));
+      }
+      if (component instanceof StreamSpec streamSpec) {
+        return new BindStreamVisitor(streamSpec, BuilderConfig.from(objectBuilder), o -> objectBuilder.add(name, o));
       }
       throw new IllegalStateException("invalid component for an array " + component);
     }
@@ -105,11 +139,21 @@ public final class Binder {
       if (spec instanceof ArraySpec arraySpec) {
         return new BindArrayVisitor(arraySpec, config.newArrayBuilder(), postOp);
       }
+      if (spec instanceof StreamSpec streamSpec) {
+        return new BindStreamVisitor(streamSpec, config, postOp);
+      }
       throw new IllegalStateException("invalid component for an array " + spec + " for element " + name);
     }
   }
 
   static JsonValue convert(ArraySpec spec, JsonValue value) {
+    var elementSpec = spec.component;
+    if (elementSpec instanceof ValueSpec valueSpec) {
+      return valueSpec.convert(value);
+    }
+    throw new IllegalStateException(spec + " can not convert " + value + " to " + elementSpec);
+  }
+  static JsonValue convert(StreamSpec spec, JsonValue value) {
     var elementSpec = spec.component;
     if (elementSpec instanceof ValueSpec valueSpec) {
       return valueSpec.convert(value);
@@ -123,6 +167,7 @@ public final class Binder {
     }
     throw new IllegalStateException(spec + "." + name + " can not convert " + value + " to " + elementSpec);
   }
+
   static JsonValue convert(ClassSpec spec, String name, JsonValue value) {
     var elementSpec = spec.classInfo.elementSpec(name);
     if (elementSpec instanceof ValueSpec valueSpec) {
@@ -185,7 +230,7 @@ public final class Binder {
   private Spec specForClass(Class<?> type) {
     return specMap.get(type);
   }
-  public Spec lookupSpec(Type type) throws NoSpecFoundException {
+  public Spec spec(Type type) throws NoSpecFoundException {
     requireNonNull(type);
     if (type instanceof Class<?> clazz) {
       return specForClass(clazz);
@@ -197,10 +242,10 @@ public final class Binder {
         if (actualTypeArguments[0] != String.class) {  //FIXME wildcard ?
           throw new NoSpecFoundException("can not decode " + type.getTypeName());
         }
-        return lookupSpec(actualTypeArguments[1]).object();
+        return spec(actualTypeArguments[1]).object();
       }
       if (rawType == List.class) {
-        return lookupSpec(actualTypeArguments[0]).array();
+        return spec(actualTypeArguments[0]).array();
       }
     }
     throw new NoSpecFoundException("can not decode unknown type " + type.getTypeName());
@@ -208,14 +253,12 @@ public final class Binder {
 
   static final BuilderConfig DEFAULT_CONFIG = new BuilderConfig();
 
-  public /*sealed*/ interface ArrayToken { /* empty */ }
-  private record ArrayTokenEmpty() implements ArrayToken { /* empty */ }
+  public interface ArrayToken { /* empty */ }
+  public interface ObjectToken { /* empty */ }
 
-  public /*sealed*/ interface ObjectToken { /* empty */ }
-  private record ObjectTokenEmpty() implements ObjectToken { /* empty */ }
+  public static final ObjectToken IN_OBJECT = null;
+  public static final ArrayToken IN_ARRAY = null;
 
-  public static final ArrayToken IN_ARRAY = new ArrayTokenEmpty();
-  public static final ObjectToken IN_OBJECT = new ObjectTokenEmpty();
 
   public <T> T read(Reader reader, Class<T> type) throws IOException {
     requireNonNull(reader);
@@ -248,6 +291,10 @@ public final class Binder {
     }
     if (spec instanceof ArraySpec arraySpec) {
       var visitor = new BindArrayVisitor(arraySpec, config.newArrayBuilder());
+      return JsonReader.parse(reader, visitor);
+    }
+    if (spec instanceof StreamSpec streamSpec) {
+      var visitor = new BindStreamVisitor(streamSpec, config);
       return JsonReader.parse(reader, visitor);
     }
     if (spec instanceof ClassSpec classSpec) {
@@ -290,6 +337,10 @@ public final class Binder {
       var visitor = new BindArrayVisitor(arraySpec, config.newArrayBuilder());
       return JsonReader.parse(text, visitor);
     }
+    if (spec instanceof StreamSpec streamSpec) {
+      var visitor = new BindStreamVisitor(streamSpec, config);
+      return JsonReader.parse(text, visitor);
+    }
     if (spec instanceof ClassSpec classSpec) {
       var visitor = new BindClassVisitor(classSpec, config);
       return JsonReader.parse(text, visitor);
@@ -328,6 +379,10 @@ public final class Binder {
     }
     if (spec instanceof ArraySpec arraySpec) {
       var visitor = new BindArrayVisitor(arraySpec, config.newArrayBuilder());
+      return JsonReader.parse(path, visitor);
+    }
+    if (spec instanceof StreamSpec streamSpec) {
+      var visitor = new BindStreamVisitor(streamSpec, config);
       return JsonReader.parse(path, visitor);
     }
     if (spec instanceof ClassSpec classSpec) {

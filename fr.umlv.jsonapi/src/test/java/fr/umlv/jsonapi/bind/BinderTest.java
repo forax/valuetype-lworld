@@ -23,9 +23,9 @@ public class BinderTest {
   @Test
   public void noDefaults() {
     var binder = Binder.noDefaults();
-    assertNotNull(binder.lookupSpec(int.class));
-    assertNotNull(binder.lookupSpec(String.class));
-    assertThrows(NoSpecFoundException.class, () -> binder.lookupSpec(URI.class));
+    assertNotNull(binder.spec(int.class));
+    assertNotNull(binder.spec(String.class));
+    assertThrows(NoSpecFoundException.class, () -> binder.spec(URI.class));
   }
 
   /*@Test
@@ -46,7 +46,7 @@ public class BinderTest {
   public void findSpec() {
     var binder = new Binder(lookup());
     record Point(int x, int y) { }
-    var spec = binder.lookupSpec(Point.class);
+    var spec = binder.spec(Point.class);
     assertEquals("Point", spec.toString());
   }
 
@@ -110,13 +110,25 @@ public class BinderTest {
     var json = """
         [ { "color": "red", "lines": 3 }, { "color": "blue", "lines": 1 } ]
         """;
-    var any = binder.lookupSpec(Object.class);
+    var any = binder.spec(Object.class);
     Object array = Binder.read(json, any.object().array(), new BuilderConfig());
     assertEquals(
         List.of(
             Map.of("color", "red", "lines", 3),
             Map.of("color", "blue", "lines", 1)),
         array);
+  }
+
+  @Test
+  public void readStreamSpec() {
+    var binder = new Binder(lookup());
+    var json = """
+        [ { "color": "red", "lines": 3 }, { "color": "blue", "lines": 1 } ]
+        """;
+    record Shape(String color, int lines) { }
+    var spec = binder.spec(Shape.class).stream(s -> s.findFirst().orElseThrow());
+    var shape = (Shape) Binder.read(json, spec, new BuilderConfig());
+    assertEquals(new Shape("red", 3), shape);
   }
 
   @Test
@@ -149,7 +161,7 @@ public class BinderTest {
         }
         """;
     record Author(String name, List<String> books) { }
-    var authorSpec = binder.lookupSpec(Author.class);
+    var authorSpec = binder.spec(Author.class);
     var classVisitor = authorSpec.createBindVisitor(BindClassVisitor.class);
     var author = (Author)JsonReader.parse(json, classVisitor.filterName(not("age"::equals)));
     assertEquals(new Author("James Joyce", List.of("Finnegans Wake")), author);

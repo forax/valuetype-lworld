@@ -2,6 +2,8 @@ package fr.umlv.jsonapi.bind;
 
 import static java.util.Objects.requireNonNull;
 
+import fr.umlv.jsonapi.bind.Binder.StreamSpec;
+import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 import fr.umlv.jsonapi.BuilderConfig;
@@ -10,9 +12,11 @@ import fr.umlv.jsonapi.bind.Binder.ArraySpec;
 import fr.umlv.jsonapi.bind.Binder.ClassSpec;
 import fr.umlv.jsonapi.bind.Binder.ObjectSpec;
 import fr.umlv.jsonapi.bind.Binder.ValueSpec;
+import java.util.stream.Stream;
 
-public /*sealed*/ interface Spec {
+public /*sealed*/ interface Spec /*add permits clause*/ {
   default Spec array() { return new ArraySpec(this); }
+  default Spec stream(Function<? super Stream<Object>, ?> aggregator) { return new StreamSpec(this, aggregator); }
   default Spec object() { return new ObjectSpec(this); }
 
   default <V> V createBindVisitor(Class<V> visitorType) {
@@ -21,16 +25,19 @@ public /*sealed*/ interface Spec {
   default <V> V createBindVisitor(Class<V> visitorType, BuilderConfig config) {
     requireNonNull(visitorType);
     requireNonNull(config);
-    if (this instanceof ClassSpec classSpec) {
-      return visitorType.cast(new BindClassVisitor(classSpec, config));
+    if (this instanceof ObjectSpec objectSpec) {
+      return visitorType.cast(new BindObjectVisitor(objectSpec, config.newObjectBuilder()));
     }
     if (this instanceof ArraySpec arraySpec) {
       return visitorType.cast(new BindArrayVisitor(arraySpec, config.newArrayBuilder()));
     }
-    if (this instanceof ObjectSpec objectSpec) {
-      return visitorType.cast(new BindObjectVisitor(objectSpec, config.newObjectBuilder()));
+    if (this instanceof StreamSpec streamSpec) {
+      return visitorType.cast(new BindStreamVisitor(streamSpec, config));
     }
-    throw new IllegalArgumentException("unknown type of visitor " + visitorType.getName());
+    if (this instanceof ClassSpec classSpec) {
+      return visitorType.cast(new BindClassVisitor(classSpec, config));
+    }
+    throw new AssertionError();
   }
 
   static Spec objectClass(String name, ClassInfo<?> classInfo) {
