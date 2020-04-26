@@ -2,16 +2,15 @@ package fr.umlv.jsonapi.bind;
 
 import static java.util.Objects.requireNonNull;
 
-import fr.umlv.jsonapi.bind.Binder.StreamSpec;
-import java.util.function.Function;
-import java.util.function.UnaryOperator;
-
 import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonValue;
-import fr.umlv.jsonapi.bind.Binder.ArraySpec;
-import fr.umlv.jsonapi.bind.Binder.ClassSpec;
-import fr.umlv.jsonapi.bind.Binder.ObjectSpec;
-import fr.umlv.jsonapi.bind.Binder.ValueSpec;
+import fr.umlv.jsonapi.bind.Specs.ArraySpec;
+import fr.umlv.jsonapi.bind.Specs.ClassSpec;
+import fr.umlv.jsonapi.bind.Specs.ObjectSpec;
+import fr.umlv.jsonapi.bind.Specs.StreamSpec;
+import fr.umlv.jsonapi.bind.Specs.ValueSpec;
+import java.util.function.Function;
+import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 public /*sealed*/ interface Spec /*add permits clause*/ {

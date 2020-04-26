@@ -136,7 +136,7 @@ public class BinderTest {
     record Authorized() { }
     record Unauthorized() { }
     var binder = Binder.noDefaults();  // no finder registered !
-    var recordFinder = SpecFinder.recordFinder(lookup(), binder);
+    var recordFinder = binder.newRecordSpecFinder(lookup());
     var restrictedSet = Set.of(Authorized.class);
     // register the finder filtered !
     binder.register(recordFinder.filter(restrictedSet::contains));

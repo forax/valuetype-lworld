@@ -4,8 +4,8 @@ import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
-import fr.umlv.jsonapi.bind.Binder.ClassSpec;
 import fr.umlv.jsonapi.bind.Spec.ClassInfo;
+import fr.umlv.jsonapi.bind.Specs.ClassSpec;
 import java.util.function.Consumer;
 
 final class BindClassVisitor implements ObjectVisitor {
@@ -43,7 +43,7 @@ final class BindClassVisitor implements ObjectVisitor {
   public void visitMemberValue(String name, JsonValue value) {
     @SuppressWarnings("unchecked")
     var classInfo = (ClassInfo<Object>) spec.classInfo();
-    builder = classInfo.addValue(builder, name, Binder.convert(spec, name, value));
+    builder = classInfo.addValue(builder, name, Specs.convert(spec, name, value));
   }
 
   @Override

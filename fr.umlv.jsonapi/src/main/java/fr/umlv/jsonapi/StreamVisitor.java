@@ -5,6 +5,7 @@ import java.util.stream.Stream;
 public interface StreamVisitor extends ArrayVisitor {
   Object visitStream(Stream<Object> stream);
 
+  @Override
   default Object visitValue(JsonValue value) {
     return value.asObject();
   }

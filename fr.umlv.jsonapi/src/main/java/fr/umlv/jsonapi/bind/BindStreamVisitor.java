@@ -5,7 +5,7 @@ import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.StreamVisitor;
-import fr.umlv.jsonapi.bind.Binder.StreamSpec;
+import fr.umlv.jsonapi.bind.Specs.StreamSpec;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
@@ -42,7 +42,7 @@ final class BindStreamVisitor implements StreamVisitor {
 
   @Override
   public Object visitValue(JsonValue value) {
-    return Binder.convert(spec, value).asObject();
+    return Specs.convert(spec, value).asObject();
   }
 
   @Override

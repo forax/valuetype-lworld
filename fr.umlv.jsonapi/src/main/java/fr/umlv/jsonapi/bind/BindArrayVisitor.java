@@ -4,7 +4,7 @@ import fr.umlv.jsonapi.ArrayBuilder;
 import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
-import fr.umlv.jsonapi.bind.Binder.ArraySpec;
+import fr.umlv.jsonapi.bind.Specs.ArraySpec;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -35,7 +35,7 @@ final class BindArrayVisitor implements ArrayVisitor {
 
   @Override
   public Void visitValue(JsonValue value) {
-    arrayBuilder.visitValue(Binder.convert(spec, value));
+    arrayBuilder.visitValue(Specs.convert(spec, value));
     return null;
   }
 
