@@ -8,7 +8,7 @@ import fr.umlv.jsonapi.bind.Binder.ArraySpec;
 import java.util.List;
 import java.util.function.Consumer;
 
-public final class BindArrayVisitor implements ArrayVisitor {
+final class BindArrayVisitor implements ArrayVisitor {
   private final ArraySpec spec;
   private final ArrayBuilder arrayBuilder;
   private final Consumer<Object> postOp;
@@ -21,10 +21,6 @@ public final class BindArrayVisitor implements ArrayVisitor {
 
   BindArrayVisitor(ArraySpec spec, ArrayBuilder arrayBuilder) {
     this(spec, arrayBuilder, __ -> { /* empty */ });
-  }
-
-  public List<Object> toList() {
-    return arrayBuilder.toList();
   }
 
   @Override
@@ -44,8 +40,8 @@ public final class BindArrayVisitor implements ArrayVisitor {
   }
 
   @Override
-  public List<Object> visitEndArray(Object unused) {
-    var list = arrayBuilder.visitEndArray(null);
+  public List<Object> visitEndArray(Object result) {
+    var list = arrayBuilder.visitEndArray(result);
     postOp.accept(list);
     return list;
   }

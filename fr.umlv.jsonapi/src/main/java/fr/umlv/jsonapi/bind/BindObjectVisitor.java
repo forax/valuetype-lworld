@@ -8,7 +8,7 @@ import fr.umlv.jsonapi.bind.Binder.ObjectSpec;
 import java.util.Map;
 import java.util.function.Consumer;
 
-public final class BindObjectVisitor implements ObjectVisitor {
+final class BindObjectVisitor implements ObjectVisitor {
   private final ObjectSpec spec;
   private final ObjectBuilder objectBuilder;
   private final Consumer<Object> postOp;
@@ -21,10 +21,6 @@ public final class BindObjectVisitor implements ObjectVisitor {
 
   BindObjectVisitor(ObjectSpec spec, ObjectBuilder objectBuilder) {
     this(spec, objectBuilder, __ -> { /* empty */ });
-  }
-
-  public Map<String, Object> toMap() {
-    return objectBuilder.toMap();
   }
 
   @Override

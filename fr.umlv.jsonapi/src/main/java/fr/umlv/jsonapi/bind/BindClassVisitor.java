@@ -8,7 +8,7 @@ import fr.umlv.jsonapi.bind.Binder.ClassSpec;
 import fr.umlv.jsonapi.bind.Spec.ClassInfo;
 import java.util.function.Consumer;
 
-public final class BindClassVisitor implements ObjectVisitor {
+final class BindClassVisitor implements ObjectVisitor {
   private final ClassSpec spec;
   private final BuilderConfig config;
   private Object builder;

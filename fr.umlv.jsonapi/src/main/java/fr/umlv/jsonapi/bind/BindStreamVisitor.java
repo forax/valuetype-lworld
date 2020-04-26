@@ -7,10 +7,9 @@ import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.StreamVisitor;
 import fr.umlv.jsonapi.bind.Binder.StreamSpec;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public final class BindStreamVisitor implements StreamVisitor {
+final class BindStreamVisitor implements StreamVisitor {
   private final StreamSpec spec;
   private final BuilderConfig config;
 
