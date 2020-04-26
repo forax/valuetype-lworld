@@ -29,13 +29,13 @@ public final class JsonReader {
 
     public ObjectVisitor visitObject() {
       if ((kind & OBJECT) == 0) {
-        throw new IllegalStateException("illegal root object");
+        throw new IllegalStateException("root is an object but expect an array");
       }
       return objectVisitor;
     }
     public ArrayVisitor visitArray() {
       if ((kind & ARRAY) == 0) {
-        throw new IllegalStateException("illegal root array");
+        throw new IllegalStateException("root is an array but expect an object");
       }
       return arrayVisitor;
     }
@@ -45,62 +45,65 @@ public final class JsonReader {
     throw new AssertionError();
   }
 
-  public static Object parse(Path path, ObjectVisitor objectVisitor) throws IOException {
-    requireNonNull(objectVisitor);
-    return parse(path, new RootVisitor(RootVisitor.OBJECT, objectVisitor, null));
-  }
-  public static Object parse(Path path, ArrayVisitor arrayVisitor) throws IOException {
-    requireNonNull(arrayVisitor);
-    return parse(path, new RootVisitor(RootVisitor.ARRAY, null, arrayVisitor));
+  public static Object parse(Path path, Object visitor) throws IOException{
+    if (visitor instanceof ObjectVisitor objectVisitor) {
+      return parseJson(path, new RootVisitor(RootVisitor.OBJECT, objectVisitor, null));
+    }
+    if (visitor instanceof ArrayVisitor arrayVisitor) {
+      return parseJson(path, new RootVisitor(RootVisitor.ARRAY, null, arrayVisitor));
+    }
+    throw new IllegalArgumentException("unknown visitor type " + visitor);
   }
   public static Object parse(Path path, ObjectVisitor objectVisitor, ArrayVisitor arrayVisitor) throws IOException {
     requireNonNull(objectVisitor);
     requireNonNull(arrayVisitor);
-    return parse(path, new RootVisitor(RootVisitor.BOTH, objectVisitor, arrayVisitor));
+    return parseJson(path, new RootVisitor(RootVisitor.BOTH, objectVisitor, arrayVisitor));
   }
-  private static Object parse(Path path, RootVisitor rootVisitor) throws IOException {
+  private static Object parseJson(Path path, RootVisitor rootVisitor) throws IOException {
     requireNonNull(path);
     try(var reader = Files.newBufferedReader(path)) {
-      return parse(reader, rootVisitor);
+      return parseJson(reader, rootVisitor);
     }
   }
 
-  public static Object parse(String text, ObjectVisitor objectVisitor) {
-    requireNonNull(objectVisitor);
-    return parse(text, new RootVisitor(RootVisitor.OBJECT, objectVisitor, null));
-  }
-  public static Object parse(String text, ArrayVisitor arrayVisitor) {
-    requireNonNull(arrayVisitor);
-    return parse(text, new RootVisitor(RootVisitor.ARRAY, null, arrayVisitor));
+  public static Object parse(String text, Object visitor) {
+    if (visitor instanceof ObjectVisitor objectVisitor) {
+      return parseJson(text, new RootVisitor(RootVisitor.OBJECT, objectVisitor, null));
+    }
+    if (visitor instanceof ArrayVisitor arrayVisitor) {
+      return parseJson(text, new RootVisitor(RootVisitor.ARRAY, null, arrayVisitor));
+    }
+    throw new IllegalArgumentException("unknown visitor type " + visitor);
   }
   public static Object parse(String text, ObjectVisitor objectVisitor, ArrayVisitor arrayVisitor) {
     requireNonNull(objectVisitor);
     requireNonNull(arrayVisitor);
-    return parse(text, new RootVisitor(RootVisitor.BOTH, objectVisitor, arrayVisitor));
+    return parseJson(text, new RootVisitor(RootVisitor.BOTH, objectVisitor, arrayVisitor));
   }
-  private static Object parse(String text, RootVisitor rootVisitor) {
+  private static Object parseJson(String text, RootVisitor rootVisitor) {
     requireNonNull(text);
     try {
-      return parse(new StringReader(text), rootVisitor);
+      return parseJson(new StringReader(text), rootVisitor);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
   }
 
-  public static Object parse(Reader reader, ObjectVisitor objectVisitor) throws IOException {
-    requireNonNull(objectVisitor);
-    return parse(reader, new RootVisitor(RootVisitor.OBJECT, objectVisitor, null));
-  }
-  public static Object parse(Reader reader, ArrayVisitor arrayVisitor) throws IOException {
-    requireNonNull(arrayVisitor);
-    return parse(reader, new RootVisitor(RootVisitor.ARRAY, null, arrayVisitor));
+  public static Object parse(Reader reader, Object visitor) throws IOException{
+    if (visitor instanceof ObjectVisitor objectVisitor) {
+      return parseJson(reader, new RootVisitor(RootVisitor.OBJECT, objectVisitor, null));
+    }
+    if (visitor instanceof ArrayVisitor arrayVisitor) {
+      return parseJson(reader, new RootVisitor(RootVisitor.ARRAY, null, arrayVisitor));
+    }
+    throw new IllegalArgumentException("unknown visitor type " + visitor);
   }
   public static Object parse(Reader reader, ObjectVisitor objectVisitor, ArrayVisitor arrayVisitor) throws IOException {
     requireNonNull(objectVisitor);
     requireNonNull(arrayVisitor);
-    return parse(reader, new RootVisitor(RootVisitor.BOTH, objectVisitor, arrayVisitor));
+    return parseJson(reader, new RootVisitor(RootVisitor.BOTH, objectVisitor, arrayVisitor));
   }
-  private static Object parse(Reader reader, RootVisitor rootVisitor) throws IOException {
+  private static Object parseJson(Reader reader, RootVisitor rootVisitor) throws IOException {
     requireNonNull(reader);
     try(var parser = new JsonFactory().createParser(reader)) {
       return parseJson(parser, rootVisitor);
@@ -171,7 +174,7 @@ public final class JsonReader {
         case START_OBJECT -> parseOrSkipObject(parser, visitor.visitObject(), stack);
         case START_ARRAY -> parseOrSkipArray(parser, visitor.visitArray(), stack);
         case VALUE_STRING -> visitor.visitValue(JsonValue.from(parser.getValueAsString()));
-        case VALUE_NUMBER_INT, VALUE_NUMBER_FLOAT -> readValue(parser, visitor);
+        case VALUE_NUMBER_INT, VALUE_NUMBER_FLOAT -> readNumericValue(parser, visitor);
         case VALUE_TRUE -> visitor.visitValue(JsonValue.trueValue());
         case VALUE_FALSE -> visitor.visitValue(JsonValue.falseValue());
         case VALUE_NULL -> visitor.visitValue(JsonValue.nullValue());
@@ -181,7 +184,7 @@ public final class JsonReader {
     }
   }
 
-  private static Object readValue(JsonParser parser, ArrayVisitor visitor) throws IOException {
+  private static Object readNumericValue(JsonParser parser, ArrayVisitor visitor) throws IOException {
     return switch(parser.getNumberType()) {
       case INT -> visitor.visitValue(JsonValue.from(parser.getValueAsInt()));
       case LONG -> visitor.visitValue(JsonValue.from(parser.getValueAsLong()));
@@ -218,13 +221,13 @@ public final class JsonReader {
                 result = readArray(parser, arrayVisitor, stack);
               }
               case VALUE_STRING -> result = visitor.visitValue(JsonValue.from(parser.getValueAsString()));
-              case VALUE_NUMBER_INT, VALUE_NUMBER_FLOAT -> result = readValue(parser, visitor);
+              case VALUE_NUMBER_INT, VALUE_NUMBER_FLOAT -> result = readNumericValue(parser, visitor);
               case VALUE_TRUE -> result = visitor.visitValue(JsonValue.trueValue());
               case VALUE_FALSE -> result = visitor.visitValue(JsonValue.falseValue());
               case VALUE_NULL -> result = visitor.visitValue(JsonValue.nullValue());
               case END_ARRAY -> { ended = true; return false; }
               default -> throw new UncheckedIOException(new IOException("invalid token " + token));
-            };
+            }
             consumer.accept(result);
             return true;
           }
@@ -274,7 +277,7 @@ public final class JsonReader {
         case START_OBJECT -> parseOrSkipObject(parser, visitor.visitMemberObject(name), stack);
         case START_ARRAY -> parseOrSkipArray(parser, visitor.visitMemberArray(name), stack);
         case VALUE_STRING -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsString()));
-        case VALUE_NUMBER_INT, VALUE_NUMBER_FLOAT -> readMemberValue(parser, visitor, name);
+        case VALUE_NUMBER_INT, VALUE_NUMBER_FLOAT -> readMemberNumericValue(parser, visitor, name);
         case VALUE_TRUE -> visitor.visitMemberValue(name, JsonValue.trueValue());
         case VALUE_FALSE -> visitor.visitMemberValue(name, JsonValue.falseValue());
         case VALUE_NULL -> visitor.visitMemberValue(name, JsonValue.nullValue());
@@ -283,7 +286,7 @@ public final class JsonReader {
     }
   }
 
-  private static void readMemberValue(JsonParser parser, ObjectVisitor visitor, String name) throws IOException {
+  private static void readMemberNumericValue(JsonParser parser, ObjectVisitor visitor, String name) throws IOException {
     switch(parser.getNumberType()) {
       case INT -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsInt()));
       case LONG -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsLong()));

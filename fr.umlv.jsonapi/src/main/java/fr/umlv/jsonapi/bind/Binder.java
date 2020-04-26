@@ -285,23 +285,8 @@ public final class Binder {
   public static Object read(Reader reader, Spec spec, BuilderConfig config) throws IOException {
     requireNonNull(reader);
     requireNonNull(spec);
-    if (spec instanceof ObjectSpec objectSpec) {
-      var visitor = new BindObjectVisitor(objectSpec, config.newObjectBuilder());
-      return JsonReader.parse(reader, visitor);
-    }
-    if (spec instanceof ArraySpec arraySpec) {
-      var visitor = new BindArrayVisitor(arraySpec, config.newArrayBuilder());
-      return JsonReader.parse(reader, visitor);
-    }
-    if (spec instanceof StreamSpec streamSpec) {
-      var visitor = new BindStreamVisitor(streamSpec, config);
-      return JsonReader.parse(reader, visitor);
-    }
-    if (spec instanceof ClassSpec classSpec) {
-      var visitor = new BindClassVisitor(classSpec, config);
-      return JsonReader.parse(reader, visitor);
-    }
-    throw new AssertionError();
+    requireNonNull(config);
+    return JsonReader.parse(reader, spec.createBindVisitor(Object.class, config));
   }
 
   public <T> T read(String text, Class<T> type) {
@@ -329,23 +314,8 @@ public final class Binder {
   public static Object read(String text, Spec spec, BuilderConfig config) {
     requireNonNull(text);
     requireNonNull(spec);
-    if (spec instanceof ObjectSpec objectSpec) {
-      var visitor = new BindObjectVisitor(objectSpec, config.newObjectBuilder());
-      return JsonReader.parse(text, visitor);
-    }
-    if (spec instanceof ArraySpec arraySpec) {
-      var visitor = new BindArrayVisitor(arraySpec, config.newArrayBuilder());
-      return JsonReader.parse(text, visitor);
-    }
-    if (spec instanceof StreamSpec streamSpec) {
-      var visitor = new BindStreamVisitor(streamSpec, config);
-      return JsonReader.parse(text, visitor);
-    }
-    if (spec instanceof ClassSpec classSpec) {
-      var visitor = new BindClassVisitor(classSpec, config);
-      return JsonReader.parse(text, visitor);
-    }
-    throw new AssertionError();
+    requireNonNull(config);
+    return JsonReader.parse(text, spec.createBindVisitor(Object.class, config));
   }
 
   public <T> T read(Path path, Class<T> type) throws IOException {
@@ -373,22 +343,7 @@ public final class Binder {
   public static Object read(Path path, Spec spec, BuilderConfig config) throws IOException {
     requireNonNull(path);
     requireNonNull(spec);
-    if (spec instanceof ObjectSpec objectSpec) {
-      var visitor = new BindObjectVisitor(objectSpec, config.newObjectBuilder());
-      return JsonReader.parse(path, visitor);
-    }
-    if (spec instanceof ArraySpec arraySpec) {
-      var visitor = new BindArrayVisitor(arraySpec, config.newArrayBuilder());
-      return JsonReader.parse(path, visitor);
-    }
-    if (spec instanceof StreamSpec streamSpec) {
-      var visitor = new BindStreamVisitor(streamSpec, config);
-      return JsonReader.parse(path, visitor);
-    }
-    if (spec instanceof ClassSpec classSpec) {
-      var visitor = new BindClassVisitor(classSpec, config);
-      return JsonReader.parse(path, visitor);
-    }
-    throw new AssertionError();
+    requireNonNull(config);
+    return JsonReader.parse(path, spec.createBindVisitor(Object.class, config));
   }
 }
