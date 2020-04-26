@@ -151,7 +151,7 @@ public final class ObjectBuilder implements ObjectVisitor {
         var visitor = objectVisitor.visitMemberArray(name);
         if (visitor != null) {
           ArrayBuilder.visitList(list, visitor);
-          visitor.visitEndArray();
+          visitor.visitEndArray(null);
         }
         continue;
       }

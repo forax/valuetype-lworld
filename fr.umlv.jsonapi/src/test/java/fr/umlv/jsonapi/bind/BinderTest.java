@@ -1,7 +1,7 @@
 package fr.umlv.jsonapi.bind;
 
-import static fr.umlv.jsonapi.bind.Binder.ARRAY;
-import static fr.umlv.jsonapi.bind.Binder.OBJECT;
+import static fr.umlv.jsonapi.bind.Binder.IN_ARRAY;
+import static fr.umlv.jsonapi.bind.Binder.IN_OBJECT;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.function.Predicate.not;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -79,7 +79,7 @@ public class BinderTest {
     var json = """
         { "firstName": "John", "lastName": "Boijoly" }
         """;
-    Map<String, String> map = binder.read(json, String.class, OBJECT);
+    Map<String, String> map = binder.read(json, String.class, IN_OBJECT);
     assertEquals(Map.of("firstName", "John", "lastName", "Boijoly"), map);
   }
 
@@ -89,7 +89,7 @@ public class BinderTest {
     var json = """
         [ 1, 2, 3, 4, 10 ]
         """;
-    List<Integer> array = binder.read(json, int.class, ARRAY);
+    List<Integer> array = binder.read(json, int.class, IN_ARRAY);
     assertEquals(List.of(1, 2, 3, 4, 10), array);
   }
 
@@ -100,7 +100,7 @@ public class BinderTest {
         [ { "color": "red", "lines": 3 }, { "color": "blue", "lines": 1 } ]
         """;
     record Shape(String color, int lines) { }
-    List<Shape> array = binder.read(json, Shape.class, ARRAY);
+    List<Shape> array = binder.read(json, Shape.class, IN_ARRAY);
     assertEquals(List.of(new Shape("red", 3), new Shape("blue", 1)), array);
   }
 
@@ -111,12 +111,12 @@ public class BinderTest {
         [ { "color": "red", "lines": 3 }, { "color": "blue", "lines": 1 } ]
         """;
     var any = binder.lookupSpec(Object.class);
-    Object o = Binder.read(json, any.object().array(), new BuilderConfig());
+    Object array = Binder.read(json, any.object().array(), new BuilderConfig());
     assertEquals(
         List.of(
             Map.of("color", "red", "lines", 3),
             Map.of("color", "blue", "lines", 1)),
-        o);
+        array);
   }
 
   @Test

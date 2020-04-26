@@ -36,7 +36,7 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
   }
 
   @Override
-  public ObjectVisitor visitMemberObject(String name) {
+  public JsonWriter visitMemberObject(String name) {
     Objects.requireNonNull(name);
     try {
       generator.writeFieldName(name);
@@ -48,7 +48,7 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
   }
 
   @Override
-  public ArrayVisitor visitMemberArray(String name) {
+  public JsonWriter visitMemberArray(String name) {
     Objects.requireNonNull(name);
     try {
       generator.writeFieldName(name);
@@ -78,7 +78,7 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
   }
 
   @Override
-  public Object visitEndObject() {
+  public Void visitEndObject() {
     try {
       generator.writeEndObject();
       return null;
@@ -88,7 +88,7 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
   }
 
   @Override
-  public ObjectVisitor visitObject() {
+  public JsonWriter visitObject() {
     try {
       generator.writeStartObject();
     } catch (IOException e) {
@@ -98,7 +98,7 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
   }
 
   @Override
-  public ArrayVisitor visitArray() {
+  public JsonWriter visitArray() {
     try {
       generator.writeStartArray();
     } catch (IOException e) {
@@ -108,7 +108,7 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
   }
 
   @Override
-  public void visitValue(JsonValue value) {
+  public Void visitValue(JsonValue value) {
     try {
       switch(value.kind()) {
         case NULL -> generator.writeNull();
@@ -119,13 +119,14 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
         case BIG_INTEGER -> generator.writeNumber(value.bigIntegerValue());
         case BIG_DECIMAL -> generator.writeNumber(value.bigDecimalValue());
       }
+      return null;
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
   }
 
   @Override
-  public Object visitEndArray() {
+  public Void visitEndArray(Object unused) {
     try {
       generator.writeEndArray();
       return null;

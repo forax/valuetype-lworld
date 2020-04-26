@@ -1,16 +1,20 @@
 package fr.umlv.jsonapi;
 
+import static java.util.stream.Collectors.toList;
+import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 public class JsonObjectVisitorTest {
@@ -118,7 +122,7 @@ public class JsonObjectVisitorTest {
           }
 
           @Override
-          public void visitValue(JsonValue value) {
+          public Object visitValue(JsonValue value) {
             methods.add("visitValue+" + value.kind());
             switch(value.kind()) {
               case NULL -> assertEquals(JsonValue.nullValue(), value);
@@ -144,11 +148,13 @@ public class JsonObjectVisitorTest {
               }
               case TRUE, LONG, BIG_INTEGER, BIG_DECIMAL -> fail();
             }
+            return null;
           }
 
           @Override
-          public Object visitEndArray() {
+          public Object visitEndArray(Object unused) {
             methods.add("visitEndArray");
+            assertNull(unused);
             return null;
           }
         };
@@ -161,6 +167,103 @@ public class JsonObjectVisitorTest {
         methods);
   }
 
+  @Test
+  public void testJsonReaderStreamVisitor() {
+    var text = """
+        [
+          "Jane", false, 72, 37.8, null,
+          { "skipped1": "skipped2" }, [ "skipped3", "skipped4" ]
+        ]
+        """;
+    var methods = new ArrayList<String>();
+    var visitor = new StreamVisitor() {
+      @Override
+      public ObjectVisitor visitObject() {
+        methods.add("visitObject");
+        return null;
+      }
+
+      @Override
+      public ArrayVisitor visitArray() {
+        methods.add("visitArray");
+        return null;
+      }
+
+      @Override
+      public Object visitStream(Stream<Object> stream) {
+        return stream.collect(toList());
+      }
+
+      @Override
+      public Object visitValue(JsonValue value) {
+        methods.add("visitValue+" + value.kind());
+        switch(value.kind()) {
+          case NULL -> assertEquals(JsonValue.nullValue(), value);
+          case FALSE -> {
+            assertEquals(JsonValue.falseValue(), value);
+            assertFalse(value.booleanValue());
+            assertTrue(value.isFalse());
+          }
+          case INT -> {
+            assertEquals(JsonValue.from(72), value);
+            assertEquals(72, value.intValue());
+            assertTrue(value.isInt());
+          }
+          case DOUBLE -> {
+            assertEquals(JsonValue.from(37.8), value);
+            assertEquals(37.8, value.doubleValue());
+            assertTrue(value.isDouble());
+          }
+          case STRING -> {
+            assertEquals(JsonValue.from("Jane"), value);
+            assertEquals("Jane", value.stringValue());
+            assertTrue(value.isString());
+          }
+          case TRUE, LONG, BIG_INTEGER, BIG_DECIMAL -> fail();
+        }
+        return StreamVisitor.super.visitValue(value);
+      }
+
+      @Override
+      public Object visitEndArray(Object result) {
+        methods.add("visitEndArray");
+        assertTrue(result instanceof List<?>);
+        return StreamVisitor.super.visitEndArray(result);
+      }
+    };
+
+    var result = JsonReader.parse(text, visitor);
+    assertEquals(Arrays.asList("Jane", false, 72, 37.8, null), result);
+    assertEquals(
+        List.of("visitValue+STRING", "visitValue+FALSE", "visitValue+INT",
+            "visitValue+DOUBLE", "visitValue+NULL", "visitObject", "visitArray",
+            "visitEndArray"),
+        methods);
+  }
+
+  @Test
+  public void testJsonReaderShortCircuitStreamVisitor() {
+    var text = """
+        [ "foo", "bar", 456 ]
+        """;
+    var visitor = new StreamVisitor() {
+      @Override
+      public ObjectVisitor visitObject() {
+        return null;
+      }
+      @Override
+      public ArrayVisitor visitArray() {
+        return null;
+      }
+
+      @Override
+      public Object visitStream(Stream<Object> stream) {
+        return stream.findFirst().orElseThrow();
+      }
+    };
+    var result = JsonReader.parse(text, visitor);
+    assertEquals("foo", result);
+  }
 
   @Test
   public void testSimpleObjectParsingToMap() {
@@ -264,5 +367,30 @@ public class JsonObjectVisitorTest {
     assertEquals(
         List.of("age", "children", "firstName", "spouse", "weight"),
         new ArrayList<>(object2.toMap().keySet()));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testSimpleStreamOfMap() {
+    var text = """
+        [ { "x": 4, "y": 7 }, { "x": 14, "y": 71 } ]
+        """;
+    var visitor = new StreamVisitor() {
+      @Override
+      public ObjectVisitor visitObject() {
+        return new ObjectBuilder();
+      }
+      @Override
+      public ArrayVisitor visitArray() {
+        return null;
+      }
+
+      @Override
+      public Object visitStream(Stream<Object> stream) {
+        return stream.map(v -> (Map<String, Integer>) v).filter(p -> p.get("y") < 10).collect(toUnmodifiableList());
+      }
+    };
+    var result = (List<Map<String, Integer>>) JsonReader.parse(text, visitor);
+    assertEquals(List.of(Map.of("x", 4, "y", 7)), result);
   }
 }

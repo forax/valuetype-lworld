@@ -1,13 +1,12 @@
 package fr.umlv.jsonapi.bind;
 
-import java.util.function.Consumer;
-
 import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.bind.Binder.ClassSpec;
 import fr.umlv.jsonapi.bind.Spec.ClassInfo;
+import java.util.function.Consumer;
 
 public final class BindClassVisitor implements ObjectVisitor {
   private final ClassSpec spec;

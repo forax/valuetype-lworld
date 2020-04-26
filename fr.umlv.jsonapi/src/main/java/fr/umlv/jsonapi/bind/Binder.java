@@ -24,7 +24,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 import java.util.function.UnaryOperator;
 
-public class Binder {
+public final class Binder {
   record ValueSpec(String name, UnaryOperator<JsonValue> converter) implements Spec {
     @Override
     public String toString() {
@@ -214,8 +214,8 @@ public class Binder {
   public /*sealed*/ interface ObjectToken { /* empty */ }
   private record ObjectTokenEmpty() implements ObjectToken { /* empty */ }
 
-  public static final ArrayToken ARRAY = new ArrayTokenEmpty();
-  public static final ObjectToken OBJECT = new ObjectTokenEmpty();
+  public static final ArrayToken IN_ARRAY = new ArrayTokenEmpty();
+  public static final ObjectToken IN_OBJECT = new ObjectTokenEmpty();
 
   public <T> T read(Reader reader, Class<T> type) throws IOException {
     requireNonNull(reader);

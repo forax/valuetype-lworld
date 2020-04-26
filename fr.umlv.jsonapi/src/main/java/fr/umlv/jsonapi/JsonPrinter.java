@@ -2,7 +2,7 @@ package fr.umlv.jsonapi;
 
 import java.util.Objects;
 
-public class JsonPrinter implements ObjectVisitor, ArrayVisitor {
+public final class JsonPrinter implements ObjectVisitor, ArrayVisitor {
   private final StringBuilder builder;
   private String separator = "";
 
@@ -73,15 +73,16 @@ public class JsonPrinter implements ObjectVisitor, ArrayVisitor {
   }
 
   @Override
-  public void visitValue(JsonValue value) {
+  public Void visitValue(JsonValue value) {
     builder.append(separator).append(value);
     separator = ", ";
+    return null;
   }
 
   @Override
-  public Object visitEndArray() {
+  public Object visitEndArray(Object result) {
     builder.append(" ]");
     separator = ", ";
-    return null;
+    return result;
   }
 }

@@ -5,9 +5,10 @@ import static java.util.Objects.requireNonNull;
 import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.JsonValue;
+import fr.umlv.jsonapi.StreamVisitor;
 import java.util.function.UnaryOperator;
 
-public class RenamerObjectVisitor implements ObjectVisitor {
+public final class RenamerObjectVisitor implements ObjectVisitor {
   private final ObjectVisitor delegate;
   private final UnaryOperator<String> renamer;
 
@@ -18,12 +19,17 @@ public class RenamerObjectVisitor implements ObjectVisitor {
 
   @Override
   public ObjectVisitor visitMemberObject(String name) {
-    return new RenamerObjectVisitor(delegate.visitMemberObject(renamer.apply(name)), renamer);
+    var objectVisitor = delegate.visitMemberObject(renamer.apply(name));
+    return new RenamerObjectVisitor(objectVisitor, renamer);
   }
 
   @Override
   public ArrayVisitor visitMemberArray(String name) {
-    return new RenamerArrayVisitor(delegate.visitMemberArray(renamer.apply(name)), renamer);
+    var arrayVisitor = delegate.visitMemberArray(renamer.apply(name));
+    if (arrayVisitor instanceof StreamVisitor streamVisitor) {
+      return new RenamerStreamVisitor(streamVisitor, renamer);
+    }
+    return new RenamerArrayVisitor(arrayVisitor, renamer);
   }
 
   @Override

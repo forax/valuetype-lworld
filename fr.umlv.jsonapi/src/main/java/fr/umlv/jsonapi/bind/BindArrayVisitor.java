@@ -38,14 +38,15 @@ public final class BindArrayVisitor implements ArrayVisitor {
   }
 
   @Override
-  public void visitValue(JsonValue value) {
+  public Void visitValue(JsonValue value) {
     arrayBuilder.visitValue(Binder.convert(spec, value));
+    return null;
   }
 
   @Override
-  public Object visitEndArray() {
-    var array = arrayBuilder.visitEndArray();
-    postOp.accept(array);
-    return array;
+  public List<Object> visitEndArray(Object unused) {
+    var list = arrayBuilder.visitEndArray(null);
+    postOp.accept(list);
+    return list;
   }
 }

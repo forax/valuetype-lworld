@@ -3,17 +3,17 @@ package fr.umlv.jsonapi.filter;
 import static java.util.Objects.requireNonNull;
 
 import fr.umlv.jsonapi.ArrayVisitor;
-import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.JsonValue;
+import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.StreamVisitor;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
-public final class RenamerArrayVisitor implements ArrayVisitor {
-  private final ArrayVisitor delegate;
+public final class RenamerStreamVisitor implements StreamVisitor {
+  private final StreamVisitor delegate;
   private final UnaryOperator<String> renamer;
 
-  public RenamerArrayVisitor(ArrayVisitor delegate, UnaryOperator<String> renamer) {
+  public RenamerStreamVisitor(StreamVisitor delegate, UnaryOperator<String> renamer) {
     this.delegate = requireNonNull(delegate);
     this.renamer = requireNonNull(renamer);
   }
@@ -30,6 +30,12 @@ public final class RenamerArrayVisitor implements ArrayVisitor {
       return new RenamerStreamVisitor(streamVisitor, renamer);
     }
     return new RenamerArrayVisitor(arrayVisitor, renamer);
+  }
+
+  @Override
+  public Object visitStream(Stream<Object> stream) {
+    requireNonNull(stream);
+    return delegate.visitStream(stream);
   }
 
   @Override

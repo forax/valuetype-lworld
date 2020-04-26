@@ -43,9 +43,9 @@ public final class BindObjectVisitor implements ObjectVisitor {
   }
 
   @Override
-  public Object visitEndObject() {
-    var array = objectBuilder.visitEndObject();
-    postOp.accept(array);
-    return array;
+  public Map<String, Object> visitEndObject() {
+    var map = objectBuilder.visitEndObject();
+    postOp.accept(map);
+    return map;
   }
 }

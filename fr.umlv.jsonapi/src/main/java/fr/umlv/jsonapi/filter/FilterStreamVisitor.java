@@ -3,33 +3,39 @@ package fr.umlv.jsonapi.filter;
 import static java.util.Objects.requireNonNull;
 
 import fr.umlv.jsonapi.ArrayVisitor;
-import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.JsonValue;
+import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.StreamVisitor;
-import java.util.function.UnaryOperator;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-public final class RenamerArrayVisitor implements ArrayVisitor {
-  private final ArrayVisitor delegate;
-  private final UnaryOperator<String> renamer;
+public final class FilterStreamVisitor implements StreamVisitor {
+  private final StreamVisitor delegate;
+  private final Predicate<? super String> predicate;
 
-  public RenamerArrayVisitor(ArrayVisitor delegate, UnaryOperator<String> renamer) {
+  public FilterStreamVisitor(StreamVisitor delegate, Predicate<? super String> predicate) {
     this.delegate = requireNonNull(delegate);
-    this.renamer = requireNonNull(renamer);
+    this.predicate = requireNonNull(predicate);
   }
 
   @Override
   public ObjectVisitor visitObject() {
-    return new RenamerObjectVisitor(delegate.visitObject(), renamer);
+    return new FilterObjectVisitor(delegate.visitObject(), predicate);
   }
 
   @Override
   public ArrayVisitor visitArray() {
     var arrayVisitor = delegate.visitArray();
     if (arrayVisitor instanceof StreamVisitor streamVisitor) {
-      return new RenamerStreamVisitor(streamVisitor, renamer);
+      return new FilterStreamVisitor(streamVisitor, predicate);
     }
-    return new RenamerArrayVisitor(arrayVisitor, renamer);
+    return new FilterArrayVisitor(arrayVisitor, predicate);
+  }
+
+  @Override
+  public Object visitStream(Stream<Object> stream) {
+    requireNonNull(stream);
+    return delegate.visitStream(stream);
   }
 
   @Override

@@ -17,6 +17,9 @@ import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
+import java.util.Spliterator;
+import java.util.function.Consumer;
+import java.util.stream.StreamSupport;
 
 public final class JsonReader {
   private record RootVisitor(int kind, ObjectVisitor objectVisitor, ArrayVisitor arrayVisitor) {
@@ -155,61 +158,139 @@ public final class JsonReader {
   }
 
   private static Object readArray(JsonParser parser, ArrayVisitor visitor, ArrayDeque<JsonToken> stack) throws IOException {
+    if (visitor instanceof StreamVisitor streamVisitor) {
+      return readStreamArray(parser, streamVisitor, stack);
+    }
+    return readPlainArray(parser, visitor, stack);
+  }
+
+  private static Object readPlainArray(JsonParser parser, ArrayVisitor visitor, ArrayDeque<JsonToken> stack) throws IOException {
     for(;;) {
       var token = parser.nextToken();
       switch(token) {
         case START_OBJECT -> parseOrSkipObject(parser, visitor.visitObject(), stack);
         case START_ARRAY -> parseOrSkipArray(parser, visitor.visitArray(), stack);
         case VALUE_STRING -> visitor.visitValue(JsonValue.from(parser.getValueAsString()));
-        case VALUE_NUMBER_INT, VALUE_NUMBER_FLOAT -> {
-          switch(parser.getNumberType()) {
-            case INT -> visitor.visitValue(JsonValue.from(parser.getValueAsInt()));
-            case LONG -> visitor.visitValue(JsonValue.from(parser.getValueAsLong()));
-            case FLOAT, DOUBLE -> visitor.visitValue(JsonValue.from(parser.getValueAsDouble()));
-            case BIG_INTEGER -> visitor.visitValue(JsonValue.fromBigInteger(parser.getValueAsString()));
-            case BIG_DECIMAL -> visitor.visitValue(JsonValue.fromBigDecimal(parser.getValueAsString()));
-            default -> throw new IOException("invalid number " + parser.getValueAsString());
-          }
-        }
+        case VALUE_NUMBER_INT, VALUE_NUMBER_FLOAT -> readValue(parser, visitor);
         case VALUE_TRUE -> visitor.visitValue(JsonValue.trueValue());
         case VALUE_FALSE -> visitor.visitValue(JsonValue.falseValue());
         case VALUE_NULL -> visitor.visitValue(JsonValue.nullValue());
-        case END_ARRAY -> { return visitor.visitEndArray(); }
+        case END_ARRAY -> { return visitor.visitEndArray(null); }
         default -> throw new IOException("invalid token " + token);
       }
     }
   }
 
+  private static Object readValue(JsonParser parser, ArrayVisitor visitor) throws IOException {
+    return switch(parser.getNumberType()) {
+      case INT -> visitor.visitValue(JsonValue.from(parser.getValueAsInt()));
+      case LONG -> visitor.visitValue(JsonValue.from(parser.getValueAsLong()));
+      case FLOAT, DOUBLE -> visitor.visitValue(JsonValue.from(parser.getValueAsDouble()));
+      case BIG_INTEGER -> visitor.visitValue(JsonValue.fromBigInteger(parser.getValueAsString()));
+      case BIG_DECIMAL -> visitor.visitValue(JsonValue.fromBigDecimal(parser.getValueAsString()));
+    };
+  }
+
+  private static Object readStreamArray(JsonParser parser, StreamVisitor visitor, ArrayDeque<JsonToken> stack) throws IOException {
+    var spliterator = new Spliterator<>() {
+      private boolean ended;
+      @Override
+      public boolean tryAdvance(Consumer<? super Object> consumer) {
+        try {
+          for(;;) {
+            var token = parser.nextToken();
+            Object result;
+            switch(token) {
+              case START_OBJECT -> {
+                var objectVisitor = visitor.visitObject();
+                if (objectVisitor == null) {
+                  skipUntil(parser, END_OBJECT, stack);
+                  continue;
+                }
+                result = readObject(parser, objectVisitor, stack);
+              }
+              case START_ARRAY -> {
+                var arrayVisitor = visitor.visitArray();
+                if (arrayVisitor == null) {
+                  skipUntil(parser, END_ARRAY, stack);
+                  continue;
+                }
+                result = readArray(parser, arrayVisitor, stack);
+              }
+              case VALUE_STRING -> result = visitor.visitValue(JsonValue.from(parser.getValueAsString()));
+              case VALUE_NUMBER_INT, VALUE_NUMBER_FLOAT -> result = readValue(parser, visitor);
+              case VALUE_TRUE -> result = visitor.visitValue(JsonValue.trueValue());
+              case VALUE_FALSE -> result = visitor.visitValue(JsonValue.falseValue());
+              case VALUE_NULL -> result = visitor.visitValue(JsonValue.nullValue());
+              case END_ARRAY -> { ended = true; return false; }
+              default -> throw new UncheckedIOException(new IOException("invalid token " + token));
+            };
+            consumer.accept(result);
+            return true;
+          }
+        } catch (IOException e) {
+          throw new UncheckedIOException(e);
+        }
+      }
+
+      @Override
+      public Spliterator<Object> trySplit() {
+        return null;
+      }
+      @Override
+      public long estimateSize() {
+        return Long.MAX_VALUE;
+      }
+      @Override
+      public int characteristics() {
+        return ORDERED;
+      }
+    };
+    var stream = StreamSupport.stream(spliterator, false);
+    Object result;
+    try {
+      result = visitor.visitStream(stream);
+    } catch(UncheckedIOException e) {
+      throw e.getCause();
+    }
+    if (!spliterator.ended) {  // stream short-circuited !
+      skipUntil(parser, END_ARRAY, stack);
+    }
+    return visitor.visitEndArray(result);
+  }
+
   private static Object readObject(JsonParser parser, ObjectVisitor visitor, ArrayDeque<JsonToken> stack) throws IOException {
     for(;;) {
-      var token = parser.nextToken();
-      if (token == END_OBJECT) {
+      var fieldToken = parser.nextToken();
+      if (fieldToken == END_OBJECT) {
         return visitor.visitEndObject();
       }
-      if (token != FIELD_NAME) {
-        throw new IOException("invalid token " + token);
+      if (fieldToken != FIELD_NAME) {
+        throw new IOException("invalid token " + fieldToken);
       }
       var name = parser.getCurrentName();
-      token = parser.nextToken();
+      var token = parser.nextToken();
       switch(token) {
         case START_OBJECT -> parseOrSkipObject(parser, visitor.visitMemberObject(name), stack);
         case START_ARRAY -> parseOrSkipArray(parser, visitor.visitMemberArray(name), stack);
         case VALUE_STRING -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsString()));
-        case VALUE_NUMBER_INT, VALUE_NUMBER_FLOAT -> {
-          switch(parser.getNumberType()) {
-            case INT -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsInt()));
-            case LONG -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsLong()));
-            case FLOAT, DOUBLE -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsDouble()));
-            case BIG_INTEGER -> visitor.visitMemberValue(name, JsonValue.fromBigInteger(parser.getValueAsString()));
-            case BIG_DECIMAL -> visitor.visitMemberValue(name, JsonValue.fromBigDecimal(parser.getValueAsString()));
-            default -> throw new IOException("invalid number " + parser.getValueAsString());
-          }
-        }
+        case VALUE_NUMBER_INT, VALUE_NUMBER_FLOAT -> readMemberValue(parser, visitor, name);
         case VALUE_TRUE -> visitor.visitMemberValue(name, JsonValue.trueValue());
         case VALUE_FALSE -> visitor.visitMemberValue(name, JsonValue.falseValue());
         case VALUE_NULL -> visitor.visitMemberValue(name, JsonValue.nullValue());
         default -> throw new IOException("invalid token " + token);
       }
+    }
+  }
+
+  private static void readMemberValue(JsonParser parser, ObjectVisitor visitor, String name) throws IOException {
+    switch(parser.getNumberType()) {
+      case INT -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsInt()));
+      case LONG -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsLong()));
+      case FLOAT, DOUBLE -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsDouble()));
+      case BIG_INTEGER -> visitor.visitMemberValue(name, JsonValue.fromBigInteger(parser.getValueAsString()));
+      case BIG_DECIMAL -> visitor.visitMemberValue(name, JsonValue.fromBigDecimal(parser.getValueAsString()));
+      default -> throw new IOException("invalid number " + parser.getValueAsString());
     }
   }
 }

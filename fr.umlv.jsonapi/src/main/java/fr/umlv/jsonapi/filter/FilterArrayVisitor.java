@@ -3,11 +3,12 @@ package fr.umlv.jsonapi.filter;
 import static java.util.Objects.requireNonNull;
 
 import fr.umlv.jsonapi.ArrayVisitor;
-import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.JsonValue;
+import fr.umlv.jsonapi.ObjectVisitor;
+import fr.umlv.jsonapi.StreamVisitor;
 import java.util.function.Predicate;
 
-public class FilterArrayVisitor implements ArrayVisitor {
+public final class FilterArrayVisitor implements ArrayVisitor {
   private final ArrayVisitor delegate;
   private final Predicate<? super String> predicate;
 
@@ -18,21 +19,26 @@ public class FilterArrayVisitor implements ArrayVisitor {
 
   @Override
   public ObjectVisitor visitObject() {
-    return new FilterObjectVisitor(delegate.visitObject(), predicate);
+    var objectVisitor = this.delegate.visitObject();
+    return new FilterObjectVisitor(objectVisitor, predicate);
   }
 
   @Override
   public ArrayVisitor visitArray() {
-    return new FilterArrayVisitor(delegate.visitArray(), predicate);
+    var arrayVisitor = delegate.visitArray();
+    if (arrayVisitor instanceof StreamVisitor streamVisitor) {
+      return new FilterStreamVisitor(streamVisitor, predicate);
+    }
+    return new FilterArrayVisitor(arrayVisitor, predicate);
   }
 
   @Override
-  public void visitValue(JsonValue value) {
-    delegate.visitValue(value);
+  public Object visitValue(JsonValue value) {
+    return delegate.visitValue(value);
   }
 
   @Override
-  public Object visitEndArray() {
-    return delegate.visitEndArray();
+  public Object visitEndArray(Object result) {
+    return delegate.visitEndArray(result);
   }
 }

@@ -5,9 +5,10 @@ import static java.util.Objects.requireNonNull;
 import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.JsonValue;
+import fr.umlv.jsonapi.StreamVisitor;
 import java.util.function.Predicate;
 
-public class FilterObjectVisitor implements ObjectVisitor {
+public final class FilterObjectVisitor implements ObjectVisitor {
   private final ObjectVisitor delegate;
   private final Predicate<? super String> predicate;
 
@@ -21,7 +22,8 @@ public class FilterObjectVisitor implements ObjectVisitor {
     if (!predicate.test(name)) {
       return null;
     }
-    return new FilterObjectVisitor(delegate.visitMemberObject(name), predicate);
+    var objectVisitor = this.delegate.visitMemberObject(name);
+    return new FilterObjectVisitor(objectVisitor, predicate);
   }
 
   @Override
@@ -29,7 +31,11 @@ public class FilterObjectVisitor implements ObjectVisitor {
     if (!predicate.test(name)) {
       return null;
     }
-    return new FilterArrayVisitor(delegate.visitMemberArray(name), predicate);
+    var arrayVisitor = delegate.visitMemberArray(name);
+    if (arrayVisitor instanceof StreamVisitor streamVisitor) {
+      return new FilterStreamVisitor(streamVisitor, predicate);
+    }
+    return new FilterArrayVisitor(arrayVisitor, predicate);
   }
 
   @Override

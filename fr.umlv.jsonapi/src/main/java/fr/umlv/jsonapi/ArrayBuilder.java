@@ -88,12 +88,13 @@ public final class ArrayBuilder implements ArrayVisitor {
   }
 
   @Override
-  public void visitValue(JsonValue value) {
+  public Void visitValue(JsonValue value) {
     list.add(value.asObject());
+    return null;
   }
 
   @Override
-  public List<Object> visitEndArray() {
+  public List<Object> visitEndArray(Object unused) {
     return toList();
   }
 
@@ -142,14 +143,14 @@ public final class ArrayBuilder implements ArrayVisitor {
       if (element instanceof List<?> _list) {
         var visitor = arrayVisitor.visitArray();
         if (visitor != null) {
-          visitList(list, visitor);
-          visitor.visitEndArray();
+          visitList(_list, visitor);
+          visitor.visitEndArray(null);
         }
         continue;
       }
       throw new IllegalStateException("invalid element " + element);
     }
-    return arrayVisitor.visitEndArray();
+    return arrayVisitor.visitEndArray(null);
   }
 
   public Object accept(ArrayVisitor arrayVisitor) {
