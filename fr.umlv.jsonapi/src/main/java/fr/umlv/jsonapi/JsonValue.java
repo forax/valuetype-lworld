@@ -9,7 +9,7 @@ import java.util.Objects;
 public final @__inline__ class JsonValue {
   private final Kind kind;
   private final long data;
-  private final String string;
+  private final Object box;
 
   public enum Kind {
     NULL(void.class),
@@ -20,7 +20,8 @@ public final @__inline__ class JsonValue {
     DOUBLE(double.class),
     STRING(String.class),
     BIG_INTEGER(BigInteger.class),
-    BIG_DECIMAL(BigDecimal.class)
+    BIG_DECIMAL(BigDecimal.class),
+    OPAQUE(Object.class)
     ;
 
     private final Class<?> type;
@@ -30,10 +31,10 @@ public final @__inline__ class JsonValue {
     }
   }
 
-  private JsonValue(Kind kind, long data, String string) {
+  private JsonValue(Kind kind, long data, Object box) {
     this.kind = kind;
     this.data = data;
-    this.string = string;
+    this.box = box;
   }
 
   @Override
@@ -41,13 +42,18 @@ public final @__inline__ class JsonValue {
     return obj instanceof JsonValue value
         && kind == value.kind
         && data == value.data
-        && Objects.equals(string, value.string);
+        && (box instanceof String string?  // de-virtualize
+              string.equals(value.box):
+              Objects.equals(box, value.box));
   }
 
   @Override
   public int hashCode() {
-    if (string != null) {
-      return string.hashCode();
+    if (box != null) {
+      if (box instanceof String string) {  // de-virtualize
+        return string.hashCode();
+      }
+      return box.hashCode();
     }
     return (int)(data ^ data >>> 32);
   }
@@ -57,8 +63,8 @@ public final @__inline__ class JsonValue {
     return switch(kind) {
       case INT, LONG -> Long.toString(data);
       case DOUBLE -> Double.toString(Double.longBitsToDouble(data));
-      case STRING -> '"' + string + '"';   // FIXME escape
-      default -> string;
+      case STRING -> '"' + (String) box + '"';   // FIXME escape
+      default -> box.toString();
     };
   }
 
@@ -99,6 +105,7 @@ public final @__inline__ class JsonValue {
   public boolean isBigDecimal() {
     return kind == Kind.BIG_DECIMAL;
   }
+  public boolean isOpaque() { return kind == Kind.OPAQUE; }
 
   public boolean booleanValue() {
     if (kind.type != boolean.class) {
@@ -128,19 +135,19 @@ public final @__inline__ class JsonValue {
     if (kind != Kind.STRING) {
       throw new IllegalStateException("not a String: " + this);
     }
-    return string;
+    return (String) box;
   }
   public BigInteger bigIntegerValue() {
     if (kind != Kind.BIG_INTEGER) {
       throw new IllegalStateException("not a BigInteger: " + this);
     }
-    return new BigInteger(string);
+    return (BigInteger) box;
   }
   public BigDecimal bigDecimalValue() {
     if (kind != Kind.BIG_DECIMAL) {
       throw new IllegalStateException("not a BigDecimal: " + this);
     }
-    return new BigDecimal(string);
+    return (BigDecimal) box;
   }
 
   public Object asObject() {
@@ -151,9 +158,8 @@ public final @__inline__ class JsonValue {
       case INT -> (int)data;
       case LONG-> data;
       case DOUBLE -> Double.longBitsToDouble(data);
-      case STRING -> string;
-      case BIG_INTEGER -> new BigInteger(string);
-      case BIG_DECIMAL -> new BigDecimal(string);
+      case STRING -> (String) box;
+      case BIG_INTEGER, BIG_DECIMAL, OPAQUE -> box;
     };
   }
 
@@ -162,16 +168,19 @@ public final @__inline__ class JsonValue {
       case INT -> (int)data;
       case LONG-> data;
       case DOUBLE -> Double.longBitsToDouble(data);
-      case BIG_INTEGER, BIG_DECIMAL -> Double.parseDouble(string);
+      case BIG_INTEGER -> ((BigInteger) box).doubleValue();
+      case BIG_DECIMAL -> ((BigDecimal) box).doubleValue();
       default -> throw new IllegalStateException("not a numeric value " + this);
     };
   }
 
   public String convertToString() {
     return switch(kind) {
+      case NULL -> null;
       case INT, LONG -> Long.toString(data);
       case DOUBLE -> Double.toString(Double.longBitsToDouble(data));
-      default -> string;
+      case STRING -> (String) box;
+      default -> box.toString();
     };
   }
 
@@ -201,16 +210,42 @@ public final @__inline__ class JsonValue {
     return new JsonValue(Kind.STRING, 0, value);
   }
   public static JsonValue from(BigInteger value) {
-    return new JsonValue(Kind.BIG_INTEGER, 0, value.toString());  // implicit nullcheck
-  }
-  public static JsonValue from(BigDecimal value) {
-    return new JsonValue(Kind.BIG_DECIMAL, 0, value.toString());  // implicit nullcheck
-  }
-
-  static JsonValue fromBigInteger(String value) {
+    requireNonNull(value);
     return new JsonValue(Kind.BIG_INTEGER, 0, value);
   }
-  static JsonValue fromBigDecimal(String value) {
+  public static JsonValue from(BigDecimal value) {
+    requireNonNull(value);
     return new JsonValue(Kind.BIG_DECIMAL, 0, value);
+  }
+  public static JsonValue fromOpaque(Object value) {
+    requireNonNull(value);
+    return new JsonValue(Kind.OPAQUE, 0, value);
+  }
+  public static JsonValue fromAny(Object value) {
+    if (value == null) {
+      return nullValue();
+    }
+    if (value instanceof Boolean booleanValue) {
+      return from(booleanValue);
+    }
+    if (value instanceof Integer intValue) {
+      return from(intValue);
+    }
+    if (value instanceof Long longValue) {
+      return from(longValue);
+    }
+    if (value instanceof Double doubleValue) {
+      return from(doubleValue);
+    }
+    if (value instanceof String stringValue) {
+      return from(stringValue);
+    }
+    if (value instanceof BigInteger bigInteger) {
+      return from(bigInteger);
+    }
+    if (value instanceof BigDecimal bigDecimal) {
+      return from(bigDecimal);
+    }
+    return fromOpaque(value);
   }
 }

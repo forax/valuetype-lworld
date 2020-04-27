@@ -8,7 +8,6 @@ import fr.umlv.jsonapi.ObjectBuilder;
 import fr.umlv.jsonapi.ObjectVisitor;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 final class Specs {
@@ -16,14 +15,30 @@ final class Specs {
     throw new AssertionError();
   }
 
-  record ValueSpec(String name, UnaryOperator<JsonValue>converter) implements Spec {
+  record ValueSpec(String name, Converter converter) implements Spec {
     @Override
     public String toString() {
       return name;
     }
 
-    private JsonValue convert(JsonValue value) {
-      return converter.apply(value);
+    private JsonValue convertTo(JsonValue jsonValue) {
+      if (converter == null) {
+        return jsonValue;
+      }
+      return converter.convertTo(jsonValue);
+    }
+
+    public Spec composeWith(Converter converter) {
+      var currentConverter = this.converter;
+      var newConverter = (currentConverter == null)?
+          converter:
+          new Converter() {
+            @Override
+            public JsonValue convertTo(JsonValue value) {
+              return converter.convertTo(currentConverter.convertTo(value));
+            }
+          };
+      return new ValueSpec(name + ".convert()", newConverter);
     }
   }
 
@@ -138,21 +153,21 @@ final class Specs {
   static JsonValue convert(ArraySpec spec, JsonValue value) {
     var elementSpec = spec.component;
     if (elementSpec instanceof ValueSpec valueSpec) {
-      return valueSpec.convert(value);
+      return valueSpec.convertTo(value);
     }
     throw new IllegalStateException(spec + " can not convert " + value + " to " + elementSpec);
   }
   static JsonValue convert(StreamSpec spec, JsonValue value) {
     var elementSpec = spec.component;
     if (elementSpec instanceof ValueSpec valueSpec) {
-      return valueSpec.convert(value);
+      return valueSpec.convertTo(value);
     }
     throw new IllegalStateException(spec + " can not convert " + value + " to " + elementSpec);
   }
   static JsonValue convert(ObjectSpec spec, String name, JsonValue value) {
     var elementSpec = spec.component;
     if (elementSpec instanceof ValueSpec valueSpec) {
-      return valueSpec.convert(value);
+      return valueSpec.convertTo(value);
     }
     throw new IllegalStateException(spec + "." + name + " can not convert " + value + " to " + elementSpec);
   }
@@ -160,7 +175,7 @@ final class Specs {
   static JsonValue convert(ClassSpec spec, String name, JsonValue value) {
     var elementSpec = spec.classInfo.elementSpec(name);
     if (elementSpec instanceof ValueSpec valueSpec) {
-      return valueSpec.convert(value);
+      return valueSpec.convertTo(value);
     }
     throw new IllegalStateException(spec + "." + name + " can not convert " + value + " to " + elementSpec);
   }

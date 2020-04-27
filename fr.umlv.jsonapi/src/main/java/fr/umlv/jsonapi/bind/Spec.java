@@ -10,13 +10,20 @@ import fr.umlv.jsonapi.bind.Specs.ObjectSpec;
 import fr.umlv.jsonapi.bind.Specs.StreamSpec;
 import fr.umlv.jsonapi.bind.Specs.ValueSpec;
 import java.util.function.Function;
-import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 public /*sealed*/ interface Spec /*add permits clause*/ {
   default Spec array() { return new ArraySpec(this); }
   default Spec stream(Function<? super Stream<Object>, ?> aggregator) { return new StreamSpec(this, aggregator); }
   default Spec object() { return new ObjectSpec(this); }
+
+  default Spec convert(Converter converter) {
+    requireNonNull(converter);
+    if (this instanceof ValueSpec valueSpec) {
+      return valueSpec.composeWith(converter);
+    }
+    throw new IllegalArgumentException("can not convert this spec");
+  }
 
   default <V> V createBindVisitor(Class<V> visitorType) {
     return createBindVisitor(visitorType, Binder.DEFAULT_CONFIG);
@@ -44,9 +51,8 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
     requireNonNull(classInfo);
     return new ClassSpec(name, classInfo);
   }
-  static Spec valueClass(String name, UnaryOperator<JsonValue> converter) {
+  static Spec valueClass(String name, Converter converter) {
     requireNonNull(name);
-    requireNonNull(converter);
     return new ValueSpec(name, converter);
   }
   
@@ -58,5 +64,10 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
     B addArray(B builder, String name, Object array);
     B addValue(B builder, String name, JsonValue value);
     Object build(B builder);
+  }
+
+  interface Converter {
+    JsonValue convertTo(JsonValue value);
+    //JsonValue convertFrom(JsonValue value);
   }
 }

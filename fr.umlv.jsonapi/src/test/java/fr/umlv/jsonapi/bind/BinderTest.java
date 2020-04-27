@@ -10,12 +10,16 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonReader;
-import fr.umlv.jsonapi.bind.Binder.NoSpecFoundException;
+import fr.umlv.jsonapi.JsonValue;
+import fr.umlv.jsonapi.bind.Binder.SpecNoFoundException;
+import fr.umlv.jsonapi.bind.Spec.Converter;
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
@@ -25,7 +29,7 @@ public class BinderTest {
     var binder = Binder.noDefaults();
     assertNotNull(binder.spec(int.class));
     assertNotNull(binder.spec(String.class));
-    assertThrows(NoSpecFoundException.class, () -> binder.spec(URI.class));
+    assertThrows(SpecNoFoundException.class, () -> binder.spec(URI.class));
   }
 
   /*@Test
@@ -105,6 +109,25 @@ public class BinderTest {
   }
 
   @Test
+  public void readBinderRegisterLocalDate() {
+    var binder = new Binder(lookup());
+    var stringSpec = binder.spec(String.class);
+    var localDateSpec = stringSpec.convert(new Converter() {
+      @Override
+      public JsonValue convertTo(JsonValue value) {
+        return JsonValue.fromOpaque(LocalDate.parse(value.stringValue()));
+      }
+    });
+    binder.register(SpecFinder.from(Map.of(LocalDate.class, localDateSpec)));
+    record Order(LocalDate date) { }
+    var json = """
+        { "date": "2007-12-03" }
+        """;
+    Order order = binder.read(json, Order.class);
+    assertEquals(new Order(LocalDate.of(2007, 12, 3)), order);
+  }
+
+  @Test
   public void readSpec() {
     var binder = new Binder(lookup());
     var json = """
@@ -145,7 +168,7 @@ public class BinderTest {
     var authorized = binder.read(json, Authorized.class);
     assertEquals(new Authorized(), authorized);
 
-    assertThrows(NoSpecFoundException.class, () -> binder.read(json, Unauthorized.class));
+    assertThrows(SpecNoFoundException.class, () -> binder.read(json, Unauthorized.class));
   }
 
   @Test

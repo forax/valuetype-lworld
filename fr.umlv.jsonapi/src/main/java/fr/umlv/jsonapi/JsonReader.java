@@ -14,6 +14,8 @@ import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
@@ -189,8 +191,8 @@ public final class JsonReader {
       case INT -> visitor.visitValue(JsonValue.from(parser.getValueAsInt()));
       case LONG -> visitor.visitValue(JsonValue.from(parser.getValueAsLong()));
       case FLOAT, DOUBLE -> visitor.visitValue(JsonValue.from(parser.getValueAsDouble()));
-      case BIG_INTEGER -> visitor.visitValue(JsonValue.fromBigInteger(parser.getValueAsString()));
-      case BIG_DECIMAL -> visitor.visitValue(JsonValue.fromBigDecimal(parser.getValueAsString()));
+      case BIG_INTEGER -> visitor.visitValue(JsonValue.from(new BigInteger(parser.getValueAsString())));
+      case BIG_DECIMAL -> visitor.visitValue(JsonValue.from(new BigDecimal(parser.getValueAsString())));
     };
   }
 
@@ -291,8 +293,8 @@ public final class JsonReader {
       case INT -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsInt()));
       case LONG -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsLong()));
       case FLOAT, DOUBLE -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsDouble()));
-      case BIG_INTEGER -> visitor.visitMemberValue(name, JsonValue.fromBigInteger(parser.getValueAsString()));
-      case BIG_DECIMAL -> visitor.visitMemberValue(name, JsonValue.fromBigDecimal(parser.getValueAsString()));
+      case BIG_INTEGER -> visitor.visitMemberValue(name, JsonValue.from(new BigInteger(parser.getValueAsString())));
+      case BIG_DECIMAL -> visitor.visitMemberValue(name, JsonValue.from(new BigDecimal(parser.getValueAsString())));
       default -> throw new IOException("invalid number " + parser.getValueAsString());
     }
   }

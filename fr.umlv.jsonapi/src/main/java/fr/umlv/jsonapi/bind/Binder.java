@@ -15,17 +15,16 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.function.UnaryOperator;
 
 public final class Binder {
-  public static final class NoSpecFoundException extends RuntimeException {
-    public NoSpecFoundException(String message) {
+  public static final class SpecNoFoundException extends RuntimeException {
+    public SpecNoFoundException(String message) {
       super(message);
     }
-    public NoSpecFoundException(String message, Throwable cause) {
+    public SpecNoFoundException(String message, Throwable cause) {
       super(message, cause);
     }
-    public NoSpecFoundException(Throwable cause) {
+    public SpecNoFoundException(Throwable cause) {
       super(cause);
     }
   }
@@ -35,7 +34,7 @@ public final class Binder {
     protected Spec computeValue(Class<?> type) {
       if (type.isPrimitive() || type == Object.class || type == String.class
           || type == BigInteger.class || type == BigDecimal.class) {
-        return Spec.valueClass(type.getName(), UnaryOperator.identity());
+        return Spec.valueClass(type.getName(), null);
       }
 
       var finders = Binder.this.finders;
@@ -45,7 +44,7 @@ public final class Binder {
           return optSpec.orElseThrow();
         }
       }
-      throw new NoSpecFoundException("no finder can resolve type " + type.getName());
+      throw new SpecNoFoundException("no finder can resolve type " + type.getName());
     }
   };
   private final CopyOnWriteArrayList<SpecFinder> finders = new CopyOnWriteArrayList<>();
@@ -77,7 +76,7 @@ public final class Binder {
   private Spec specForClass(Class<?> type) {
     return specMap.get(type);
   }
-  public Spec spec(Type type) throws NoSpecFoundException {
+  public Spec spec(Type type) throws SpecNoFoundException {
     requireNonNull(type);
     if (type instanceof Class<?> clazz) {
       return specForClass(clazz);
@@ -87,7 +86,7 @@ public final class Binder {
       var actualTypeArguments = parameterizedType.getActualTypeArguments();
       if (rawType == Map.class) {
         if (actualTypeArguments[0] != String.class) {  //FIXME wildcard ?
-          throw new NoSpecFoundException("can not decode " + type.getTypeName());
+          throw new SpecNoFoundException("can not decode " + type.getTypeName());
         }
         return spec(actualTypeArguments[1]).object();
       }
@@ -95,7 +94,7 @@ public final class Binder {
         return spec(actualTypeArguments[0]).array();
       }
     }
-    throw new NoSpecFoundException("can not decode unknown type " + type.getTypeName());
+    throw new SpecNoFoundException("can not decode unknown type " + type.getTypeName());
   }
 
   static final BuilderConfig DEFAULT_CONFIG = new BuilderConfig();
