@@ -32,20 +32,6 @@ public class BinderTest {
     assertThrows(SpecNoFoundException.class, () -> binder.spec(URI.class));
   }
 
-  /*@Test
-  public void register() {
-    var binder = new Binder(lookup());
-    binder.register(SpecFinder.from(Map.of(
-        LocalDate.class, Spec.valueClass("LocalDate", v -> v))
-    ));
-    record Data(LocalDate date) { }
-    var json = """
-        [ { "date": "1234" } ]
-        """;
-    List<Data> list = binder.read(json, Data.class, ARRAY);
-    assertEquals(List.of(new Data(LocalDate.now())), list);
-  }*/
-
   @Test
   public void findSpec() {
     var binder = new Binder(lookup());
