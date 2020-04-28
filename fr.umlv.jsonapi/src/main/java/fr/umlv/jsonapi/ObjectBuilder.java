@@ -74,9 +74,7 @@ public final class ObjectBuilder implements ObjectVisitor {
   }
 
   public Map<String, Object> toMap() {
-    var resultMap = config.transformMapOp().apply(map);
-    postOp.accept(resultMap);
-    return resultMap;
+    return config.transformMapOp().apply(map);
   }
 
   @Override
@@ -99,7 +97,9 @@ public final class ObjectBuilder implements ObjectVisitor {
 
   @Override
   public Map<String, Object> visitEndObject() {
-    return toMap();
+    var resultMap = toMap();
+    postOp.accept(resultMap);
+    return resultMap;
   }
 
   static Object visitMap(Map<?,?> map, ObjectVisitor objectVisitor) {

@@ -72,9 +72,7 @@ public final class ArrayBuilder implements ArrayVisitor {
   }
 
   public List<Object> toList() {
-    var resultList = config.transformListOp().apply(list);
-    postOp.accept(resultList);
-    return resultList;
+    return config.transformListOp().apply(list);
   }
 
   @Override
@@ -95,7 +93,9 @@ public final class ArrayBuilder implements ArrayVisitor {
 
   @Override
   public List<Object> visitEndArray(Object unused) {
-    return toList();
+    var resultList = toList();
+    postOp.accept(resultList);
+    return resultList;
   }
 
   static Object visitList(List<?> list, ArrayVisitor arrayVisitor) {
