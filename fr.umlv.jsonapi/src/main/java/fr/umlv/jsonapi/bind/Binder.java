@@ -33,11 +33,6 @@ public final class Binder {
   private final ClassValue<Spec> specMap = new ClassValue<>() {
     @Override
     protected Spec computeValue(Class<?> type) {
-      if (type.isPrimitive() || type == Object.class || type == String.class
-          || type == BigInteger.class || type == BigDecimal.class) {
-        return Spec.valueClass(type.getName(), null);
-      }
-
       var spec = lookup(type, Binder.this.finders);
       if (spec != null) {
         return spec;
@@ -72,6 +67,11 @@ public final class Binder {
   }
 
   private static Spec lookup(Class<?> type, CopyOnWriteArrayList<SpecFinder> finders) {
+    if (type == boolean.class || type == int.class || type == long.class || type == double.class
+        || type == String.class || type == BigInteger.class || type == BigDecimal.class
+        || type == Object.class) {
+      return Spec.valueClass(type.getName(), null);
+    }
     for(var i = finders.size(); --i >= 0; ) {
       var optSpec = finders.get(i).findSpec(type);
       if (optSpec.isPresent()) {
