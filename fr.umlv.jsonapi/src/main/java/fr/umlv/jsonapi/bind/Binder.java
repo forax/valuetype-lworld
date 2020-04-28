@@ -2,8 +2,11 @@ package fr.umlv.jsonapi.bind;
 
 import static java.util.Objects.requireNonNull;
 
+import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonReader;
+import fr.umlv.jsonapi.JsonValue;
+import fr.umlv.jsonapi.ObjectVisitor;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.invoke.MethodHandles.Lookup;
@@ -16,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Stream;
 
 public final class Binder {
   public static final class SpecNoFoundException extends RuntimeException {
@@ -204,5 +208,79 @@ public final class Binder {
     requireNonNull(spec);
     requireNonNull(config);
     return JsonReader.parse(path, spec.createBindVisitor(Object.class, config));
+  }
+
+
+  public <T> Stream<T> stream(Path path, Class<T> type) throws IOException {
+    requireNonNull(path);
+    requireNonNull(type);
+    return stream(path, type, DEFAULT_CONFIG);
+  }
+  public <T> Stream<T> stream(Path path, Class<T> type, BuilderConfig config) throws IOException {
+    requireNonNull(path);
+    requireNonNull(type);
+    requireNonNull(config);
+    return stream(path, specForClass(type), config).map(type::cast);
+  }
+  public static Stream<Object> stream(Path path, Spec spec, BuilderConfig config) throws IOException {
+    requireNonNull(path);
+    requireNonNull(spec);
+    requireNonNull(config);
+    return JsonReader.parseStream(path, arrayForStreamVisitor(spec, config));
+  }
+  public <T> Stream<T> stream(String text, Class<T> type) {
+    requireNonNull(text);
+    requireNonNull(type);
+    return stream(text, type, DEFAULT_CONFIG);
+  }
+  public <T> Stream<T> stream(String text, Class<T> type, BuilderConfig config)  {
+    requireNonNull(text);
+    requireNonNull(type);
+    requireNonNull(config);
+    return stream(text, specForClass(type), config).map(type::cast);
+  }
+  public static Stream<Object> stream(String text, Spec spec, BuilderConfig config) {
+    requireNonNull(text);
+    requireNonNull(spec);
+    requireNonNull(config);
+    return JsonReader.parseStream(text, arrayForStreamVisitor(spec, config));
+  }
+  public <T> Stream<T> stream(Reader reader, Class<T> type) throws IOException {
+    requireNonNull(reader);
+    requireNonNull(type);
+    return stream(reader, type, DEFAULT_CONFIG);
+  }
+  public <T> Stream<T> stream(Reader reader, Class<T> type, BuilderConfig config) throws IOException {
+    requireNonNull(reader);
+    requireNonNull(type);
+    requireNonNull(config);
+    return stream(reader, specForClass(type), config).map(type::cast);
+  }
+  public static Stream<Object> stream(Reader reader, Spec spec, BuilderConfig config) throws IOException {
+    requireNonNull(reader);
+    requireNonNull(spec);
+    requireNonNull(config);
+    return JsonReader.parseStream(reader, arrayForStreamVisitor(spec, config));
+  }
+
+  private static ArrayVisitor arrayForStreamVisitor(Spec spec, BuilderConfig config) {
+    return new ArrayVisitor() {
+      @Override
+      public ObjectVisitor visitObject() {
+        return spec.createBindVisitor(ObjectVisitor.class, config);
+      }
+      @Override
+      public ArrayVisitor visitArray() {
+        return spec.createBindVisitor(ArrayVisitor.class, config);
+      }
+      @Override
+      public Object visitValue(JsonValue value) {
+        return value;
+      }
+      @Override
+      public Object visitEndArray(Object result) {
+        return null;  // useless
+      }
+    };
   }
 }

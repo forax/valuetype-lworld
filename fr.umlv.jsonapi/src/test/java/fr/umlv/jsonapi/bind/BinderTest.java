@@ -4,9 +4,11 @@ import static fr.umlv.jsonapi.bind.Binder.IN_ARRAY;
 import static fr.umlv.jsonapi.bind.Binder.IN_OBJECT;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.function.Predicate.not;
+import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonReader;
@@ -17,10 +19,13 @@ import fr.umlv.jsonapi.bind.Spec.Converter;
 import java.net.URI;
 import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
 public class BinderTest {
@@ -261,5 +266,31 @@ public class BinderTest {
     var pixel = (Map<String,Object>) Binder.read(json, pixelSpec, new BuilderConfig());
     assertEquals(Map.of("x", 1, "y", 3, "color", "red"), pixel);
     assertThrows(UnsupportedOperationException.class, () -> pixel.put("x", 100));
+  }
+
+  @Test
+  public void streamRecord() {
+    var binder = new Binder(lookup());
+    var json = """
+        [ { "color": "red", "lines": 3 }, { "color": "blue", "lines": 1 } ]
+        """;
+    record Shape(String color, int lines) {}
+    Stream<Shape> stream = binder.stream(json, Shape.class);
+    assertEquals(
+        List.of(new Shape("red", 3), new Shape("blue", 1)),
+        stream.collect(toList()));
+  }
+
+  @Test
+  public void streamOfStream() {
+    var binder = new Binder(lookup());
+    var json = """
+        [ [ 1, 2, 3, 4, 5 ], [ 4, 6, 8, 10 ] ]
+        """;
+    var streamSpec = binder.spec(Object.class).stream(s -> s.mapToInt(o -> (int) o).toArray());
+    Stream<int[]> stream = binder.stream(json, streamSpec, new BuilderConfig()).map(o -> (int[]) o);
+    assertTrue(Arrays.equals(
+        new int[] { 1, 2, 3, 4, 5, 4, 6, 8, 10 },
+        stream.flatMapToInt(Arrays::stream).toArray()));
   }
 }

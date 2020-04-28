@@ -55,7 +55,8 @@ final class BindClassVisitor implements ObjectVisitor {
     }
     @SuppressWarnings("unchecked")
     var classInfo = (ClassInfo<Object>) spec.classInfo();
-    builder = classInfo.addValue(builder, name, Specs.convert(spec, name, value));
+    var converted = Specs.convert(spec, name, value);
+    builder = classInfo.addValue(builder, name, converted);
   }
 
   @Override

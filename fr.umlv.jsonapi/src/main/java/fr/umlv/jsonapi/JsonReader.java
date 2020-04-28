@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.util.ArrayDeque;
 import java.util.Spliterator;
 import java.util.function.Consumer;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public final class JsonReader {
@@ -297,5 +298,119 @@ public final class JsonReader {
       case BIG_DECIMAL -> visitor.visitMemberValue(name, JsonValue.from(new BigDecimal(parser.getValueAsString())));
       default -> throw new IOException("invalid number " + parser.getValueAsString());
     }
+  }
+
+
+  public static Stream<Object> parseStream(Path path, ArrayVisitor arrayVisitor) throws IOException {
+    requireNonNull(path);
+    requireNonNull(arrayVisitor);
+    var reader = Files.newBufferedReader(path);
+    try {
+      return parseStream(reader, arrayVisitor);
+    } catch(RuntimeException | Error | IOException e) { // don't leak the reader
+      reader.close();
+      throw e;
+    }
+  }
+  public static Stream<Object> parseStream(String text, ArrayVisitor arrayVisitor) {
+    requireNonNull(text);
+    requireNonNull(arrayVisitor);
+    try {
+      return parseStream(new StringReader(text), arrayVisitor);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+  public static Stream<Object> parseStream(Reader reader, ArrayVisitor visitor) throws IOException {
+    requireNonNull(reader);
+    requireNonNull(visitor);
+    if (visitor instanceof ArrayBuilder) { // fool prof
+      throw new IllegalArgumentException("ArrayBuilder.visitValue() returns null !");
+    }
+    var parser = new JsonFactory().createParser(reader);
+    try {
+      var stack = new ArrayDeque<JsonToken>();
+      var token = parser.nextToken();
+      if (token == START_OBJECT) {
+        throw new IllegalStateException("root is an object but expect an array");
+      }
+      if (token != START_ARRAY) {
+        throw new IllegalStateException("invalid token " + token);
+      }
+      var spliterator = new Spliterator<>() {
+        @Override
+        public boolean tryAdvance(Consumer<? super Object> consumer) {
+          try {
+            for(;;) {
+              var token = parser.nextToken();
+              Object result;
+              switch(token) {
+                case START_OBJECT -> {
+                  var objectVisitor = visitor.visitObject();
+                  if (objectVisitor == null) {
+                    skipUntil(parser, END_OBJECT, stack);
+                    continue;
+                  }
+                  result = readObject(parser, objectVisitor, stack);
+                }
+                case START_ARRAY -> {
+                  var arrayVisitor = visitor.visitArray();
+                  if (arrayVisitor == null) {
+                    skipUntil(parser, END_ARRAY, stack);
+                    continue;
+                  }
+                  result = readArray(parser, arrayVisitor, stack);
+                }
+                case VALUE_STRING -> result = visitor.visitValue(JsonValue.from(parser.getValueAsString()));
+                case VALUE_NUMBER_INT, VALUE_NUMBER_FLOAT -> result = readNumericValue(parser, visitor);
+                case VALUE_TRUE -> result = visitor.visitValue(JsonValue.trueValue());
+                case VALUE_FALSE -> result = visitor.visitValue(JsonValue.falseValue());
+                case VALUE_NULL -> result = visitor.visitValue(JsonValue.nullValue());
+                case END_ARRAY -> { visitor.visitEndArray(null); return false; }
+                default -> throw new UncheckedIOException(new IOException("invalid token " + token));
+              }
+              consumer.accept(result);
+              return true;
+            }
+          } catch (IOException e) {
+            throw new UncheckedIOException(e);
+          }
+        }
+
+        @Override
+        public Spliterator<Object> trySplit() {
+          return null;
+        }
+        @Override
+        public long estimateSize() {
+          return Long.MAX_VALUE;
+        }
+        @Override
+        public int characteristics() {
+          return ORDERED;
+        }
+      };
+      var stream = StreamSupport.stream(spliterator, false);
+      return stream.onClose(() -> {
+        try {
+          parser.close();
+        } catch (IOException e) {
+          throw new UncheckedIOException(e);
+        }
+      });
+    } catch(RuntimeException | Error | IOException e) {  // don't leak the parser
+      parser.close();
+      throw e;
+    }
+  }
+
+  private static Object readNumericValueAndBox(JsonParser parser) throws IOException {
+    return switch(parser.getNumberType()) {
+      case INT -> parser.getValueAsInt();
+      case LONG -> parser.getValueAsLong();
+      case FLOAT, DOUBLE -> parser.getValueAsDouble();
+      case BIG_INTEGER -> new BigInteger(parser.getValueAsString());
+      case BIG_DECIMAL -> new BigDecimal(parser.getValueAsString());
+    };
   }
 }

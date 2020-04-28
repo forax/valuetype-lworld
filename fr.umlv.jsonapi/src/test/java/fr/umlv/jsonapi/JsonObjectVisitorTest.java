@@ -393,4 +393,61 @@ public class JsonObjectVisitorTest {
     var result = (List<Map<String, Integer>>) JsonReader.parse(text, visitor);
     assertEquals(List.of(Map.of("x", 4, "y", 7)), result);
   }
+
+  @Test
+  public void testParseStreamOfString() {
+    var text = """
+        [ "foo", "bar", "baz", "whizz" ]
+        """;
+
+    var stream = JsonReader.parseStream(text, new ArrayVisitor() {
+      @Override
+      public ObjectVisitor visitObject() {
+        return null;
+      }
+      @Override
+      public ArrayVisitor visitArray() {
+        return null;
+      }
+      @Override
+      public Object visitValue(JsonValue value) {
+        return value.asObject();
+      }
+      @Override
+      public Object visitEndArray(Object result) {
+        return null;
+      }
+    });
+    var list = stream.limit(2).collect(toList());
+    assertEquals(List.of("foo", "bar"), list);
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void testParseStreamOfObject() {
+    var text = """
+        [ { "x": 4, "y": 7 }, { "x": 14, "y": 71 } ]
+        """;
+
+    var stream = JsonReader.parseStream(text, new ArrayVisitor() {
+          @Override
+          public ObjectVisitor visitObject() {
+            return new ObjectBuilder();
+          }
+          @Override
+          public ArrayVisitor visitArray() {
+            return null;
+          }
+          @Override
+          public Object visitValue(JsonValue value) {
+            return null;
+          }
+          @Override
+          public Object visitEndArray(Object result) {
+            return null;
+          }
+        });
+    var point = stream.map(o -> (Map<String, Object>) o).findFirst().orElseThrow();
+    assertEquals(Map.of("x", 4, "y", 7), point);
+  }
 }
