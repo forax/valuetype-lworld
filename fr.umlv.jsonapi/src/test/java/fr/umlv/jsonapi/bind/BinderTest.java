@@ -12,6 +12,7 @@ import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonReader;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.bind.Binder.SpecNoFoundException;
+import fr.umlv.jsonapi.bind.Spec.ClassInfo;
 import fr.umlv.jsonapi.bind.Spec.Converter;
 import java.net.URI;
 import java.time.LocalDate;
@@ -189,7 +190,7 @@ public class BinderTest {
         """;
     record Author(String name, List<String> books) { }
     var authorSpec = binder.specFinder().findSpec(Author.class).orElseThrow();
-    binder.register(SpecFinder.from(Map.of(Author.class, authorSpec.filter(not("age"::equals)))));
+    binder.register(SpecFinder.of(Author.class, authorSpec.filter(not("age"::equals))));
     var author = binder.read(json, Author.class);
     assertEquals(new Author("James Joyce", List.of("Finnegans Wake")), author);
   }
@@ -210,5 +211,53 @@ public class BinderTest {
     var config = new BuilderConfig(HashMap::new, Map::copyOf, ArrayList::new, List::copyOf);
     var author = binder.read(json, Author.class, config);
     assertThrows(UnsupportedOperationException.class, () -> author.books().add("foo"));
+  }
+
+  @Test
+  public void readInMapLayout() {
+    var binder = Binder.noDefaults();
+    var json = """
+        {
+          "x": 1,
+          "y": 3,
+          "color": "red"
+        }
+        """;
+    class PixelClassInfo implements ClassInfo<Map<String, Object>> {
+      @Override
+      public Spec elementSpec(String name) {
+        return switch(name) {
+          case "x", "y" -> binder.spec(int.class);
+          case "color" -> binder.spec(String.class);
+          default -> throw new AssertionError();
+        };
+      }
+
+      @Override
+      public Map<String, Object> newBuilder() {
+        return new HashMap<>();
+      }
+      @Override
+      public Map<String, Object> addObject(Map<String, Object> builder, String name, Object object) {
+        throw new AssertionError();
+      }
+      @Override
+      public Map<String, Object> addArray(Map<String, Object> builder, String name, Object array) {
+        throw new AssertionError();
+      }
+      @Override
+      public Map<String, Object> addValue(Map<String, Object> builder, String name, JsonValue value) {
+        builder.put(name, value.asObject());
+        return builder;
+      }
+      @Override
+      public Object build(Map<String, Object> builder) {
+        return builder;
+      }
+    }
+
+    var pixelSpec = Spec.objectClass("Pixel", new PixelClassInfo());
+    var pixel = Binder.read(json, pixelSpec, new BuilderConfig());
+    assertEquals(Map.of("x", 1, "y", 3, "color", "red"), pixel);
   }
 }
