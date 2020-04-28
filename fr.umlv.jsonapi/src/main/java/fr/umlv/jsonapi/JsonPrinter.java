@@ -23,7 +23,7 @@ public final class JsonPrinter implements ObjectVisitor, ArrayVisitor {
   }
 
   @Override
-  public ObjectVisitor visitMemberObject(String name) {
+  public JsonPrinter visitMemberObject(String name) {
     Objects.requireNonNull(name);
     builder.append(separator);
     appendText(builder, name);
@@ -33,7 +33,7 @@ public final class JsonPrinter implements ObjectVisitor, ArrayVisitor {
   }
 
   @Override
-  public ArrayVisitor visitMemberArray(String name) {
+  public JsonPrinter visitMemberArray(String name) {
     Objects.requireNonNull(name);
     builder.append(separator);
     appendText(builder, name);
@@ -52,21 +52,21 @@ public final class JsonPrinter implements ObjectVisitor, ArrayVisitor {
   }
 
   @Override
-  public Object visitEndObject() {
+  public Void visitEndObject() {
     builder.append(" }");
     separator = ", ";
     return null;
   }
 
   @Override
-  public ObjectVisitor visitObject() {
+  public JsonPrinter visitObject() {
     builder.append(separator).append("{ ");
     separator = "";
     return this;
   }
 
   @Override
-  public ArrayVisitor visitArray() {
+  public JsonPrinter visitArray() {
     builder.append(separator).append("[ ");
     separator = "";
     return this;
@@ -80,9 +80,9 @@ public final class JsonPrinter implements ObjectVisitor, ArrayVisitor {
   }
 
   @Override
-  public Object visitEndArray(Object result) {
+  public Void visitEndArray(Object unused) {
     builder.append(" ]");
     separator = ", ";
-    return result;
+    return null;
   }
 }

@@ -3,15 +3,14 @@ package fr.umlv.jsonapi;
 import java.util.stream.Stream;
 
 public interface StreamVisitor extends ArrayVisitor {
-  Object visitStream(Stream<Object> stream);
+  Object visitEndArray(Stream<Object> stream);
 
   @Override
-  default Object visitValue(JsonValue value) {
-    return value.asObject();
-  }
+  Object visitValue(JsonValue value);
 
   @Override
+  @SuppressWarnings("unchecked")
   default Object visitEndArray(Object result) {
-    return result;
+    return visitEndArray((Stream<Object>) result);
   }
 }

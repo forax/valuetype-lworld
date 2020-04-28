@@ -26,6 +26,13 @@ final class BindStreamVisitor implements StreamVisitor {
   }
 
   @Override
+  public Object visitEndArray(Stream<Object> stream) {
+    var result = spec.aggregator().apply(stream);
+    postOp.accept(result);
+    return result;
+  }
+
+  @Override
   public ObjectVisitor visitObject() {
     return spec.newObjectFrom(config);
   }
@@ -36,18 +43,7 @@ final class BindStreamVisitor implements StreamVisitor {
   }
 
   @Override
-  public Object visitStream(Stream<Object> stream) {
-    return spec.aggregator().apply(stream);
-  }
-
-  @Override
   public Object visitValue(JsonValue value) {
     return Specs.convert(spec, value).asObject();
-  }
-
-  @Override
-  public Object visitEndArray(Object result) {
-    postOp.accept(result);
-    return result;
   }
 }

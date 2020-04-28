@@ -190,7 +190,8 @@ public class JsonObjectVisitorTest {
       }
 
       @Override
-      public Object visitStream(Stream<Object> stream) {
+      public Object visitEndArray(Stream<Object> stream) {
+        methods.add("visitEndArray");
         return stream.collect(toList());
       }
 
@@ -221,23 +222,16 @@ public class JsonObjectVisitorTest {
           }
           case TRUE, LONG, BIG_INTEGER, BIG_DECIMAL -> fail();
         }
-        return StreamVisitor.super.visitValue(value);
-      }
-
-      @Override
-      public Object visitEndArray(Object result) {
-        methods.add("visitEndArray");
-        assertTrue(result instanceof List<?>);
-        return StreamVisitor.super.visitEndArray(result);
+        return value.asObject();
       }
     };
 
     var result = JsonReader.parse(text, visitor);
     assertEquals(Arrays.asList("Jane", false, 72, 37.8, null), result);
     assertEquals(
-        List.of("visitValue+STRING", "visitValue+FALSE", "visitValue+INT",
-            "visitValue+DOUBLE", "visitValue+NULL", "visitObject", "visitArray",
-            "visitEndArray"),
+        List.of("visitEndArray", "visitValue+STRING", "visitValue+FALSE",
+            "visitValue+INT", "visitValue+DOUBLE", "visitValue+NULL", "visitObject",
+            "visitArray"),
         methods);
   }
 
@@ -255,9 +249,13 @@ public class JsonObjectVisitorTest {
       public ArrayVisitor visitArray() {
         return null;
       }
+      @Override
+      public Object visitValue(JsonValue value) {
+        return value.asObject();
+      }
 
       @Override
-      public Object visitStream(Stream<Object> stream) {
+      public Object visitEndArray(Stream<Object> stream) {
         return stream.findFirst().orElseThrow();
       }
     };
@@ -384,9 +382,13 @@ public class JsonObjectVisitorTest {
       public ArrayVisitor visitArray() {
         return null;
       }
+      @Override
+      public Object visitValue(JsonValue value) {
+        return value.asObject();
+      }
 
       @Override
-      public Object visitStream(Stream<Object> stream) {
+      public Object visitEndArray(Stream<Object> stream) {
         return stream.map(v -> (Map<String, Integer>) v).filter(p -> p.get("y") < 10).collect(toUnmodifiableList());
       }
     };

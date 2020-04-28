@@ -255,14 +255,14 @@ public final class JsonReader {
     var stream = StreamSupport.stream(spliterator, false);
     Object result;
     try {
-      result = visitor.visitStream(stream);
+      result = visitor.visitEndArray(stream);
     } catch(UncheckedIOException e) {
       throw e.getCause();
     }
     if (!spliterator.ended) {  // stream short-circuited !
       skipUntil(parser, END_ARRAY, stack);
     }
-    return visitor.visitEndArray(result);
+    return result;
   }
 
   private static Object readObject(JsonParser parser, ObjectVisitor visitor, ArrayDeque<JsonToken> stack) throws IOException {

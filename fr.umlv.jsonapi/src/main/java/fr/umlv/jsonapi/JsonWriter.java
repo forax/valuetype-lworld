@@ -126,7 +126,7 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
   }
 
   @Override
-  public Void visitEndArray(Object result) {
+  public Void visitEndArray(Object unused) {
     try {
       generator.writeEndArray();
       return null;

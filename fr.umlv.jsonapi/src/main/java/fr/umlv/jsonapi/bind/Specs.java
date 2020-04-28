@@ -69,7 +69,7 @@ final class Specs {
       throw new IllegalStateException("invalid component for an array " + component);
     }
   }
-  record StreamSpec(Spec component, Function<? super Stream<Object>, ?>aggregator) implements Spec {
+  record StreamSpec(Spec component, Function<? super Stream<Object>, ?> aggregator) implements Spec {
     @Override
     public String toString() {
       return component + ".stream(aggregator)";

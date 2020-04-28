@@ -19,6 +19,12 @@ public final class FilterStreamVisitor implements StreamVisitor {
   }
 
   @Override
+  public Object visitEndArray(Stream<Object> stream) {
+    requireNonNull(stream);
+    return delegate.visitEndArray(stream);
+  }
+
+  @Override
   public ObjectVisitor visitObject() {
     return new FilterObjectVisitor(delegate.visitObject(), predicate);
   }
@@ -33,18 +39,7 @@ public final class FilterStreamVisitor implements StreamVisitor {
   }
 
   @Override
-  public Object visitStream(Stream<Object> stream) {
-    requireNonNull(stream);
-    return delegate.visitStream(stream);
-  }
-
-  @Override
   public Object visitValue(JsonValue value) {
     return delegate.visitValue(value);
-  }
-
-  @Override
-  public Object visitEndArray(Object result) {
-    return delegate.visitEndArray(result);
   }
 }
