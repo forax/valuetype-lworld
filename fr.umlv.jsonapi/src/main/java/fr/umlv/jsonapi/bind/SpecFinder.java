@@ -29,4 +29,7 @@ public interface SpecFinder {
   static SpecFinder from(Map<Class<?>, ? extends Spec> specMap) {
     return type -> Optional.ofNullable(specMap.get(type));
   }
+  static SpecFinder of(Class<?> type, Spec spec) {
+    return t -> Optional.of(t).filter(type::equals).map(__ -> spec);
+  }
 }
