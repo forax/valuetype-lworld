@@ -19,7 +19,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
@@ -158,7 +157,7 @@ public class BinderTest {
   }
 
   @Test
-  public void readAndFilter() {
+  public void readAndFilterClassVisitor() {
     var binder = new Binder(lookup());
     var json = """
         {
@@ -173,6 +172,25 @@ public class BinderTest {
     var authorSpec = binder.spec(Author.class);
     var classVisitor = authorSpec.createBindVisitor(BindClassVisitor.class);
     var author = (Author)JsonReader.parse(json, classVisitor.filterName(not("age"::equals)));
+    assertEquals(new Author("James Joyce", List.of("Finnegans Wake")), author);
+  }
+
+  @Test
+  public void readAndFilterSpec() {
+    var binder = new Binder(lookup());
+    var json = """
+        {
+          "name": "James Joyce",
+          "age": 38,
+          "books": [
+            "Finnegans Wake"
+          ]
+        }
+        """;
+    record Author(String name, List<String> books) { }
+    var authorSpec = binder.specFinder().findSpec(Author.class).orElseThrow();
+    binder.register(SpecFinder.from(Map.of(Author.class, authorSpec.filter(not("age"::equals)))));
+    var author = binder.read(json, Author.class);
     assertEquals(new Author("James Joyce", List.of("Finnegans Wake")), author);
   }
 

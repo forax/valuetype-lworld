@@ -25,16 +25,28 @@ final class BindObjectVisitor implements ObjectVisitor {
 
   @Override
   public ObjectVisitor visitMemberObject(String name) {
+    var filter = spec.filter();
+    if (filter != null && !filter.test(name)) {
+      return null;
+    }
     return spec.newMemberObjectFrom(name, objectBuilder);
   }
 
   @Override
   public ArrayVisitor visitMemberArray(String name) {
+    var filter = spec.filter();
+    if (filter != null && !filter.test(name)) {
+      return null;
+    }
     return spec.newMemberArrayFrom(name, objectBuilder);
   }
 
   @Override
   public void visitMemberValue(String name, JsonValue value) {
+    var filter = spec.filter();
+    if (filter != null && !filter.test(name)) {
+      return;
+    }
     objectBuilder.visitMemberValue(name, Specs.convert(spec, name, value));
   }
 

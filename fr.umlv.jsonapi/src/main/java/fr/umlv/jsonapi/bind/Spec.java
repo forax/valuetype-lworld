@@ -10,12 +10,13 @@ import fr.umlv.jsonapi.bind.Specs.ObjectSpec;
 import fr.umlv.jsonapi.bind.Specs.StreamSpec;
 import fr.umlv.jsonapi.bind.Specs.ValueSpec;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 public /*sealed*/ interface Spec /*add permits clause*/ {
   default Spec array() { return new ArraySpec(this); }
   default Spec stream(Function<? super Stream<Object>, ?> aggregator) { return new StreamSpec(this, aggregator); }
-  default Spec object() { return new ObjectSpec(this); }
+  default Spec object() { return new ObjectSpec(this, null); }
 
   default Spec convert(Converter converter) {
     requireNonNull(converter);
@@ -23,6 +24,17 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
       return valueSpec.composeWith(converter);
     }
     throw new IllegalArgumentException("can not convert this spec");
+  }
+
+  default Spec filter(Predicate<? super String> predicate) {
+    requireNonNull(predicate);
+    if (this instanceof ObjectSpec objectSpec) {
+      return objectSpec.filterWith(predicate);
+    }
+    if (this instanceof ClassSpec classSpec) {
+      return classSpec.filterWith(predicate);
+    }
+    throw new IllegalArgumentException("can not filter this spec");
   }
 
   default <V> V createBindVisitor(Class<V> visitorType) {
@@ -49,7 +61,7 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
   static Spec objectClass(String name, ClassInfo<?> classInfo) {
     requireNonNull(name);
     requireNonNull(classInfo);
-    return new ClassSpec(name, classInfo);
+    return new ClassSpec(name, null, classInfo);
   }
   static Spec valueClass(String name, Converter converter) {
     requireNonNull(name);

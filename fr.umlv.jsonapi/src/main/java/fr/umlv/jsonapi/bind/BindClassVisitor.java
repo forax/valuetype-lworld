@@ -27,6 +27,10 @@ final class BindClassVisitor implements ObjectVisitor {
 
   @Override
   public ObjectVisitor visitMemberObject(String name) {
+    var filter = spec.filter();
+    if (filter != null && !filter.test(name)) {
+      return null;
+    }
     @SuppressWarnings("unchecked")
     var classInfo = (ClassInfo<Object>) spec.classInfo();
     return spec.newMemberObject(name, config, o -> builder = classInfo.addObject(builder, name, o));
@@ -34,6 +38,10 @@ final class BindClassVisitor implements ObjectVisitor {
 
   @Override
   public ArrayVisitor visitMemberArray(String name) {
+    var filter = spec.filter();
+    if (filter != null && !filter.test(name)) {
+      return null;
+    }
     @SuppressWarnings("unchecked")
     var classInfo = (ClassInfo<Object>) spec.classInfo();
     return spec.newMemberArray(name, config, a -> builder = classInfo.addArray(builder, name, a));
@@ -41,6 +49,10 @@ final class BindClassVisitor implements ObjectVisitor {
 
   @Override
   public void visitMemberValue(String name, JsonValue value) {
+    var filter = spec.filter();
+    if (filter != null && !filter.test(name)) {
+      return;
+    }
     @SuppressWarnings("unchecked")
     var classInfo = (ClassInfo<Object>) spec.classInfo();
     builder = classInfo.addValue(builder, name, Specs.convert(spec, name, value));

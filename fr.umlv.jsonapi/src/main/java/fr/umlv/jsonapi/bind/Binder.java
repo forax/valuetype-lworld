@@ -14,6 +14,7 @@ import java.math.BigInteger;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 public final class Binder {
@@ -37,12 +38,9 @@ public final class Binder {
         return Spec.valueClass(type.getName(), null);
       }
 
-      var finders = Binder.this.finders;
-      for(var i = finders.size(); --i >= 0; ) {
-        var optSpec = finders.get(i).findSpec(type);
-        if (optSpec.isPresent()) {
-          return optSpec.orElseThrow();
-        }
+      var spec = lookup(type, Binder.this.finders);
+      if (spec != null) {
+        return spec;
       }
       throw new SpecNoFoundException("no finder can resolve type " + type.getName());
     }
@@ -71,6 +69,21 @@ public final class Binder {
     requireNonNull(finder);
     finders.add(finder);
     return this;
+  }
+
+  private static Spec lookup(Class<?> type, CopyOnWriteArrayList<SpecFinder> finders) {
+    for(var i = finders.size(); --i >= 0; ) {
+      var optSpec = finders.get(i).findSpec(type);
+      if (optSpec.isPresent()) {
+        return optSpec.orElseThrow();
+      }
+    }
+    return null;
+  }
+
+  public SpecFinder specFinder() {
+    var finders = this.finders;
+    return type -> Optional.ofNullable(lookup(type, finders));
   }
 
   private Spec specForClass(Class<?> type) {

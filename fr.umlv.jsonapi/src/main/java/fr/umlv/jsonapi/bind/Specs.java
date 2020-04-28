@@ -8,6 +8,7 @@ import fr.umlv.jsonapi.ObjectBuilder;
 import fr.umlv.jsonapi.ObjectVisitor;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 final class Specs {
@@ -94,10 +95,10 @@ final class Specs {
       throw new IllegalStateException("invalid component for an array " + component);
     }
   }
-  record ObjectSpec(Spec component) implements Spec {
+  record ObjectSpec(Spec component, Predicate<? super String> filter) implements Spec {
     @Override
     public String toString() {
-      return component + ".object()";
+      return component + ".object()" + (filter == null? "": ".filter()");
     }
 
     ObjectVisitor newMemberObjectFrom(String name, ObjectBuilder objectBuilder) {
@@ -119,9 +120,14 @@ final class Specs {
       }
       throw new IllegalStateException("invalid component for an array " + component);
     }
+    public ObjectSpec filterWith(Predicate<? super String> predicate) {
+      var filter = this.filter;
+      Predicate<? super String> newFilter = (filter == null)? predicate: name -> predicate.test(name) && filter.test(name);
+      return new ObjectSpec(component, newFilter);
+    }
   }
 
-  record ClassSpec(String name, ClassInfo<?>classInfo) implements Spec {
+  record ClassSpec(String name, Predicate<? super String>filter, ClassInfo<?>classInfo) implements Spec {
     @Override
     public String toString() {
       return name;
@@ -147,6 +153,12 @@ final class Specs {
         return new BindStreamVisitor(streamSpec, config, postOp);
       }
       throw new IllegalStateException("invalid component for an array " + spec + " for element " + name);
+    }
+
+    public ClassSpec filterWith(Predicate<? super String> predicate) {
+       var filter = this.filter;
+       Predicate<? super String> newFilter = (filter == null)? predicate: name -> predicate.test(name) && filter.test(name);
+       return new ClassSpec(name + ".filter()", newFilter, classInfo);
     }
   }
 
