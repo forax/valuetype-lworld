@@ -252,12 +252,14 @@ public class BinderTest {
       }
       @Override
       public Object build(Map<String, Object> builder) {
-        return builder;
+        return Map.copyOf(builder);  // make immutable
       }
     }
 
     var pixelSpec = Spec.objectClass("Pixel", new PixelClassInfo());
-    var pixel = Binder.read(json, pixelSpec, new BuilderConfig());
+    @SuppressWarnings("unchecked")
+    var pixel = (Map<String,Object>) Binder.read(json, pixelSpec, new BuilderConfig());
     assertEquals(Map.of("x", 1, "y", 3, "color", "red"), pixel);
+    assertThrows(UnsupportedOperationException.class, () -> pixel.put("x", 100));
   }
 }
