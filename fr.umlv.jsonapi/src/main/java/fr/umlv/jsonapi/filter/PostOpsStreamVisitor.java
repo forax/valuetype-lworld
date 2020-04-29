@@ -7,16 +7,17 @@ import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.StreamVisitor;
 import fr.umlv.jsonapi.VisitorMode;
-import java.util.function.Predicate;
+import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-public final class FilterStreamVisitor implements StreamVisitor {
+public class PostOpsStreamVisitor<E> implements StreamVisitor {
   private final StreamVisitor delegate;
-  private final Predicate<? super String> predicate;
+  private final Consumer<Object> postOp;
 
-  public FilterStreamVisitor(StreamVisitor delegate, Predicate<? super String> predicate) {
+  @SuppressWarnings("unchecked")
+  public PostOpsStreamVisitor(StreamVisitor delegate, Consumer<E> postOp) {
     this.delegate = requireNonNull(delegate);
-    this.predicate = requireNonNull(predicate);
+    this.postOp = (Consumer<Object>) postOp;
   }
 
   @Override
@@ -26,22 +27,19 @@ public final class FilterStreamVisitor implements StreamVisitor {
 
   @Override
   public Object visitStream(Stream<Object> stream) {
-    requireNonNull(stream);
-    return delegate.visitStream(stream);
+    var result = delegate.visitStream(stream);
+    postOp.accept(result);
+    return result;
   }
 
   @Override
   public ObjectVisitor visitObject() {
-    return new FilterObjectVisitor(delegate.visitObject(), predicate);
+    return delegate.visitObject();
   }
 
   @Override
   public ArrayVisitor visitArray() {
-    var arrayVisitor = delegate.visitArray();
-    if (arrayVisitor instanceof StreamVisitor streamVisitor) {
-      return new FilterStreamVisitor(streamVisitor, predicate);
-    }
-    return new FilterArrayVisitor(arrayVisitor, predicate);
+    return delegate.visitArray();
   }
 
   @Override

@@ -7,6 +7,7 @@ import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonReader;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
+import fr.umlv.jsonapi.VisitorMode;
 import java.io.IOException;
 import java.io.Reader;
 import java.lang.invoke.MethodHandles.Lookup;
@@ -265,6 +266,10 @@ public final class Binder {
 
   private static ArrayVisitor arrayForStreamVisitor(Spec spec, BuilderConfig config) {
     return new ArrayVisitor() {
+      @Override
+      public VisitorMode mode() {
+        return VisitorMode.PULL_MODE;
+      }
       @Override
       public ObjectVisitor visitObject() {
         return spec.createBindVisitor(ObjectVisitor.class, config);

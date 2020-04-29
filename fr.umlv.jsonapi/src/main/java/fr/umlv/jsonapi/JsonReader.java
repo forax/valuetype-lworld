@@ -167,6 +167,9 @@ public final class JsonReader {
     if (visitor instanceof StreamVisitor streamVisitor) {
       return readStreamArray(parser, streamVisitor, stack);
     }
+    if (visitor.mode() == VisitorMode.PULL_MODE) {
+      throw new IllegalArgumentException("ArrayVisitor in pull mode not allowed");
+    }
     return readPlainArray(parser, visitor, stack);
   }
 
@@ -262,6 +265,7 @@ public final class JsonReader {
     if (!spliterator.ended) {  // stream short-circuited !
       skipUntil(parser, END_ARRAY, stack);
     }
+    visitor.visitEndArray();
     return result;
   }
 
@@ -324,11 +328,8 @@ public final class JsonReader {
   public static Stream<Object> stream(Reader reader, ArrayVisitor visitor) throws IOException {
     requireNonNull(reader);
     requireNonNull(visitor);
-    if (visitor instanceof ArrayBuilder) { // fool prof
-      throw new IllegalArgumentException("ArrayBuilder only provides a push API");
-    }
-    if (visitor instanceof StreamVisitor) { // fool prof 2
-      throw new IllegalArgumentException("a StreamVisitor can not be used here");
+    if (visitor.mode() == VisitorMode.PUSH_MODE) {
+      throw new IllegalArgumentException("only pull mode visitors are allowed");
     }
     var parser = new JsonFactory().createParser(reader);
     try {

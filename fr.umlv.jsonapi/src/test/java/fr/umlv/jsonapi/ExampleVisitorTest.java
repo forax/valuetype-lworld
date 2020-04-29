@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 
 public class ExampleVisitorTest {
   @Test
-  public void testSimpleObjectParsing() {
+  public void testSimpleObjectPushMode() {
     var text = """
         {
           "name": "Mr Robot",
@@ -20,6 +20,10 @@ public class ExampleVisitorTest {
         }
         """;
     var visitor = new ObjectVisitor() {
+      @Override
+      public VisitorMode mode() {
+        return VisitorMode.PUSH_MODE;
+      }
       @Override
       public ObjectVisitor visitMemberObject(String name) {
         return null;  // skip it
@@ -30,16 +34,54 @@ public class ExampleVisitorTest {
         return null;  // skip it
       }
       @Override
-      public void visitMemberValue(String name, JsonValue value) {
+      public Object visitMemberValue(String name, JsonValue value) {
         assertEquals("Mr Robot", value.stringValue());
+        return null;
       }
       @Override
       public Object visitEndObject() {
-        return "end !";  // send result;
+        return "end !";  // send result
       }
     };
     var result = JsonReader.parse(text, visitor);
     assertEquals(result, "end !");
+  }
+
+  @Test
+  public void testSimpleObjectPullMode() {
+    var text = """
+        {
+          "name": "Mr Robot",
+          "children": [ "Elliot", "Darlene" ]
+        }
+        """;
+    var builderConfig =  BuilderConfig.defaults();
+    var visitor = builderConfig.newObjectBuilder(new ObjectVisitor() {
+      @Override
+      public VisitorMode mode() {
+        return VisitorMode.PULL_MODE;
+      }
+      @Override
+      public ObjectVisitor visitMemberObject(String name) {
+        return null;  // skip it
+      }
+      @Override
+      public ArrayVisitor visitMemberArray(String name) {
+        assertEquals("children", name);
+        return null;  // skip it
+      }
+      @Override
+      public Object visitMemberValue(String name, JsonValue value) {
+        assertEquals("Mr Robot", value.stringValue());
+        return "Mrs Robot";
+      }
+      @Override
+      public Object visitEndObject() {
+        return null;  // result ignored
+      }
+    });
+    var map = JsonReader.parse(text, visitor);
+    assertEquals(Map.of("name", "Mrs Robot"), map);
   }
 
   @Test
@@ -48,6 +90,10 @@ public class ExampleVisitorTest {
         [ "Jolene", "Joleene", "Joleeeene" ]
         """;
     var visitor = new ArrayVisitor() {
+      @Override
+      public VisitorMode mode() {
+        return VisitorMode.PUSH_MODE;
+      }
       @Override
       public ObjectVisitor visitObject() {
         return null;  // skip it
@@ -76,6 +122,10 @@ public class ExampleVisitorTest {
         [ "Jolene", "Joleene", "Joleeeene" ]
         """;
     var visitor = new ArrayVisitor() {
+      @Override
+      public VisitorMode mode() {
+        return VisitorMode.PULL_MODE;
+      }
       @Override
       public ObjectVisitor visitObject() {
         return null;  // skip it
@@ -122,7 +172,6 @@ public class ExampleVisitorTest {
         assertTrue(value.stringValue().startsWith("Jole"));
         return value.asObject();  // used in pull mode
       }
-      // no visitEndArray !
     };
     var result = JsonReader.parse(text, visitor);
     assertEquals("Joleene", result);

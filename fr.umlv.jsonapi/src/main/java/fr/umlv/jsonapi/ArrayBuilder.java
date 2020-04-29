@@ -2,13 +2,15 @@ package fr.umlv.jsonapi;
 
 import static java.util.Objects.requireNonNull;
 
+import fr.umlv.jsonapi.filter.PostOpsArrayVisitor;
+import fr.umlv.jsonapi.filter.PostOpsObjectVisitor;
+import fr.umlv.jsonapi.filter.PostOpsStreamVisitor;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 /**
@@ -53,29 +55,28 @@ import java.util.stream.Collectors;
 public final class ArrayBuilder implements ArrayVisitor {
   private final List<Object> list;
   final BuilderConfig config;
+  private final ArrayVisitor delegate;
   private final Consumer<List<Object>> postOp;
 
-  ArrayBuilder(BuilderConfig config, Consumer<List<Object>> postOp) {
+  ArrayBuilder(BuilderConfig config, ArrayVisitor delegate, Consumer<List<Object>> postOp) {
     this.list = requireNonNull(config.listSupplier().get());
+    this.delegate = delegate;
     this.config = config;
     this.postOp = postOp;
   }
 
-  /**
-   * Creates an array builder that takes as argument a builder config
-   */
-  ArrayBuilder(BuilderConfig config) {
-    this(config, __ -> {});
+  ArrayBuilder(BuilderConfig config, ArrayVisitor delegate) {
+    this(config, delegate, __ -> {});
   }
 
   /**
    * Creates an array builder that uses a {@link java.util.HashMap} and {@link java.util.ArrayList}
    * to store a JSON object and a JSON array respectively.
    *
-   * @see BuilderConfig#newArrayBuilder()
+   * @see BuilderConfig
    */
   public ArrayBuilder() {
-    this(BuilderConfig.DEFAULT);
+    this(BuilderConfig.DEFAULT, null);
   }
 
 
@@ -143,30 +144,61 @@ public final class ArrayBuilder implements ArrayVisitor {
    *
    * @return a list (newly created or not)
    *
-   * @see #ArrayBuilder(Supplier, UnaryOperator, Supplier, UnaryOperator)
+   * @see BuilderConfig
    */
   public List<Object> toList() {
     return config.transformListOp().apply(list);
   }
 
   @Override
-  public ObjectBuilder visitObject() {
-    return new ObjectBuilder(config, list::add);
+  public VisitorMode mode() {
+    return VisitorMode.PUSH_MODE;
   }
 
   @Override
-  public ArrayBuilder visitArray() {
-    return new ArrayBuilder(config, list::add);
+  public ObjectVisitor visitObject() {
+    if (delegate != null) {
+      var objectVisitor = delegate.visitObject();
+      if (objectVisitor == null) {
+        return null;
+      }
+      return new PostOpsObjectVisitor<>(objectVisitor, list::add);
+    }
+    return new ObjectBuilder(config, null, list::add);
   }
 
   @Override
-  public Void visitValue(JsonValue value) {
-    list.add(value.asObject());
-    return null;
+  public ArrayVisitor visitArray() {
+    if (delegate != null) {
+      var arrayVisitor = delegate.visitArray();
+      if (arrayVisitor == null) {
+        return null;
+      }
+      if (arrayVisitor instanceof StreamVisitor streamVisitor) {
+        return new PostOpsStreamVisitor<>(streamVisitor, list::add);
+      }
+      return new PostOpsArrayVisitor<>(arrayVisitor, list::add);
+    }
+    return new ArrayBuilder(config, null, list::add);
+  }
+
+  @Override
+  public Object visitValue(JsonValue value) {
+    if (delegate != null) {
+      var object = delegate.visitValue(value);  // pull mode
+      list.add(object);
+      return object;
+    }
+    var object = value.asObject();
+    list.add(object);
+    return object;
   }
 
   @Override
   public List<Object> visitEndArray() {
+    if (delegate != null) {
+      delegate.visitArray();  // ignore the resulting value (pull mode)
+    }
     var resultList = toList();
     postOp.accept(resultList);
     return resultList;

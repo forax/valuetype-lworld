@@ -4,6 +4,7 @@ import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
+import fr.umlv.jsonapi.VisitorMode;
 import fr.umlv.jsonapi.bind.Spec.ClassInfo;
 import fr.umlv.jsonapi.bind.Specs.ClassSpec;
 import java.util.function.Consumer;
@@ -23,6 +24,11 @@ final class BindClassVisitor implements ObjectVisitor {
 
   BindClassVisitor(ClassSpec spec, BuilderConfig config) {
     this(spec, config, __ -> { /* empty */ });
+  }
+
+  @Override
+  public VisitorMode mode() {
+    return VisitorMode.PUSH_MODE;
   }
 
   @Override
@@ -48,15 +54,16 @@ final class BindClassVisitor implements ObjectVisitor {
   }
 
   @Override
-  public void visitMemberValue(String name, JsonValue value) {
+  public Void visitMemberValue(String name, JsonValue value) {
     var filter = spec.filter();
     if (filter != null && !filter.test(name)) {
-      return;
+      return null;
     }
     @SuppressWarnings("unchecked")
     var classInfo = (ClassInfo<Object>) spec.classInfo();
     var converted = Specs.convert(spec, name, value);
     builder = classInfo.addValue(builder, name, converted);
+    return null;
   }
 
   @Override

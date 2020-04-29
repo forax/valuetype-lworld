@@ -35,15 +35,20 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
   }
 
   @Override
+  public VisitorMode mode() {
+    return VisitorMode.PUSH_MODE;
+  }
+
+  @Override
   public JsonWriter visitMemberObject(String name) {
     Objects.requireNonNull(name);
     try {
       generator.writeFieldName(name);
       generator.writeStartObject();
+      return this;
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-    return this;
   }
 
   @Override
@@ -52,14 +57,14 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
     try {
       generator.writeFieldName(name);
       generator.writeStartArray();
+      return this;
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-    return this;
   }
 
   @Override
-  public void visitMemberValue(String name, JsonValue value) {
+  public Void visitMemberValue(String name, JsonValue value) {
     Objects.requireNonNull(name);
     try {
       switch(value.kind()) {
@@ -71,6 +76,7 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
         case BIG_INTEGER -> { generator.writeFieldName(name); generator.writeNumber(value.bigIntegerValue()); }
         case BIG_DECIMAL -> generator.writeNumberField(name, value.bigDecimalValue());
       }
+      return null;
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
@@ -90,20 +96,20 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
   public JsonWriter visitObject() {
     try {
       generator.writeStartObject();
+      return this;
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-    return this;
   }
 
   @Override
   public JsonWriter visitArray() {
     try {
       generator.writeStartArray();
+      return this;
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
-    return this;
   }
 
   @Override

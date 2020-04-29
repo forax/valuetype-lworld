@@ -2,13 +2,15 @@ package fr.umlv.jsonapi;
 
 import static java.util.Objects.requireNonNull;
 
+import fr.umlv.jsonapi.filter.PostOpsArrayVisitor;
+import fr.umlv.jsonapi.filter.PostOpsObjectVisitor;
+import fr.umlv.jsonapi.filter.PostOpsStreamVisitor;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 /**
@@ -61,23 +63,28 @@ import java.util.stream.Collectors;
 public final class ObjectBuilder implements ObjectVisitor {
   private final Map<String, Object> map;
   final BuilderConfig config;
+  private final ObjectVisitor delegate;
   private final Consumer<Map<String, Object>> postOp;
 
-  ObjectBuilder(BuilderConfig config, Consumer<Map<String, Object>> postOp) {
+  ObjectBuilder(BuilderConfig config, ObjectVisitor delegate, Consumer<Map<String, Object>> postOp) {
     this.map = requireNonNull(config.mapSupplier().get());
     this.config = config;
+    this.delegate = delegate;
     this.postOp = postOp;
   }
 
-  /**
-   * Creates an object builder that takes as argument a builder config
-   */
-  ObjectBuilder(BuilderConfig config) {
-    this(config, __ -> {});
+  ObjectBuilder(BuilderConfig config, ObjectVisitor delegate) {
+    this(config, delegate, __ -> {});
   }
 
+  /**
+   * Creates an object builder that uses a {@link java.util.HashMap} and {@link java.util.ArrayList}
+   * to store a JSON object and a JSON array respectively.
+   *
+   * @see BuilderConfig
+   */
   public ObjectBuilder() {
-    this(BuilderConfig.DEFAULT);
+    this(BuilderConfig.DEFAULT, null);
   }
 
   @Override
@@ -108,7 +115,7 @@ public final class ObjectBuilder implements ObjectVisitor {
   public ObjectBuilder with(String name, Consumer<? super ObjectBuilder> consumer) {
     requireNonNull(name);
     requireNonNull(consumer);
-    var builder = new ObjectBuilder(config);
+    var builder = new ObjectBuilder(config, null);
     consumer.accept(builder);
     add(name, builder.toMap());
     return this;
@@ -119,25 +126,57 @@ public final class ObjectBuilder implements ObjectVisitor {
   }
 
   @Override
-  public ObjectBuilder visitMemberObject(String name) {
-    requireNonNull(name);
-    return new ObjectBuilder(config, _map -> map.put(name, _map));
+  public VisitorMode mode() {
+    return VisitorMode.PUSH_MODE;
   }
 
   @Override
-  public ArrayBuilder visitMemberArray(String name) {
+  public ObjectVisitor visitMemberObject(String name) {
     requireNonNull(name);
-    return new ArrayBuilder(config, list -> map.put(name, list));
+    if (delegate != null) {
+      var objectVisitor = delegate.visitMemberObject(name);
+      if (objectVisitor == null) {
+        return null;
+      }
+      return new PostOpsObjectVisitor<>(objectVisitor, _map -> map.put(name, _map));
+    }
+    return new ObjectBuilder(config, null, _map -> map.put(name, _map));
   }
 
   @Override
-  public void visitMemberValue(String name, JsonValue value) {
+  public ArrayVisitor visitMemberArray(String name) {
     requireNonNull(name);
-    map.put(name, value.asObject());
+    if (delegate != null) {
+      var arrayVisitor = delegate.visitMemberArray(name);
+      if (arrayVisitor == null) {
+        return null;
+      }
+      if (arrayVisitor instanceof StreamVisitor streamVisitor) {
+        return new PostOpsStreamVisitor<>(streamVisitor, list -> map.put(name, list));
+      }
+      return new PostOpsArrayVisitor<>(arrayVisitor, list -> map.put(name, list));
+    }
+    return new ArrayBuilder(config, null, list -> map.put(name, list));
+  }
+
+  @Override
+  public Void visitMemberValue(String name, JsonValue value) {
+    requireNonNull(name);
+    if (delegate != null) {
+      var object = delegate.visitMemberValue(name, value);
+      map.put(name, object);
+      return null;
+    }
+    var object = value.asObject();
+    map.put(name, object);
+    return null;
   }
 
   @Override
   public Map<String, Object> visitEndObject() {
+    if (delegate != null) {
+      delegate.visitEndObject();
+    }
     var resultMap = toMap();
     postOp.accept(resultMap);
     return resultMap;

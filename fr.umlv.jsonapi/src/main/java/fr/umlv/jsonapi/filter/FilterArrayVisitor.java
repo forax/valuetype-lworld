@@ -6,6 +6,7 @@ import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.StreamVisitor;
+import fr.umlv.jsonapi.VisitorMode;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -16,6 +17,11 @@ public final class FilterArrayVisitor implements ArrayVisitor {
   public FilterArrayVisitor(ArrayVisitor delegate, Predicate<? super String> predicate) {
     this.delegate = requireNonNull(delegate);
     this.predicate = requireNonNull(predicate);
+  }
+
+  @Override
+  public VisitorMode mode() {
+    return delegate.mode();
   }
 
   @Override

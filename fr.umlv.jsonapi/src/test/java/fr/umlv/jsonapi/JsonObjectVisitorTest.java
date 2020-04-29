@@ -32,6 +32,11 @@ public class JsonObjectVisitorTest {
     var methods = new ArrayList<String>();
     var visitor = new ObjectVisitor() {
       @Override
+      public VisitorMode mode() {
+        return VisitorMode.PUSH_MODE;
+      }
+
+      @Override
       public ObjectVisitor visitMemberObject(String name) {
         methods.add("visitMemberObject");
         assertEquals("address", name);
@@ -46,7 +51,7 @@ public class JsonObjectVisitorTest {
       }
 
       @Override
-      public void visitMemberValue(String name, JsonValue value) {
+      public Object visitMemberValue(String name, JsonValue value) {
         methods.add("visitMemberValue+" + value.kind());
         switch (value.kind()) {
           case NULL -> {
@@ -80,6 +85,7 @@ public class JsonObjectVisitorTest {
           }
           case FALSE, LONG, BIG_INTEGER, BIG_DECIMAL -> fail();
         }
+        return null;
       }
 
       @Override
@@ -107,54 +113,59 @@ public class JsonObjectVisitorTest {
         """;
     var methods = new ArrayList<String>();
     var visitor = new ArrayVisitor() {
-          @Override
-          public ObjectVisitor visitObject() {
-            methods.add("visitObject");
-            return null;
-          }
+      @Override
+      public VisitorMode mode() {
+        return VisitorMode.PUSH_MODE;
+      }
 
-          @Override
-          public ArrayVisitor visitArray() {
-            methods.add("visitArray");
-            return null;
-          }
+      @Override
+      public ObjectVisitor visitObject() {
+        methods.add("visitObject");
+        return null;
+      }
 
-          @Override
-          public Object visitValue(JsonValue value) {
-            methods.add("visitValue+" + value.kind());
-            switch(value.kind()) {
-              case NULL -> assertEquals(JsonValue.nullValue(), value);
-              case FALSE -> {
-                assertEquals(JsonValue.falseValue(), value);
-                assertFalse(value.booleanValue());
-                assertTrue(value.isFalse());
-              }
-              case INT -> {
-                assertEquals(JsonValue.from(72), value);
-                assertEquals(72, value.intValue());
-                assertTrue(value.isInt());
-              }
-              case DOUBLE -> {
-                assertEquals(JsonValue.from(37.8), value);
-                assertEquals(37.8, value.doubleValue());
-                assertTrue(value.isDouble());
-              }
-              case STRING -> {
-                assertEquals(JsonValue.from("Jane"), value);
-                assertEquals("Jane", value.stringValue());
-                assertTrue(value.isString());
-              }
-              case TRUE, LONG, BIG_INTEGER, BIG_DECIMAL -> fail();
-            }
-            return null;
-          }
+      @Override
+      public ArrayVisitor visitArray() {
+        methods.add("visitArray");
+        return null;
+      }
 
-          @Override
-          public Object visitEndArray() {
-            methods.add("visitEndArray");
-            return null;
+      @Override
+      public Object visitValue(JsonValue value) {
+        methods.add("visitValue+" + value.kind());
+        switch(value.kind()) {
+          case NULL -> assertEquals(JsonValue.nullValue(), value);
+          case FALSE -> {
+            assertEquals(JsonValue.falseValue(), value);
+            assertFalse(value.booleanValue());
+            assertTrue(value.isFalse());
           }
-        };
+          case INT -> {
+            assertEquals(JsonValue.from(72), value);
+            assertEquals(72, value.intValue());
+            assertTrue(value.isInt());
+          }
+          case DOUBLE -> {
+            assertEquals(JsonValue.from(37.8), value);
+            assertEquals(37.8, value.doubleValue());
+            assertTrue(value.isDouble());
+          }
+          case STRING -> {
+            assertEquals(JsonValue.from("Jane"), value);
+            assertEquals("Jane", value.stringValue());
+            assertTrue(value.isString());
+          }
+          case TRUE, LONG, BIG_INTEGER, BIG_DECIMAL -> fail();
+        }
+        return null;
+      }
+
+      @Override
+      public Object visitEndArray() {
+        methods.add("visitEndArray");
+        return null;
+      }
+    };
 
     JsonReader.parse(text, visitor);
     assertEquals(
@@ -359,11 +370,11 @@ public class JsonObjectVisitorTest {
         .add("weight", 70.2)
         .add("spouse", null)
         .add("children", true);
-    var object2 = new ObjectBuilder(new BuilderConfig(TreeMap::new, ArrayList::new));
-    builder.accept(() -> object2);
+    var builder2 = new BuilderConfig(TreeMap::new, ArrayList::new).newObjectBuilder();
+    builder.accept(() -> builder2);
     assertEquals(
         List.of("age", "children", "firstName", "spouse", "weight"),
-        new ArrayList<>(object2.toMap().keySet()));
+        new ArrayList<>(builder2.toMap().keySet()));
   }
 
   @Test
@@ -396,31 +407,56 @@ public class JsonObjectVisitorTest {
   }
 
   @Test
-  public void testParseAsStreamOfString() {
+  public void testParseAsStreamAndDelegate() {
     var text = """
-        [ "foo", "bar", "baz", "whizz" ]
+        {
+          "dataset": "kanga-3",
+          "data": [ 34, 1, 64, 1 ]
+        }
         """;
+    var visitor = BuilderConfig.defaults().newObjectBuilder(new ObjectVisitor() {
+      @Override
+      public VisitorMode mode() {
+        return VisitorMode.PULL_MODE;
+      }
+      @Override
+      public ObjectVisitor visitMemberObject(String name) {
+        return null;
+      }
+      @Override
+      public ArrayVisitor visitMemberArray(String name) {
+        return new StreamVisitor() {
+          @Override
+          public Object visitStream(Stream<Object> stream) {
+            return stream.mapToInt(o -> (int) o).sum();
+          }
+          @Override
+          public Object visitValue(JsonValue value) {
+            return value.intValue();
+          }
 
-    var stream = JsonReader.stream(text, new ArrayVisitor() {
-      @Override
-      public ObjectVisitor visitObject() {
-        return null;
+          @Override
+          public ObjectVisitor visitObject() {
+            return null;
+          }
+          @Override
+          public ArrayVisitor visitArray() {
+            return null;
+          }
+        };
       }
+
       @Override
-      public ArrayVisitor visitArray() {
-        return null;
-      }
-      @Override
-      public Object visitValue(JsonValue value) {
+      public Object visitMemberValue(String name, JsonValue value) {
         return value.asObject();
       }
       @Override
-      public Object visitEndArray() {
+      public Object visitEndObject() {
         return null;
       }
     });
-    var list = stream.limit(2).collect(toList());
-    assertEquals(List.of("foo", "bar"), list);
+    var map = JsonReader.parse(text, visitor);
+    assertEquals(Map.of("dataset", "kanga-3", "data", 100), map);
   }
 
   @Test
@@ -431,23 +467,27 @@ public class JsonObjectVisitorTest {
         """;
 
     var stream = JsonReader.stream(text, new ArrayVisitor() {
-          @Override
-          public ObjectVisitor visitObject() {
-            return new ObjectBuilder();
-          }
-          @Override
-          public ArrayVisitor visitArray() {
-            throw new AssertionError();
-          }
-          @Override
-          public Object visitValue(JsonValue value) {
-            throw new AssertionError();
-          }
-          @Override
-          public Object visitEndArray() {
-            return null;
-          }
-        });
+      @Override
+      public VisitorMode mode() {
+        return VisitorMode.PULL_MODE;
+      }
+      @Override
+      public ObjectVisitor visitObject() {
+        return new ObjectBuilder();
+      }
+      @Override
+      public ArrayVisitor visitArray() {
+        throw new AssertionError();
+      }
+      @Override
+      public Object visitValue(JsonValue value) {
+        throw new AssertionError();
+      }
+      @Override
+      public Object visitEndArray() {
+        return null;
+      }
+    });
     var point = stream.map(o -> (Map<String, Object>) o).findFirst().orElseThrow();
     assertEquals(Map.of("x", 4, "y", 7), point);
   }

@@ -4,6 +4,7 @@ import fr.umlv.jsonapi.ArrayBuilder;
 import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
+import fr.umlv.jsonapi.VisitorMode;
 import fr.umlv.jsonapi.bind.Specs.ArraySpec;
 import java.util.List;
 import java.util.function.Consumer;
@@ -21,6 +22,11 @@ final class BindArrayVisitor implements ArrayVisitor {
 
   BindArrayVisitor(ArraySpec spec, ArrayBuilder arrayBuilder) {
     this(spec, arrayBuilder, __ -> { /* empty */ });
+  }
+
+  @Override
+  public VisitorMode mode() {
+    return VisitorMode.PUSH_MODE;
   }
 
   @Override

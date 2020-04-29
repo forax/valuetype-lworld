@@ -46,4 +46,9 @@ final class BindStreamVisitor implements StreamVisitor {
   public Object visitValue(JsonValue value) {
     return Specs.convert(spec, value).asObject();
   }
+
+  @Override
+  public Void visitEndArray() {
+    return null;
+  }
 }

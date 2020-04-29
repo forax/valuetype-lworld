@@ -6,6 +6,7 @@ import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.StreamVisitor;
+import fr.umlv.jsonapi.VisitorMode;
 import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
@@ -16,6 +17,11 @@ public final class RenamerArrayVisitor implements ArrayVisitor {
   public RenamerArrayVisitor(ArrayVisitor delegate, UnaryOperator<String> renamer) {
     this.delegate = requireNonNull(delegate);
     this.renamer = requireNonNull(renamer);
+  }
+
+  @Override
+  public VisitorMode mode() {
+    return delegate.mode();
   }
 
   @Override

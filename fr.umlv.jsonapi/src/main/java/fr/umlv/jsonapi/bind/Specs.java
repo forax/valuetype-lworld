@@ -51,7 +51,7 @@ final class Specs {
 
     ObjectVisitor newObjectFrom(ArrayBuilder arrayBuilder) {
       if (component instanceof ObjectSpec objectSpec) {
-        return new BindObjectVisitor(objectSpec, arrayBuilder.visitObject());
+        return new BindObjectVisitor(objectSpec, (ObjectBuilder) arrayBuilder.visitObject());
       }
       if (component instanceof ClassSpec classSpec) {
         return new BindClassVisitor(classSpec, BuilderConfig.from(arrayBuilder), arrayBuilder::add);
@@ -61,7 +61,7 @@ final class Specs {
 
     ArrayVisitor newArrayFrom(ArrayBuilder arrayBuilder) {
       if (component instanceof ArraySpec arraySpec) {
-        return new BindArrayVisitor(arraySpec, arrayBuilder.visitArray());
+        return new BindArrayVisitor(arraySpec, (ArrayBuilder) arrayBuilder.visitArray());
       }
       if (component instanceof StreamSpec streamSpec) {
         return new BindStreamVisitor(streamSpec, BuilderConfig.from(arrayBuilder), arrayBuilder::add);
@@ -103,7 +103,7 @@ final class Specs {
 
     ObjectVisitor newMemberObjectFrom(String name, ObjectBuilder objectBuilder) {
       if (component instanceof ObjectSpec objectSpec) {
-        return new BindObjectVisitor(objectSpec, objectBuilder.visitMemberObject(name));
+        return new BindObjectVisitor(objectSpec, (ObjectBuilder) objectBuilder.visitMemberObject(name));
       }
       if (component instanceof ClassSpec classSpec) {
         return new BindClassVisitor(classSpec, BuilderConfig.from(objectBuilder), o -> objectBuilder.add(name, o));
@@ -113,7 +113,7 @@ final class Specs {
 
     ArrayVisitor newMemberArrayFrom(String name, ObjectBuilder objectBuilder) {
       if (component instanceof ArraySpec arraySpec) {
-        return new BindArrayVisitor(arraySpec, objectBuilder.visitMemberArray(name));
+        return new BindArrayVisitor(arraySpec, (ArrayBuilder) objectBuilder.visitMemberArray(name));
       }
       if (component instanceof StreamSpec streamSpec) {
         return new BindStreamVisitor(streamSpec, BuilderConfig.from(objectBuilder), o -> objectBuilder.add(name, o));

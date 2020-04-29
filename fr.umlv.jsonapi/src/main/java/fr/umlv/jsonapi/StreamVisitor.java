@@ -6,9 +6,9 @@ import java.util.stream.Stream;
 /**
  * Used when a JSON array is visited. This class is a subclass of {@link ArrayVisitor} that exposes
  * an array as a Stream. Unlike using {@link JsonReader#stream(Reader, ArrayVisitor)}, this visitor
- * can be used inside any nested data structure and not only at top level.
- * The processing is done lazily so if not all the values are necessary to finish the computation
- * of the stream the data not used will be skipped by the reader.
+ * can be used inside any nested data structure and not only at top level. The processing is done
+ * lazily so if not all the values are necessary to finish the computation of the stream the data
+ * not used will be skipped by the reader.
  *
  * <p>At the beginning the method {@link #visitStream(Stream)} is called to transfer the control to
  * the stream, then each time a value of the stream is need, one of these 3 methods is called
@@ -21,6 +21,8 @@ import java.util.stream.Stream;
  *       of {@link ArrayVisitor#visitEndArray()} called on that visitor is inserted in the stream.
  *   <li>if the value is a value {@link #visitValue(JsonValue)} is called
  * </ul>
+ * when all the values of the array have been visited, the method {@link #visitEndArray()} is
+ * called.
  *
  * <p>Example, using {@link JsonReader#parse(java.io.Reader, Object)}
  *
@@ -42,15 +44,10 @@ import java.util.stream.Stream;
  *     assertTrue(value.stringValue().startsWith("Jole"));
  *     return value.asObject();  // used in pull mode
  *   }
- *   // no visitEndArray !
  * };
  * Object result = JsonReader.parse(text, visitor);
  * assertEquals("Joleene", result);
  * </pre>
- *
- * <p>An astute reader may wonder why the method {@link #visitEndArray()} is not called,
- * it's because, inside {@link #visitStream(Stream)} you already know the result
- * of the stream so {@link #visitEndArray()} is useless.
  *
  * <p>This visitor has an immutable semantics, so no mutable field should be used.
  *
@@ -59,16 +56,12 @@ import java.util.stream.Stream;
  * @see JsonReader#parse(java.io.Reader, Object)
  */
 public interface StreamVisitor extends ArrayVisitor {
-
-  /**
-   * This method is not implemented, see explanations in the class level documentation.
-   * @deprecated don't use this method, use {@link #visitStream(Stream)} instead.
-   * @return nothing, an exception is thrown
-   */
-  @Deprecated
   @Override
-  default Object visitEndArray() {
-    throw new UnsupportedOperationException("you can not use a stream visitor here !");
+  default VisitorMode mode() { return VisitorMode.PULL_MODE; }
+
+  @Override
+  default Void visitEndArray() {
+    return null;
   }
 
   /**

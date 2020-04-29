@@ -50,10 +50,22 @@ public record BuilderConfig(Supplier<? extends Map<String, Object>> mapSupplier,
   }
 
   public ObjectBuilder newObjectBuilder() {
-    return new ObjectBuilder(this);
+    return new ObjectBuilder(this, null);
+  }
+  public ObjectBuilder newObjectBuilder(ObjectVisitor delegate) {
+    if (delegate.mode() != VisitorMode.PULL_MODE) {
+      throw new IllegalArgumentException("only pull mode visitors are allowed");
+    }
+    return new ObjectBuilder(this, delegate);
   }
   public ArrayBuilder newArrayBuilder() {
-    return new ArrayBuilder(this);
+    return new ArrayBuilder(this, null);
+  }
+  public ArrayBuilder newArrayBuilder(ArrayVisitor delegate) {
+    if (delegate.mode() != VisitorMode.PULL_MODE) {
+      throw new IllegalArgumentException("only pull mode visitors are allowed");
+    }
+    return new ArrayBuilder(this, delegate);
   }
 
   public static BuilderConfig from(ObjectBuilder builder) {

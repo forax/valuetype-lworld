@@ -6,6 +6,7 @@ import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.StreamVisitor;
+import fr.umlv.jsonapi.VisitorMode;
 import java.util.function.Predicate;
 
 public final class FilterObjectVisitor implements ObjectVisitor {
@@ -15,6 +16,11 @@ public final class FilterObjectVisitor implements ObjectVisitor {
   public FilterObjectVisitor(ObjectVisitor delegate, Predicate<? super String> predicate) {
     this.delegate = requireNonNull(delegate);
     this.predicate = requireNonNull(predicate);
+  }
+
+  @Override
+  public VisitorMode mode() {
+    return delegate.mode();
   }
 
   @Override
@@ -39,10 +45,11 @@ public final class FilterObjectVisitor implements ObjectVisitor {
   }
 
   @Override
-  public void visitMemberValue(String name, JsonValue value) {
+  public Object visitMemberValue(String name, JsonValue value) {
     if (predicate.test(name)) {
-      delegate.visitMemberValue(name, value);
+      return delegate.visitMemberValue(name, value);
     }
+    return null;
   }
 
   @Override
