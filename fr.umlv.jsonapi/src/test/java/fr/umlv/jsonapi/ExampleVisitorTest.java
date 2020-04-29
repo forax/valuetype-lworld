@@ -1,0 +1,180 @@
+package fr.umlv.jsonapi;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
+
+public class ExampleVisitorTest {
+  @Test
+  public void testSimpleObjectParsing() {
+    var text = """
+        {
+          "name": "Mr Robot",
+          "children": [ "Elliot", "Darlene" ]
+        }
+        """;
+    var visitor = new ObjectVisitor() {
+      @Override
+      public ObjectVisitor visitMemberObject(String name) {
+        return null;  // skip it
+      }
+      @Override
+      public ArrayVisitor visitMemberArray(String name) {
+        assertEquals("children", name);
+        return null;  // skip it
+      }
+      @Override
+      public void visitMemberValue(String name, JsonValue value) {
+        assertEquals("Mr Robot", value.stringValue());
+      }
+      @Override
+      public Object visitEndObject() {
+        return "end !";  // send result;
+      }
+    };
+    var result = JsonReader.parse(text, visitor);
+    assertEquals(result, "end !");
+  }
+
+  @Test
+  public void testSimpleArrayPushMode() {
+    var text = """
+        [ "Jolene", "Joleene", "Joleeeene" ]
+        """;
+    var visitor = new ArrayVisitor() {
+      @Override
+      public ObjectVisitor visitObject() {
+        return null;  // skip it
+      }
+      @Override
+      public ArrayVisitor visitArray() {
+        return null;  // skip it
+      }
+      @Override
+      public Object visitValue(JsonValue value) {
+        assertTrue(value.stringValue().startsWith("Jole"));
+        return null;  // used in push mode
+      }
+      @Override
+      public Object visitEndArray() {
+        return "end !";  // send result;
+      }
+    };
+    var result = JsonReader.parse(text, visitor);
+    assertEquals(result, "end !");
+  }
+
+  @Test
+  public void testSimpleArrayPullMode() {
+    var text = """
+        [ "Jolene", "Joleene", "Joleeeene" ]
+        """;
+    var visitor = new ArrayVisitor() {
+      @Override
+      public ObjectVisitor visitObject() {
+        return null;  // skip it
+      }
+      @Override
+      public ArrayVisitor visitArray() {
+        return null;  // skip it
+      }
+      @Override
+      public Object visitValue(JsonValue value) {
+        assertTrue(value.stringValue().startsWith("Jole"));
+        return value.asObject();  // used in pull mode
+      }
+      @Override
+      public Object visitEndArray() {
+        return null;  // return value ignored;
+      }
+    };
+    try(var stream = JsonReader.stream(text, visitor)) {
+      assertEquals("Joleene", stream.skip(1).findFirst().orElseThrow());
+    }
+  }
+
+  @Test
+  public void testSimpleArrayStreamVisitor() {
+    var text = """
+        [ "Jolene", "Joleene", "Joleeeene" ]
+        """;
+    var visitor = new StreamVisitor() {
+      @Override
+      public Object visitStream(Stream<Object> stream) {
+        return stream.skip(1).findFirst().orElseThrow();
+      }
+      @Override
+      public ObjectVisitor visitObject() {
+        return null;  // skip it
+      }
+      @Override
+      public ArrayVisitor visitArray() {
+        return null;  // skip it
+      }
+      @Override
+      public Object visitValue(JsonValue value) {
+        assertTrue(value.stringValue().startsWith("Jole"));
+        return value.asObject();  // used in pull mode
+      }
+      // no visitEndArray !
+    };
+    var result = JsonReader.parse(text, visitor);
+    assertEquals("Joleene", result);
+  }
+
+
+  @Test
+  public void testSimpleArrayBuilderParse() {
+    var text = """
+        [ "Jolene", "Joleene", "Joleeeene" ]
+        """;
+    var arrayBuilder = new ArrayBuilder();
+    var list = JsonReader.parse(text, arrayBuilder);
+    assertEquals(List.of("Jolene", "Joleene", "Joleeeene"), list);
+  }
+
+  @Test
+  public void testSimpleArrayBuilderAccept() {
+    var arrayBuilder = new ArrayBuilder()
+        .add("Jolene")
+        .addAll("Joleene", "Joleeeene");
+    var printer = new JsonPrinter();
+    arrayBuilder.accept(printer::visitArray);
+    assertEquals("""  
+        [ "Jolene", "Joleene", "Joleeeene" ]\
+        """, printer.toString());
+  }
+
+  @Test
+  public void testSimpleObjectBuilderParse() {
+    var text = """
+        { "name": "Francky", "address": {  "street": "3rd", "city": "NY" } }
+        """;
+    var objectBuilder = new ObjectBuilder();
+    var map = JsonReader.parse(text, objectBuilder);
+    assertEquals(
+        Map.of("name", "Francky",
+               "address", Map.of("street", "3rd", "city", "NY")),
+        map);
+  }
+
+  @Test
+  public void testSimpleObjectBuilderAccept() {
+    var objectBuilder = new ObjectBuilder(LinkedHashMap::new, ArrayList::new)
+        .add("name", "Francky")
+        .with("address", b -> b
+            .add("street", "3rd")
+            .add("city", "NY"));
+    var printer = new JsonPrinter();
+    objectBuilder.accept(printer::visitObject);
+    assertEquals("""
+        { "name": "Francky", "address": { "street": "3rd", "city": "NY" } }\
+        """, printer.toString());
+  }
+}

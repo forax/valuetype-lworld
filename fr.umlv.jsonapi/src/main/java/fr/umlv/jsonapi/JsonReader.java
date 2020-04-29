@@ -181,7 +181,7 @@ public final class JsonReader {
         case VALUE_TRUE -> visitor.visitValue(JsonValue.trueValue());
         case VALUE_FALSE -> visitor.visitValue(JsonValue.falseValue());
         case VALUE_NULL -> visitor.visitValue(JsonValue.nullValue());
-        case END_ARRAY -> { return visitor.visitEndArray(null); }
+        case END_ARRAY -> { return visitor.visitEndArray(); }
         default -> throw new IOException("invalid token " + token);
       }
     }
@@ -255,7 +255,7 @@ public final class JsonReader {
     var stream = StreamSupport.stream(spliterator, false);
     Object result;
     try {
-      result = visitor.visitEndArray(stream);
+      result = visitor.visitStream(stream);
     } catch(UncheckedIOException e) {
       throw e.getCause();
     }
@@ -301,31 +301,34 @@ public final class JsonReader {
   }
 
 
-  public static Stream<Object> parseStream(Path path, ArrayVisitor arrayVisitor) throws IOException {
+  public static Stream<Object> stream(Path path, ArrayVisitor arrayVisitor) throws IOException {
     requireNonNull(path);
     requireNonNull(arrayVisitor);
     var reader = Files.newBufferedReader(path);
     try {
-      return parseStream(reader, arrayVisitor);
+      return stream(reader, arrayVisitor);
     } catch(RuntimeException | Error | IOException e) { // don't leak the reader
       reader.close();
       throw e;
     }
   }
-  public static Stream<Object> parseStream(String text, ArrayVisitor arrayVisitor) {
+  public static Stream<Object> stream(String text, ArrayVisitor arrayVisitor) {
     requireNonNull(text);
     requireNonNull(arrayVisitor);
     try {
-      return parseStream(new StringReader(text), arrayVisitor);
+      return stream(new StringReader(text), arrayVisitor);
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
   }
-  public static Stream<Object> parseStream(Reader reader, ArrayVisitor visitor) throws IOException {
+  public static Stream<Object> stream(Reader reader, ArrayVisitor visitor) throws IOException {
     requireNonNull(reader);
     requireNonNull(visitor);
     if (visitor instanceof ArrayBuilder) { // fool prof
-      throw new IllegalArgumentException("ArrayBuilder.visitValue() returns null !");
+      throw new IllegalArgumentException("ArrayBuilder only provides a push API");
+    }
+    if (visitor instanceof StreamVisitor) { // fool prof 2
+      throw new IllegalArgumentException("a StreamVisitor can not be used here");
     }
     var parser = new JsonFactory().createParser(reader);
     try {
@@ -366,7 +369,7 @@ public final class JsonReader {
                 case VALUE_TRUE -> result = visitor.visitValue(JsonValue.trueValue());
                 case VALUE_FALSE -> result = visitor.visitValue(JsonValue.falseValue());
                 case VALUE_NULL -> result = visitor.visitValue(JsonValue.nullValue());
-                case END_ARRAY -> { visitor.visitEndArray(null); return false; }
+                case END_ARRAY -> { visitor.visitEndArray(); return false; }
                 default -> throw new UncheckedIOException(new IOException("invalid token " + token));
               }
               consumer.accept(result);

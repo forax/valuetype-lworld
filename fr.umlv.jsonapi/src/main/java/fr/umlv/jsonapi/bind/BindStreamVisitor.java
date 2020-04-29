@@ -26,7 +26,7 @@ final class BindStreamVisitor implements StreamVisitor {
   }
 
   @Override
-  public Object visitEndArray(Stream<Object> stream) {
+  public Object visitStream(Stream<Object> stream) {
     var result = spec.aggregator().apply(stream);
     postOp.accept(result);
     return result;

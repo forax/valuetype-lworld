@@ -11,6 +11,45 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
+/**
+ * An untyped builder of a representation of a JSON array.
+ *
+ * All primitive values use the usual Java classes (Boolean, Integer, Long, etc),
+ * arrays are constructed with this kind of builder and objects are constructed with a
+ * {@link ObjectBuilder}.
+ *
+ * This class is able to gather all the visited values on a JSON array and build a java.util.List.
+ * It implements the interface {@link ArrayVisitor}, so can be used by a {@link JsonReader}.
+ * <p>
+ * Example to create a list of strings using an ArrayBuilder
+ * <pre>
+ * String text = """
+ *   [ "Jolene", "Joleene", "Joleeeene" ]
+ *   """;
+ * ArrayBuilder arrayBuilder = new ArrayBuilder();
+ * List&lt;Object&gt; list = JsonReader.parse(text, arrayBuilder);
+ * assertEquals(List.of("Jolene", "Joleene", "Joleeeene"), list);
+ * </pre>
+ *
+ * As a builder, it can be mutated using the methods {@link #add(Object)},
+ * {@link #addAll(Object...)} or/and {@link #addAll(List)}.
+ *
+ * <p>
+ * Example to generate a JSON from an ArrayBuilder
+ * <pre>
+ * ArrayBuilder arrayBuilder = new ArrayBuilder()
+ *     .add("Jolene")
+ *     .addAll("Joleene", "Joleeeene");
+ * JsonPrinter printer = new JsonPrinter();
+ * arrayBuilder.accept(printer::visitArray);
+ * assertEquals("""
+ *   [ "Jolene", "Joleene", "Joleeeene" ]\
+ *   """, printer.toString());
+ * </pre>
+ *
+ * The example above is a little ridiculous because,
+ * calling {@link ArrayBuilder#toString()} also work !
+ */
 public final class ArrayBuilder implements ArrayVisitor {
   private final List<Object> list;
   final BuilderConfig config;
@@ -26,15 +65,49 @@ public final class ArrayBuilder implements ArrayVisitor {
     this(config, __ -> {});
   }
 
+  /**
+   * Creates an array builder that takes as arguments the implementations of Map and List
+   * and some post transformations.
+   * The post transformations are executed once all the elements/values have been seen.
+   *
+   * By example,
+   * <pre>
+   *   new ArrayBuilder(HashMap::new, Map::copyOf, ArrayList::new, List::copyOf)
+   * </pre>
+   * creates a builder that will create an immutable Map for any JSON objects
+   * and an immutable List for any JSON arrays.
+   *
+   * @see BuilderConfig#newArrayBuilder()
+   */
   public ArrayBuilder(Supplier<? extends Map<String, Object>> mapSupplier,
       UnaryOperator<Map<String, Object>> transformMapOp,
       Supplier<? extends List<Object>> listSupplier,
       UnaryOperator<List<Object>> transformListOp) {
     this(new BuilderConfig(mapSupplier, transformMapOp, listSupplier, transformListOp));
   }
+
+  /**
+   * Creates an array builder that takes as arguments the implementations of Map and List
+   * that should be used.
+   *
+   * By example, to keep the insertion order, one can use a {@link java.util.LinkedHashMap}
+   * as {@link Map} implementation.
+   * <pre>
+   *    new ArrayBuilder(LinkedHashMap::new, ArrayList::new)
+   * </pre>
+   *
+   * @see BuilderConfig#newArrayBuilder()
+   */
   public ArrayBuilder(Supplier<? extends Map<String, Object>> mapSupplier, Supplier<? extends List<Object>> listSupplier) {
     this(new BuilderConfig(mapSupplier, listSupplier));
   }
+
+  /**
+   * Creates an array builder that uses a {@link java.util.HashMap} and {@link java.util.ArrayList}
+   * to store a JSON object and a JSON array respectively.
+   *
+   * @see BuilderConfig#newArrayBuilder()
+   */
   public ArrayBuilder() {
     this(BuilderConfig.DEFAULT);
   }
@@ -54,16 +127,42 @@ public final class ArrayBuilder implements ArrayVisitor {
     return list.stream().map(String::valueOf).collect(Collectors.joining(", ", "[", "]"));
   }
 
+  /**
+   * Add any object to the builder.
+   *
+   * If the class of {code value} is not one of boolean, int, long, double, String, BigInteger,
+   * BigDecimal, java.util.List or java.util.Map, the method {@link #accept(Supplier)} will fail
+   * to work because there is no JSON mapping.
+   *
+   * @param value add this value to the builder.
+   * @return itself
+   */
   public ArrayBuilder add(Object value) {
     requireNonNull(value);
     list.add(value);
     return this;
   }
 
+  /**
+   * Add several objects to the builder.
+   *
+   * @param list add all the values of the list into the builder.
+   * @return itself
+   *
+   * @see #add(Object)
+   */
   public ArrayBuilder addAll(List<?> list) {
     list.forEach(this.list::add);  // implicit nullcheck
     return this;
   }
+  /**
+   * Add several objects to the builder.
+   *
+   * @param values add all the values into the builder.
+   * @return itself
+   *
+   * @see #add(Object)
+   */
   public ArrayBuilder addAll(Object... values) {
     for(var value: values) {   // implicit nullcheck
       list.add(value);
@@ -71,6 +170,15 @@ public final class ArrayBuilder implements ArrayVisitor {
     return this;
   }
 
+  /**
+   * Return a list from the underlying list of this builder.
+   * Apply the {@code transformListOp} and return the result so the returned list
+   * may be a different list from the underlying list.
+   *
+   * @return a list (newly created or not)
+   *
+   * @see #ArrayBuilder(Supplier, UnaryOperator, Supplier, UnaryOperator)
+   */
   public List<Object> toList() {
     return config.transformListOp().apply(list);
   }
@@ -92,7 +200,7 @@ public final class ArrayBuilder implements ArrayVisitor {
   }
 
   @Override
-  public List<Object> visitEndArray(Object unused) {
+  public List<Object> visitEndArray() {
     var resultList = toList();
     postOp.accept(resultList);
     return resultList;
@@ -136,7 +244,6 @@ public final class ArrayBuilder implements ArrayVisitor {
         var visitor = arrayVisitor.visitObject();
         if (visitor != null) {
           ObjectBuilder.visitMap(map, visitor);
-          visitor.visitEndObject();
         }
         continue;
       }
@@ -144,17 +251,16 @@ public final class ArrayBuilder implements ArrayVisitor {
         var visitor = arrayVisitor.visitArray();
         if (visitor != null) {
           visitList(_list, visitor);
-          visitor.visitEndArray(null);
         }
         continue;
       }
       throw new IllegalStateException("invalid element " + element);
     }
-    return arrayVisitor.visitEndArray(null);
+    return arrayVisitor.visitEndArray();
   }
 
-  public Object accept(ArrayVisitor arrayVisitor) {
-    requireNonNull(arrayVisitor);
-    return visitList(list, arrayVisitor);
+  public Object accept(Supplier<? extends ArrayVisitor> supplier) {
+    requireNonNull(supplier);
+    return visitList(list, requireNonNull(supplier.get()));
   }
 }

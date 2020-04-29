@@ -11,6 +11,52 @@ import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
+/**
+ * An untyped builder of a representation of a JSON object.
+ *
+ * All primitive values use the usual Java classes (Boolean, Integer, Long, etc),
+ * arrays are constructed with an {@link ArrayBuilder} and objects are constructed with a
+ * builder of this kind.
+ *
+ * This class is able to gather all the visited elements on a JSON object and build a
+ * java.util.Map. It implements the interface {@link ObjectVisitor}, so can be used
+ * by a {@link JsonReader}.
+ * <p>
+ * Example to create a java.util.Map using an ObjectBuilder
+ * <pre>
+ * String text = """
+ *   { "name": "Francky", "address": {  "street": "3rd", "city": "NY" }  }
+ *   """;
+ * ObjectBuilder objectBuilder = new ObjectBuilder();
+ * Map<String, Object></String,> map = JsonReader.parse(text, objectBuilder);
+ * assertEquals(
+ *         Map.of("name", "Francky",
+ *                "address", Map.of("street", "3rd", "city", "NY")),
+ *         map);
+ * </pre>
+ *
+ * As a builder, it can be mutated using the methods {@link #add(String, Object)},
+ * or {@link #addAll(Map)}.
+ * Moreover there is a special method {@link #with(String, Consumer)} to create nested objets
+ *
+ * <p>
+ * Example to generate two JSON objects using an ObjectBuilder
+ * <pre>
+ * ObjectBuilder objectBuilder = new ObjectBuilder(LinkedHashMap::new, ArrayList::new)
+ *     .add("name", "Francky")
+ *     .with("address", b -> b
+ *         .add("street", "3rd")
+ *         .add("city", "NY"));
+ * JsonPrinter printer = new JsonPrinter();
+ * objectBuilder.accept(printer::visitObject);
+ * assertEquals("""
+ *   { "name": "Francky", "address": { "street": "3rd", "city": "NY" } }\
+ *   """, printer.toString());
+ * </pre>
+ *
+ * The example above is a little ridiculous because,
+ * calling {@link ObjectBuilder#toString()} also work !
+ */
 public final class ObjectBuilder implements ObjectVisitor {
   private final Map<String, Object> map;
   final BuilderConfig config;
@@ -67,7 +113,7 @@ public final class ObjectBuilder implements ObjectVisitor {
   public ObjectBuilder with(String name, Consumer<? super ObjectBuilder> consumer) {
     requireNonNull(name);
     requireNonNull(consumer);
-    var builder = new ObjectBuilder();
+    var builder = new ObjectBuilder(config);
     consumer.accept(builder);
     add(name, builder.toMap());
     return this;
@@ -143,7 +189,6 @@ public final class ObjectBuilder implements ObjectVisitor {
         var visitor = objectVisitor.visitMemberObject(name);
         if (visitor != null) {
           visitMap(_map, visitor);
-          visitor.visitEndObject();
         }
         continue;
       }
@@ -151,7 +196,6 @@ public final class ObjectBuilder implements ObjectVisitor {
         var visitor = objectVisitor.visitMemberArray(name);
         if (visitor != null) {
           ArrayBuilder.visitList(list, visitor);
-          visitor.visitEndArray(null);
         }
         continue;
       }
@@ -160,8 +204,8 @@ public final class ObjectBuilder implements ObjectVisitor {
     return objectVisitor.visitEndObject();
   }
 
-  public Object accept(ObjectVisitor objectVisitor) {
-    requireNonNull(objectVisitor);
-    return visitMap(map, objectVisitor);
+  public Object accept(Supplier<? extends ObjectVisitor> supplier) {
+    requireNonNull(supplier);
+    return visitMap(map, requireNonNull(supplier.get()));
   }
 }

@@ -152,9 +152,8 @@ public class JsonObjectVisitorTest {
           }
 
           @Override
-          public Object visitEndArray(Object unused) {
+          public Object visitEndArray() {
             methods.add("visitEndArray");
-            assertNull(unused);
             return null;
           }
         };
@@ -190,8 +189,8 @@ public class JsonObjectVisitorTest {
       }
 
       @Override
-      public Object visitEndArray(Stream<Object> stream) {
-        methods.add("visitEndArray");
+      public Object visitStream(Stream<Object> stream) {
+        methods.add("visitStream");
         return stream.collect(toList());
       }
 
@@ -229,7 +228,7 @@ public class JsonObjectVisitorTest {
     var result = JsonReader.parse(text, visitor);
     assertEquals(Arrays.asList("Jane", false, 72, 37.8, null), result);
     assertEquals(
-        List.of("visitEndArray", "visitValue+STRING", "visitValue+FALSE",
+        List.of("visitStream", "visitValue+STRING", "visitValue+FALSE",
             "visitValue+INT", "visitValue+DOUBLE", "visitValue+NULL", "visitObject",
             "visitArray"),
         methods);
@@ -242,6 +241,11 @@ public class JsonObjectVisitorTest {
         """;
     var visitor = new StreamVisitor() {
       @Override
+      public Object visitStream(Stream<Object> stream) {
+        return stream.findFirst().orElseThrow();
+      }
+
+      @Override
       public ObjectVisitor visitObject() {
         return null;
       }
@@ -252,11 +256,6 @@ public class JsonObjectVisitorTest {
       @Override
       public Object visitValue(JsonValue value) {
         return value.asObject();
-      }
-
-      @Override
-      public Object visitEndArray(Stream<Object> stream) {
-        return stream.findFirst().orElseThrow();
       }
     };
     var result = JsonReader.parse(text, visitor);
@@ -346,7 +345,7 @@ public class JsonObjectVisitorTest {
         .add("firstName", "Bob")
         .add("age", 21);
     var object2 = new ObjectBuilder();
-    builder.accept(object2);
+    builder.accept(() -> object2);
     assertEquals(
         Map.of("firstName", "Bob", "age", 21),
         object2.toMap());
@@ -361,7 +360,7 @@ public class JsonObjectVisitorTest {
         .add("spouse", null)
         .add("children", true);
     var object2 = new ObjectBuilder(TreeMap::new, ArrayList::new);
-    builder.accept(object2);
+    builder.accept(() -> object2);
     assertEquals(
         List.of("age", "children", "firstName", "spouse", "weight"),
         new ArrayList<>(object2.toMap().keySet()));
@@ -375,6 +374,11 @@ public class JsonObjectVisitorTest {
         """;
     var visitor = new StreamVisitor() {
       @Override
+      public Object visitStream(Stream<Object> stream) {
+        return stream.map(v -> (Map<String, Integer>) v).filter(p -> p.get("y") < 10).collect(toUnmodifiableList());
+      }
+
+      @Override
       public ObjectVisitor visitObject() {
         return new ObjectBuilder();
       }
@@ -386,23 +390,18 @@ public class JsonObjectVisitorTest {
       public Object visitValue(JsonValue value) {
         return value.asObject();
       }
-
-      @Override
-      public Object visitEndArray(Stream<Object> stream) {
-        return stream.map(v -> (Map<String, Integer>) v).filter(p -> p.get("y") < 10).collect(toUnmodifiableList());
-      }
     };
     var result = (List<Map<String, Integer>>) JsonReader.parse(text, visitor);
     assertEquals(List.of(Map.of("x", 4, "y", 7)), result);
   }
 
   @Test
-  public void testParseStreamOfString() {
+  public void testParseAsStreamOfString() {
     var text = """
         [ "foo", "bar", "baz", "whizz" ]
         """;
 
-    var stream = JsonReader.parseStream(text, new ArrayVisitor() {
+    var stream = JsonReader.stream(text, new ArrayVisitor() {
       @Override
       public ObjectVisitor visitObject() {
         return null;
@@ -416,7 +415,7 @@ public class JsonObjectVisitorTest {
         return value.asObject();
       }
       @Override
-      public Object visitEndArray(Object result) {
+      public Object visitEndArray() {
         return null;
       }
     });
@@ -426,26 +425,26 @@ public class JsonObjectVisitorTest {
 
   @Test
   @SuppressWarnings("unchecked")
-  public void testParseStreamOfObject() {
+  public void testParseAsStreamOfObject() {
     var text = """
         [ { "x": 4, "y": 7 }, { "x": 14, "y": 71 } ]
         """;
 
-    var stream = JsonReader.parseStream(text, new ArrayVisitor() {
+    var stream = JsonReader.stream(text, new ArrayVisitor() {
           @Override
           public ObjectVisitor visitObject() {
             return new ObjectBuilder();
           }
           @Override
           public ArrayVisitor visitArray() {
-            return null;
+            throw new AssertionError();
           }
           @Override
           public Object visitValue(JsonValue value) {
-            return null;
+            throw new AssertionError();
           }
           @Override
-          public Object visitEndArray(Object result) {
+          public Object visitEndArray() {
             return null;
           }
         });

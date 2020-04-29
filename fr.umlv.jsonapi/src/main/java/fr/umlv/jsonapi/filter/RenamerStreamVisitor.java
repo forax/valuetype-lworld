@@ -19,9 +19,9 @@ public final class RenamerStreamVisitor implements StreamVisitor {
   }
 
   @Override
-  public Object visitEndArray(Stream<Object> stream) {
+  public Object visitStream(Stream<Object> stream) {
     requireNonNull(stream);
-    return delegate.visitEndArray(stream);
+    return delegate.visitStream(stream);
   }
 
   @Override

@@ -7,6 +7,7 @@ import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.StreamVisitor;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public final class FilterArrayVisitor implements ArrayVisitor {
   private final ArrayVisitor delegate;
@@ -38,7 +39,7 @@ public final class FilterArrayVisitor implements ArrayVisitor {
   }
 
   @Override
-  public Object visitEndArray(Object result) {
-    return delegate.visitEndArray(result);
+  public Object visitEndArray() {
+    return delegate.visitEndArray();
   }
 }

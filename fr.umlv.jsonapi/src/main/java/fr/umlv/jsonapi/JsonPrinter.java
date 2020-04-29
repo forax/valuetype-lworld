@@ -80,7 +80,7 @@ public final class JsonPrinter implements ObjectVisitor, ArrayVisitor {
   }
 
   @Override
-  public Void visitEndArray(Object unused) {
+  public Void visitEndArray() {
     builder.append(" ]");
     separator = ", ";
     return null;

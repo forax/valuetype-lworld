@@ -226,7 +226,7 @@ public final class Binder {
     requireNonNull(path);
     requireNonNull(spec);
     requireNonNull(config);
-    return JsonReader.parseStream(path, arrayForStreamVisitor(spec, config));
+    return JsonReader.stream(path, arrayForStreamVisitor(spec, config));
   }
   public <T> Stream<T> stream(String text, Class<T> type) {
     requireNonNull(text);
@@ -243,7 +243,7 @@ public final class Binder {
     requireNonNull(text);
     requireNonNull(spec);
     requireNonNull(config);
-    return JsonReader.parseStream(text, arrayForStreamVisitor(spec, config));
+    return JsonReader.stream(text, arrayForStreamVisitor(spec, config));
   }
   public <T> Stream<T> stream(Reader reader, Class<T> type) throws IOException {
     requireNonNull(reader);
@@ -260,7 +260,7 @@ public final class Binder {
     requireNonNull(reader);
     requireNonNull(spec);
     requireNonNull(config);
-    return JsonReader.parseStream(reader, arrayForStreamVisitor(spec, config));
+    return JsonReader.stream(reader, arrayForStreamVisitor(spec, config));
   }
 
   private static ArrayVisitor arrayForStreamVisitor(Spec spec, BuilderConfig config) {
@@ -278,8 +278,8 @@ public final class Binder {
         return value;
       }
       @Override
-      public Object visitEndArray(Object result) {
-        return null;  // useless
+      public Object visitEndArray() {
+        return null;
       }
     };
   }

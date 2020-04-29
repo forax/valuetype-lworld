@@ -1,5 +1,7 @@
 package fr.umlv.jsonapi;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonGenerator;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -7,9 +9,6 @@ import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
-
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
 
 public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable {
   private final JsonGenerator generator;
@@ -126,7 +125,7 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
   }
 
   @Override
-  public Void visitEndArray(Object unused) {
+  public Void visitEndArray() {
     try {
       generator.writeEndArray();
       return null;

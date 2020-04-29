@@ -38,7 +38,7 @@ public final class RenamerArrayVisitor implements ArrayVisitor {
   }
 
   @Override
-  public Object visitEndArray(Object result) {
-    return delegate.visitEndArray(result);
+  public Object visitEndArray() {
+    return delegate.visitEndArray();
   }
 }

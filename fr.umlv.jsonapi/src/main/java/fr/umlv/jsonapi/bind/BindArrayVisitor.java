@@ -40,8 +40,8 @@ final class BindArrayVisitor implements ArrayVisitor {
   }
 
   @Override
-  public List<Object> visitEndArray(Object result) {
-    var list = arrayBuilder.visitEndArray(result);
+  public List<Object> visitEndArray() {
+    var list = arrayBuilder.visitEndArray();
     postOp.accept(list);
     return list;
   }
