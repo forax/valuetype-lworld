@@ -4,13 +4,11 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -332,7 +330,9 @@ public class JsonObjectVisitorTest {
     var text = """
         [ "foo", 42, { "bar": 66.6 } ]
         """;
-    var builder = new ArrayBuilder(HashMap::new, Map::copyOf, ArrayList::new, List::copyOf);
+    var builder = BuilderConfig.defaults()
+        .withTransformListOp(List::copyOf)
+        .newArrayBuilder();
     JsonReader.parse(text, builder);
     assertEquals(
         List.of("foo", 42, Map.of("bar", 66.6)),
@@ -359,7 +359,7 @@ public class JsonObjectVisitorTest {
         .add("weight", 70.2)
         .add("spouse", null)
         .add("children", true);
-    var object2 = new ObjectBuilder(TreeMap::new, ArrayList::new);
+    var object2 = new ObjectBuilder(new BuilderConfig(TreeMap::new, ArrayList::new));
     builder.accept(() -> object2);
     assertEquals(
         List.of("age", "children", "firstName", "spouse", "weight"),

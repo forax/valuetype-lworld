@@ -25,12 +25,12 @@ import java.util.stream.Collectors;
  * Example to create a java.util.Map using an ObjectBuilder
  * <pre>
  * String text = """
- *   { "name": "Francky", "address": {  "street": "3rd", "city": "NY" }  }
+ *   { "name": "Franky", "address": {  "street": "3rd", "city": "NY" }  }
  *   """;
  * ObjectBuilder objectBuilder = new ObjectBuilder();
  * Map<String, Object></String,> map = JsonReader.parse(text, objectBuilder);
  * assertEquals(
- *         Map.of("name", "Francky",
+ *         Map.of("name", "Franky",
  *                "address", Map.of("street", "3rd", "city", "NY")),
  *         map);
  * </pre>
@@ -42,15 +42,16 @@ import java.util.stream.Collectors;
  * <p>
  * Example to generate two JSON objects using an ObjectBuilder
  * <pre>
- * ObjectBuilder objectBuilder = new ObjectBuilder(LinkedHashMap::new, ArrayList::new)
- *     .add("name", "Francky")
+ * ObjectBuilder objectBuilder = new BuilderConfig(LinkedHashMap::new, ArrayList::new)
+ *     .newObjectBuilder()
+ *     .add("name", "Franky")
  *     .with("address", b -> b
  *         .add("street", "3rd")
  *         .add("city", "NY"));
  * JsonPrinter printer = new JsonPrinter();
  * objectBuilder.accept(printer::visitObject);
  * assertEquals("""
- *   { "name": "Francky", "address": { "street": "3rd", "city": "NY" } }\
+ *   { "name": "Franky", "address": { "street": "3rd", "city": "NY" } }\
  *   """, printer.toString());
  * </pre>
  *
@@ -68,19 +69,13 @@ public final class ObjectBuilder implements ObjectVisitor {
     this.postOp = postOp;
   }
 
+  /**
+   * Creates an object builder that takes as argument a builder config
+   */
   ObjectBuilder(BuilderConfig config) {
     this(config, __ -> {});
   }
 
-  public ObjectBuilder(Supplier<? extends Map<String, Object>> mapSupplier,
-      UnaryOperator<Map<String, Object>> transformMapOp,
-      Supplier<? extends List<Object>> listSupplier,
-      UnaryOperator<List<Object>> transformListOp) {
-    this(new BuilderConfig(mapSupplier, transformMapOp, listSupplier, transformListOp));
-  }
-  public ObjectBuilder(Supplier<? extends Map<String, Object>> mapSupplier, Supplier<? extends List<Object>> listSupplier) {
-    this(new BuilderConfig(mapSupplier, listSupplier));
-  }
   public ObjectBuilder() {
     this(BuilderConfig.DEFAULT);
   }

@@ -24,13 +24,29 @@ public record BuilderConfig(Supplier<? extends Map<String, Object>> mapSupplier,
     requireNonNull(mapSupplier, "transformListOp");
   }
 
+  private BuilderConfig() {
+    this(HashMap::new, ArrayList::new);
+  }
+
   public BuilderConfig(Supplier<? extends Map<String, Object>> mapSupplier,
                        Supplier<? extends List<Object>> listSupplier) {
     this(mapSupplier, identity(), listSupplier, identity());
   }
 
-  public BuilderConfig() {
-    this(HashMap::new, ArrayList::new);
+  public static BuilderConfig defaults() {
+    return DEFAULT;
+  }
+
+  public BuilderConfig withTransformOps(
+      UnaryOperator<Map<String, Object>> transformMapOp,
+      UnaryOperator<List<Object>> transformListOp) {
+    return new BuilderConfig(mapSupplier, transformMapOp, listSupplier, transformListOp);
+  }
+  public BuilderConfig withTransformListOp(UnaryOperator<List<Object>> transformListOp) {
+    return new BuilderConfig(mapSupplier, transformMapOp, listSupplier, transformListOp);
+  }
+  public BuilderConfig withTransformMapOp(UnaryOperator<Map<String, Object>> transformMapOp) {
+    return new BuilderConfig(mapSupplier, transformMapOp, listSupplier, transformListOp);
   }
 
   public ObjectBuilder newObjectBuilder() {

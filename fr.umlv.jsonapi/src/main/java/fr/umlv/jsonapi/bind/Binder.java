@@ -114,7 +114,7 @@ public final class Binder {
     throw new SpecNoFoundException("can not decode unknown type " + type.getTypeName());
   }
 
-  static final BuilderConfig DEFAULT_CONFIG = new BuilderConfig();
+  static final BuilderConfig DEFAULT_CONFIG = BuilderConfig.defaults();
 
   public interface ArrayToken { /* empty */ }
   public interface ObjectToken { /* empty */ }

@@ -61,45 +61,11 @@ public final class ArrayBuilder implements ArrayVisitor {
     this.postOp = postOp;
   }
 
+  /**
+   * Creates an array builder that takes as argument a builder config
+   */
   ArrayBuilder(BuilderConfig config) {
     this(config, __ -> {});
-  }
-
-  /**
-   * Creates an array builder that takes as arguments the implementations of Map and List
-   * and some post transformations.
-   * The post transformations are executed once all the elements/values have been seen.
-   *
-   * By example,
-   * <pre>
-   *   new ArrayBuilder(HashMap::new, Map::copyOf, ArrayList::new, List::copyOf)
-   * </pre>
-   * creates a builder that will create an immutable Map for any JSON objects
-   * and an immutable List for any JSON arrays.
-   *
-   * @see BuilderConfig#newArrayBuilder()
-   */
-  public ArrayBuilder(Supplier<? extends Map<String, Object>> mapSupplier,
-      UnaryOperator<Map<String, Object>> transformMapOp,
-      Supplier<? extends List<Object>> listSupplier,
-      UnaryOperator<List<Object>> transformListOp) {
-    this(new BuilderConfig(mapSupplier, transformMapOp, listSupplier, transformListOp));
-  }
-
-  /**
-   * Creates an array builder that takes as arguments the implementations of Map and List
-   * that should be used.
-   *
-   * By example, to keep the insertion order, one can use a {@link java.util.LinkedHashMap}
-   * as {@link Map} implementation.
-   * <pre>
-   *    new ArrayBuilder(LinkedHashMap::new, ArrayList::new)
-   * </pre>
-   *
-   * @see BuilderConfig#newArrayBuilder()
-   */
-  public ArrayBuilder(Supplier<? extends Map<String, Object>> mapSupplier, Supplier<? extends List<Object>> listSupplier) {
-    this(new BuilderConfig(mapSupplier, listSupplier));
   }
 
   /**

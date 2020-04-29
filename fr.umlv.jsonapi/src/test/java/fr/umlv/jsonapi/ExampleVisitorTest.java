@@ -154,27 +154,28 @@ public class ExampleVisitorTest {
   @Test
   public void testSimpleObjectBuilderParse() {
     var text = """
-        { "name": "Francky", "address": {  "street": "3rd", "city": "NY" } }
+        { "name": "Franky", "address": {  "street": "3rd", "city": "NY" } }
         """;
     var objectBuilder = new ObjectBuilder();
     var map = JsonReader.parse(text, objectBuilder);
     assertEquals(
-        Map.of("name", "Francky",
+        Map.of("name", "Franky",
                "address", Map.of("street", "3rd", "city", "NY")),
         map);
   }
 
   @Test
   public void testSimpleObjectBuilderAccept() {
-    var objectBuilder = new ObjectBuilder(LinkedHashMap::new, ArrayList::new)
-        .add("name", "Francky")
+    var objectBuilder = new BuilderConfig(LinkedHashMap::new, ArrayList::new)
+        .newObjectBuilder()
+        .add("name", "Franky")
         .with("address", b -> b
             .add("street", "3rd")
             .add("city", "NY"));
     var printer = new JsonPrinter();
     objectBuilder.accept(printer::visitObject);
     assertEquals("""
-        { "name": "Francky", "address": { "street": "3rd", "city": "NY" } }\
+        { "name": "Franky", "address": { "street": "3rd", "city": "NY" } }\
         """, printer.toString());
   }
 }

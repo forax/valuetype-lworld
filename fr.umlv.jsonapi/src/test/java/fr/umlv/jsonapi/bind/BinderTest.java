@@ -5,10 +5,10 @@ import static fr.umlv.jsonapi.bind.Binder.IN_OBJECT;
 import static java.lang.invoke.MethodHandles.lookup;
 import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toList;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonReader;
@@ -124,7 +124,7 @@ public class BinderTest {
         [ { "color": "red", "lines": 3 }, { "color": "blue", "lines": 1 } ]
         """;
     var any = binder.spec(Object.class);
-    Object array = Binder.read(json, any.object().array(), new BuilderConfig());
+    Object array = Binder.read(json, any.object().array(), BuilderConfig.defaults());
     assertEquals(
         List.of(
             Map.of("color", "red", "lines", 3),
@@ -140,7 +140,7 @@ public class BinderTest {
         """;
     record Shape(String color, int lines) { }
     var spec = binder.spec(Shape.class).stream(s -> s.findFirst().orElseThrow());
-    var shape = (Shape) Binder.read(json, spec, new BuilderConfig());
+    var shape = (Shape) Binder.read(json, spec, BuilderConfig.defaults());
     assertEquals(new Shape("red", 3), shape);
   }
 
@@ -262,7 +262,7 @@ public class BinderTest {
 
     var pixelSpec = Spec.objectClass("Pixel", new PixelClassInfo());
     @SuppressWarnings("unchecked")
-    var pixel = (Map<String,Object>) Binder.read(json, pixelSpec, new BuilderConfig());
+    var pixel = (Map<String,Object>) Binder.read(json, pixelSpec, BuilderConfig.defaults());
     assertEquals(Map.of("x", 1, "y", 3, "color", "red"), pixel);
     assertThrows(UnsupportedOperationException.class, () -> pixel.put("x", 100));
   }
@@ -287,9 +287,9 @@ public class BinderTest {
         [ [ 1, 2, 3, 4, 5 ], [ 4, 6, 8, 10 ] ]
         """;
     var streamSpec = binder.spec(Object.class).stream(s -> s.mapToInt(o -> (int) o).toArray());
-    Stream<int[]> stream = binder.stream(json, streamSpec, new BuilderConfig()).map(o -> (int[]) o);
-    assertTrue(Arrays.equals(
+    Stream<int[]> stream = Binder.stream(json, streamSpec, BuilderConfig.defaults()).map(o -> (int[]) o);
+    assertArrayEquals(
         new int[] { 1, 2, 3, 4, 5, 4, 6, 8, 10 },
-        stream.flatMapToInt(Arrays::stream).toArray()));
+        stream.flatMapToInt(Arrays::stream).toArray());
   }
 }
