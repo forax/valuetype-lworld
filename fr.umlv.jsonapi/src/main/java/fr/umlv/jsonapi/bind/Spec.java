@@ -2,8 +2,10 @@ package fr.umlv.jsonapi.bind;
 
 import static java.util.Objects.requireNonNull;
 
+import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonValue;
+import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.bind.Specs.ArraySpec;
 import fr.umlv.jsonapi.bind.Specs.ClassSpec;
 import fr.umlv.jsonapi.bind.Specs.ObjectSpec;
@@ -38,16 +40,22 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
   }
 
   default <V> V createBindVisitor(Class<V> visitorType) {
-    return createBindVisitor(visitorType, Binder.DEFAULT_CONFIG);
+    return createBindVisitor(visitorType, Binder.DEFAULT_CONFIG, null);
   }
-  default <V> V createBindVisitor(Class<V> visitorType, BuilderConfig config) {
+  default <V> V createBindVisitor(Class<V> visitorType, BuilderConfig config, V delegate) {
     requireNonNull(visitorType);
     requireNonNull(config);
     if (this instanceof ObjectSpec objectSpec) {
-      return visitorType.cast(new BindObjectVisitor(objectSpec, config.newObjectBuilder()));
+      if (delegate != null && !(delegate instanceof ObjectVisitor)) {
+        throw new IllegalArgumentException("delegate should be a subclass of ObjectVisitor or null");
+      }
+      return visitorType.cast(new BindObjectVisitor(objectSpec, config.newObjectBuilder((ObjectVisitor) delegate)));
     }
     if (this instanceof ArraySpec arraySpec) {
-      return visitorType.cast(new BindArrayVisitor(arraySpec, config.newArrayBuilder()));
+      if (delegate != null && !(delegate instanceof ArrayVisitor)) {
+        throw new IllegalArgumentException("delegate should be a subclass of ArrayVisitor or null");
+      }
+      return visitorType.cast(new BindArrayVisitor(arraySpec, config.newArrayBuilder((ArrayVisitor) delegate)));
     }
     if (this instanceof StreamSpec streamSpec) {
       return visitorType.cast(new BindStreamVisitor(streamSpec, config));
@@ -58,7 +66,7 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
     throw new AssertionError();
   }
 
-  static Spec objectClass(String name, ClassInfo<?> classInfo) {
+  static Spec typedClass(String name, ClassInfo<?> classInfo) {
     requireNonNull(name);
     requireNonNull(classInfo);
     return new ClassSpec(name, null, classInfo);

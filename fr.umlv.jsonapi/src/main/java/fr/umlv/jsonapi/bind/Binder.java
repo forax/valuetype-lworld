@@ -124,24 +124,24 @@ public final class Binder {
   public static final ArrayToken IN_ARRAY = null;
 
 
-  public <T> T read(Reader reader, Class<T> type) throws IOException {
+  public <T> T read(Reader reader, Class<? extends T> type) throws IOException {
     requireNonNull(reader);
     requireNonNull(type);
     return read(reader, type, DEFAULT_CONFIG);
   }
-  public <T> T read(Reader reader, Class<T> type, BuilderConfig config) throws IOException {
+  public <T> T read(Reader reader, Class<? extends T> type, BuilderConfig config) throws IOException {
     requireNonNull(reader);
     requireNonNull(type);
     return type.cast(read(reader, specForClass(type), config));
   }
   @SuppressWarnings("unchecked")
-  public <T> List<T> read(Reader reader, Class<T> type, @SuppressWarnings("unused") ArrayToken __) throws IOException {
+  public <T> List<T> read(Reader reader, Class<? extends T> type, @SuppressWarnings("unused") ArrayToken __) throws IOException {
     requireNonNull(reader);
     requireNonNull(type);
     return (List<T>) read(reader, specForClass(type).array(), DEFAULT_CONFIG);
   }
   @SuppressWarnings("unchecked")
-  public <T> Map<String, T> read(Reader reader, Class<T> type, @SuppressWarnings("unused") ObjectToken __) throws IOException {
+  public <T> Map<String, T> read(Reader reader, Class<? extends T> type, @SuppressWarnings("unused") ObjectToken __) throws IOException {
     requireNonNull(reader);
     requireNonNull(type);
     return (Map<String, T>) read(reader, specForClass(type).object(), DEFAULT_CONFIG);
@@ -150,27 +150,27 @@ public final class Binder {
     requireNonNull(reader);
     requireNonNull(spec);
     requireNonNull(config);
-    return JsonReader.parse(reader, spec.createBindVisitor(Object.class, config));
+    return JsonReader.parse(reader, spec.createBindVisitor(Object.class, config, null));
   }
 
-  public <T> T read(String text, Class<T> type) {
+  public <T> T read(String text, Class<? extends T> type) {
     requireNonNull(text);
     requireNonNull(type);
     return read(text, type, DEFAULT_CONFIG);
   }
-  public <T> T read(String text, Class<T> type, BuilderConfig config) {
+  public <T> T read(String text, Class<? extends T> type, BuilderConfig config) {
     requireNonNull(text);
     requireNonNull(type);
     return type.cast(read(text, specForClass(type), config));
   }
   @SuppressWarnings("unchecked")
-  public <T> List<T> read(String text, Class<T> type, @SuppressWarnings("unused") ArrayToken __) {
+  public <T> List<T> read(String text, Class<? extends T> type, @SuppressWarnings("unused") ArrayToken __) {
     requireNonNull(text);
     requireNonNull(type);
     return (List<T>) read(text, specForClass(type).array(), DEFAULT_CONFIG);
   }
   @SuppressWarnings("unchecked")
-  public <T> Map<String, T> read(String text, Class<T> type, @SuppressWarnings("unused") ObjectToken __) {
+  public <T> Map<String, T> read(String text, Class<? extends T> type, @SuppressWarnings("unused") ObjectToken __) {
     requireNonNull(text);
     requireNonNull(type);
     return (Map<String, T>) read(text, specForClass(type).object(), DEFAULT_CONFIG);
@@ -179,27 +179,27 @@ public final class Binder {
     requireNonNull(text);
     requireNonNull(spec);
     requireNonNull(config);
-    return JsonReader.parse(text, spec.createBindVisitor(Object.class, config));
+    return JsonReader.parse(text, spec.createBindVisitor(Object.class, config, null));
   }
 
-  public <T> T read(Path path, Class<T> type) throws IOException {
+  public <T> T read(Path path, Class<? extends T> type) throws IOException {
     requireNonNull(path);
     requireNonNull(type);
     return read(path, type, DEFAULT_CONFIG);
   }
-  public <T> T read(Path path, Class<T> type, BuilderConfig config) throws IOException {
+  public <T> T read(Path path, Class<? extends T> type, BuilderConfig config) throws IOException {
     requireNonNull(path);
     requireNonNull(type);
     return type.cast(read(path, specForClass(type), config));
   }
   @SuppressWarnings("unchecked")
-  public <T> List<T> read(Path path, Class<T> type, @SuppressWarnings("unused") ArrayToken __) throws IOException {
+  public <T> List<T> read(Path path, Class<? extends T> type, @SuppressWarnings("unused") ArrayToken __) throws IOException {
     requireNonNull(path);
     requireNonNull(type);
     return (List<T>) read(path, specForClass(type).array(), DEFAULT_CONFIG);
   }
   @SuppressWarnings("unchecked")
-  public <T> Map<String, T> read(Path path, Class<T> type, @SuppressWarnings("unused") ObjectToken __) throws IOException {
+  public <T> Map<String, T> read(Path path, Class<? extends T> type, @SuppressWarnings("unused") ObjectToken __) throws IOException {
     requireNonNull(path);
     requireNonNull(type);
     return (Map<String, T>) read(path, specForClass(type).object(), DEFAULT_CONFIG);
@@ -208,16 +208,16 @@ public final class Binder {
     requireNonNull(path);
     requireNonNull(spec);
     requireNonNull(config);
-    return JsonReader.parse(path, spec.createBindVisitor(Object.class, config));
+    return JsonReader.parse(path, spec.createBindVisitor(Object.class, config, null));
   }
 
 
-  public <T> Stream<T> stream(Path path, Class<T> type) throws IOException {
+  public <T> Stream<T> stream(Path path, Class<? extends T> type) throws IOException {
     requireNonNull(path);
     requireNonNull(type);
     return stream(path, type, DEFAULT_CONFIG);
   }
-  public <T> Stream<T> stream(Path path, Class<T> type, BuilderConfig config) throws IOException {
+  public <T> Stream<T> stream(Path path, Class<? extends T> type, BuilderConfig config) throws IOException {
     requireNonNull(path);
     requireNonNull(type);
     requireNonNull(config);
@@ -229,12 +229,12 @@ public final class Binder {
     requireNonNull(config);
     return JsonReader.stream(path, arrayForStreamVisitor(spec, config));
   }
-  public <T> Stream<T> stream(String text, Class<T> type) {
+  public <T> Stream<T> stream(String text, Class<? extends T> type) {
     requireNonNull(text);
     requireNonNull(type);
     return stream(text, type, DEFAULT_CONFIG);
   }
-  public <T> Stream<T> stream(String text, Class<T> type, BuilderConfig config)  {
+  public <T> Stream<T> stream(String text, Class<? extends T> type, BuilderConfig config)  {
     requireNonNull(text);
     requireNonNull(type);
     requireNonNull(config);
@@ -246,12 +246,12 @@ public final class Binder {
     requireNonNull(config);
     return JsonReader.stream(text, arrayForStreamVisitor(spec, config));
   }
-  public <T> Stream<T> stream(Reader reader, Class<T> type) throws IOException {
+  public <T> Stream<T> stream(Reader reader, Class<? extends T> type) throws IOException {
     requireNonNull(reader);
     requireNonNull(type);
     return stream(reader, type, DEFAULT_CONFIG);
   }
-  public <T> Stream<T> stream(Reader reader, Class<T> type, BuilderConfig config) throws IOException {
+  public <T> Stream<T> stream(Reader reader, Class<? extends T> type, BuilderConfig config) throws IOException {
     requireNonNull(reader);
     requireNonNull(type);
     requireNonNull(config);
@@ -272,15 +272,15 @@ public final class Binder {
       }
       @Override
       public ObjectVisitor visitObject() {
-        return spec.createBindVisitor(ObjectVisitor.class, config);
+        return spec.createBindVisitor(ObjectVisitor.class, config, null);
       }
       @Override
       public ArrayVisitor visitArray() {
-        return spec.createBindVisitor(ArrayVisitor.class, config);
+        return spec.createBindVisitor(ArrayVisitor.class, config, null);
       }
       @Override
       public Object visitValue(JsonValue value) {
-        return value;
+        return value.asObject();
       }
       @Override
       public Object visitEndArray() {

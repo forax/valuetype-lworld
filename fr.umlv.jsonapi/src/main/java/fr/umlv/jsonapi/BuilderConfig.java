@@ -147,11 +147,11 @@ public class BuilderConfig {
    *
    * The {code delegate} has to be a visitor in {@link VisitorMode#PULL} mode.
    *
-   * @param delegate an object builder that will be used to react to
+   * @param delegate an object builder that will be used to react to the visit methods or null.
    * @return a new object builder that delegate its operation to an object visitor.
    */
   public ObjectBuilder newObjectBuilder(ObjectVisitor delegate) {
-    if (delegate.mode() != VisitorMode.PULL) {
+    if (delegate != null && delegate.mode() != VisitorMode.PULL) {
       throw new IllegalArgumentException("only pull mode visitors are allowed");
     }
     return new ObjectBuilder(this, delegate);
@@ -178,11 +178,11 @@ public class BuilderConfig {
    *
    * The {code delegate} has to be a visitor in {@link VisitorMode#PULL} mode.
    *
-   * @param delegate an object builder that will be used to react to
+   * @param delegate an object builder that will be used to react to the visit methods or null.
    * @return a new object builder that delegate its operation to an object visitor.
    */
   public ArrayBuilder newArrayBuilder(ArrayVisitor delegate) {
-    if (delegate.mode() != VisitorMode.PULL) {
+    if (delegate != null && delegate.mode() != VisitorMode.PULL) {
       throw new IllegalArgumentException("only pull mode visitors are allowed");
     }
     return new ArrayBuilder(this, delegate);

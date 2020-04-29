@@ -18,12 +18,8 @@ import fr.umlv.jsonapi.bind.Spec.ClassInfo;
 import fr.umlv.jsonapi.bind.Spec.Converter;
 import java.net.URI;
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -264,7 +260,7 @@ public class BinderTest {
       }
     }
 
-    var pixelSpec = Spec.objectClass("Pixel", new PixelClassInfo());
+    var pixelSpec = Spec.typedClass("Pixel", new PixelClassInfo());
     @SuppressWarnings("unchecked")
     var pixel = (Map<String,Object>) Binder.read(json, pixelSpec, BuilderConfig.defaults());
     assertEquals(Map.of("x", 1, "y", 3, "color", "red"), pixel);
