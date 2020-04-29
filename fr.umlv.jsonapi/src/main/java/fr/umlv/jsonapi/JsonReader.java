@@ -273,6 +273,9 @@ public final class JsonReader {
   }
 
   private static Object readObject(JsonParser parser, ObjectVisitor visitor, ArrayDeque<JsonToken> stack) throws IOException {
+    if (visitor.mode() == PULL) {
+      throw new IllegalArgumentException("ObjectVisitor pull mode not allowed");
+    }
     for(;;) {
       var fieldToken = parser.nextToken();
       if (fieldToken == END_OBJECT) {

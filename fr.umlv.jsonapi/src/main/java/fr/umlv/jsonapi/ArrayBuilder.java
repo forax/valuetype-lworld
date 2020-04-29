@@ -58,7 +58,7 @@ public final class ArrayBuilder implements ArrayVisitor {
   private final Consumer<List<Object>> postOp;
 
   ArrayBuilder(BuilderConfig config, ArrayVisitor delegate, Consumer<List<Object>> postOp) {
-    this.list = requireNonNull(config.listSupplier().get());
+    this.list = requireNonNull(config.listSupplier.get());
     this.delegate = delegate;
     this.config = config;
     this.postOp = postOp;
@@ -98,7 +98,7 @@ public final class ArrayBuilder implements ArrayVisitor {
    *
    * If the class of {code value} is not one of boolean, int, long, double, String, BigInteger,
    * BigDecimal, java.util.List or java.util.Map, the method {@link #accept(Supplier)} will fail
-   * to work because there is no JSON mapping.
+   * to work because the type has no JSON mapping.
    *
    * @param value add this value to the builder.
    * @return itself
@@ -110,7 +110,7 @@ public final class ArrayBuilder implements ArrayVisitor {
   }
 
   /**
-   * Add several objects to the builder.
+   * Add several values to the builder.
    *
    * @param list add all the values of the list into the builder.
    * @return itself
@@ -146,7 +146,7 @@ public final class ArrayBuilder implements ArrayVisitor {
    * @see BuilderConfig
    */
   public List<Object> toList() {
-    return config.transformListOp().apply(list);
+    return config.transformListOp.apply(list);
   }
 
   @Override
@@ -253,6 +253,15 @@ public final class ArrayBuilder implements ArrayVisitor {
     return arrayVisitor.visitEndArray();
   }
 
+  /**
+   * Replay all the values as visits to the ArrayVisitor specified
+   * as argument.
+   *
+   * @param supplier a supplier of the array visitor that will receive
+   *                 all the visits
+   * @return the value returned by the call to {@link ArrayVisitor#visitEndArray()}
+   *         on the array visitor provided as argument
+   */
   public Object accept(Supplier<? extends ArrayVisitor> supplier) {
     requireNonNull(supplier);
     return visitList(list, requireNonNull(supplier.get()));

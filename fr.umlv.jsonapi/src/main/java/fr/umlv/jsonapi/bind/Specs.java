@@ -54,7 +54,7 @@ final class Specs {
         return new BindObjectVisitor(objectSpec, (ObjectBuilder) arrayBuilder.visitObject());
       }
       if (component instanceof ClassSpec classSpec) {
-        return new BindClassVisitor(classSpec, BuilderConfig.from(arrayBuilder), arrayBuilder::add);
+        return new BindClassVisitor(classSpec, BuilderConfig.extract(arrayBuilder), arrayBuilder::add);
       }
       throw new IllegalStateException("invalid component for an object " + component);
     }
@@ -64,7 +64,7 @@ final class Specs {
         return new BindArrayVisitor(arraySpec, (ArrayBuilder) arrayBuilder.visitArray());
       }
       if (component instanceof StreamSpec streamSpec) {
-        return new BindStreamVisitor(streamSpec, BuilderConfig.from(arrayBuilder), arrayBuilder::add);
+        return new BindStreamVisitor(streamSpec, BuilderConfig.extract(arrayBuilder), arrayBuilder::add);
       }
       throw new IllegalStateException("invalid component for an array " + component);
     }
@@ -106,7 +106,7 @@ final class Specs {
         return new BindObjectVisitor(objectSpec, (ObjectBuilder) objectBuilder.visitMemberObject(name));
       }
       if (component instanceof ClassSpec classSpec) {
-        return new BindClassVisitor(classSpec, BuilderConfig.from(objectBuilder), o -> objectBuilder.add(name, o));
+        return new BindClassVisitor(classSpec, BuilderConfig.extract(objectBuilder), o -> objectBuilder.add(name, o));
       }
       throw new IllegalStateException("invalid component for an object " + component);
     }
@@ -116,7 +116,7 @@ final class Specs {
         return new BindArrayVisitor(arraySpec, (ArrayBuilder) objectBuilder.visitMemberArray(name));
       }
       if (component instanceof StreamSpec streamSpec) {
-        return new BindStreamVisitor(streamSpec, BuilderConfig.from(objectBuilder), o -> objectBuilder.add(name, o));
+        return new BindStreamVisitor(streamSpec, BuilderConfig.extract(objectBuilder), o -> objectBuilder.add(name, o));
       }
       throw new IllegalStateException("invalid component for an array " + component);
     }

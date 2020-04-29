@@ -66,7 +66,7 @@ public final class ObjectBuilder implements ObjectVisitor {
   private final Consumer<Map<String, Object>> postOp;
 
   ObjectBuilder(BuilderConfig config, ObjectVisitor delegate, Consumer<Map<String, Object>> postOp) {
-    this.map = requireNonNull(config.mapSupplier().get());
+    this.map = requireNonNull(config.mapSupplier.get());
     this.config = config;
     this.delegate = delegate;
     this.postOp = postOp;
@@ -100,17 +100,55 @@ public final class ObjectBuilder implements ObjectVisitor {
     return map.entrySet().stream().map(e -> '"' + e.getKey() + "\": " + e.getValue()).collect(Collectors.joining(", ", "{", "}"));
   }
 
+  /**
+   * Add an element composed of a name and any object to the builder.
+   *
+   * If there is already an element with the same name, this new element
+   * will replace the existing one.
+   *
+   * If the class of {code value} is not one of boolean, int, long, double, String, BigInteger,
+   * BigDecimal, java.util.List or java.util.Map, the method {@link #accept(Supplier)} will fail
+   * to work because the type has no JSON mapping.
+   *
+   * @param name name of the element to add
+   * @param value value of the element to add
+   * @return itself
+   */
   public ObjectBuilder add(String name, Object value) {
     requireNonNull(name);
     map.put(name, value);
     return this;
   }
 
+  /**
+   * Add several eleemnts to the builder.
+   *
+   * @param map add all the elements of the map into the builder.
+   * @return itself
+   *
+   * @see #add(String, Object)
+   */
   public ObjectBuilder addAll(Map<String, ?> map) {
     map.forEach(this.map::put);  // implicit nullcheck
     return this;
   }
 
+  /**
+   * Create an object by specifying all its elements and add it to the current builder;
+   *
+   * <p>Example of usage
+   * <pre>
+   * new ObjectBuilder()
+   *   .add("name", "Franky")
+   *   .with("address", b -> b
+   *       .add("street", "3rd")
+   *       .add("city", "NY"));
+   * </pre>
+   *
+   * @param name name of the object element that is added
+   * @param consumer a function that will called to create the object that will be added
+   * @return itself
+   */
   public ObjectBuilder with(String name, Consumer<? super ObjectBuilder> consumer) {
     requireNonNull(name);
     requireNonNull(consumer);
@@ -120,8 +158,17 @@ public final class ObjectBuilder implements ObjectVisitor {
     return this;
   }
 
+  /**
+   * Return a map from the underlying map of this builder.
+   * Apply the {@code transformMapOp} and return the result so the returned map
+   * may be a different map from the underlying map.
+   *
+   * @return a map (newly created or not)
+   *
+   * @see BuilderConfig
+   */
   public Map<String, Object> toMap() {
-    return config.transformMapOp().apply(map);
+    return config.transformMapOp.apply(map);
   }
 
   @Override
@@ -234,6 +281,15 @@ public final class ObjectBuilder implements ObjectVisitor {
     return objectVisitor.visitEndObject();
   }
 
+  /**
+   * Replay all the elements as visits to the BuilderVisitor specified
+   * as argument.
+   *
+   * @param supplier a supplier of the object visitor that will receive
+   *                 all the visits
+   * @return the value returned by the call to {@link ObjectVisitor#visitEndObject()} on the
+   *         array visitor provided as argument
+   */
   public Object accept(Supplier<? extends ObjectVisitor> supplier) {
     requireNonNull(supplier);
     return visitMap(map, requireNonNull(supplier.get()));

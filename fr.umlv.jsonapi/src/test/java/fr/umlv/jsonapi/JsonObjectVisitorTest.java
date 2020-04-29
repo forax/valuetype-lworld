@@ -6,13 +6,17 @@ import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
@@ -394,6 +398,48 @@ public class JsonObjectVisitorTest {
     assertEquals(
         List.of("age", "children", "firstName", "spouse", "weight"),
         new ArrayList<>(builder2.toMap().keySet()));
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void readUnOrderedImmutable() {
+    var json = """
+        {
+          "name": "James Joyce",
+          "age": 38,
+          "books": [
+            "Finnegans Wake"
+          ]
+        }
+        """;
+    var config = new BuilderConfig(LinkedHashMap::new, ArrayList::new)
+        .withTransformOps(Map::copyOf, List::copyOf);
+    var author = (Map<String, Object>) JsonReader.parse(json, config.newObjectBuilder());
+    var books = (List<String>) author.get("books");
+    assertThrows(UnsupportedOperationException.class, () -> author.put("name", "Jane Austin"));
+    assertThrows(UnsupportedOperationException.class, () -> books.add("foo"));
+    assertEquals(Set.of("name", "age", "books"), author.keySet());
+  }
+
+  @Test
+  @SuppressWarnings("unchecked")
+  public void readOrderedUnmodifiable() {
+    var json = """
+        {
+          "name": "James Joyce",
+          "age": 38,
+          "books": [
+            "Finnegans Wake"
+          ]
+        }
+        """;
+    var config = new BuilderConfig(LinkedHashMap::new, ArrayList::new)
+        .withTransformOps(Collections::unmodifiableMap, Collections::unmodifiableList);
+    var author = (Map<String, Object>) JsonReader.parse(json, config.newObjectBuilder());
+    var books = (List<String>) author.get("books");
+    assertThrows(UnsupportedOperationException.class, () -> author.put("name", "Jane Austin"));
+    assertThrows(UnsupportedOperationException.class, () -> books.add("foo"));
+    assertEquals(List.of("name", "age", "books"), new ArrayList<>(author.keySet()));
   }
 
   @Test

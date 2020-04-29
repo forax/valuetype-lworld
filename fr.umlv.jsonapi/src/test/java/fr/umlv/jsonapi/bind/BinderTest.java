@@ -20,7 +20,10 @@ import java.net.URI;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -212,7 +215,8 @@ public class BinderTest {
         }
         """;
     record Author(String name, int age, List<String> books) { }
-    var config = new BuilderConfig(HashMap::new, Map::copyOf, ArrayList::new, List::copyOf);
+    var config = BuilderConfig.defaults()
+        .withTransformOps(Map::copyOf, List::copyOf);
     var author = binder.read(json, Author.class, config);
     assertThrows(UnsupportedOperationException.class, () -> author.books().add("foo"));
   }

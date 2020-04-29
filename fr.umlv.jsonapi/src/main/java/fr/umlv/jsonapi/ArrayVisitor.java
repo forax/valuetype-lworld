@@ -21,8 +21,7 @@ import java.util.stream.Stream;
  * visitor is not interested by a peculiar object/array, in that case the {@link JsonReader} will *
  * skip all the values until the end of the object/array is seen.
  *
- * <p>This visitor can work in two different {@link VisitorMode mode}, the semantics of the two
- * methods {@link #visitValue(JsonValue)} and {@link #visitEndArray()} is different.
+ * <p>This visitor can work in three different {@link VisitorMode mode}s.
  *
  * <ul>
  *   <li>in {@link VisitorMode#PUSH}, the data flows from the {@link JsonReader reader} to the
@@ -33,9 +32,14 @@ import java.util.stream.Stream;
  *       method {@link JsonReader#stream(java.io.Reader, ArrayVisitor)}, so the return value of
  *       {@link #visitValue(JsonValue)} is sent to the stream. The return value of the method {@link
  *       #visitEndArray()} is ignored.
+ *   <li>in {@link VisitorMode#PULL_INSIDE}, instead of having the values pulled by the {@link
+ *       JsonReader reader} from outside the visitor, the vales are pulled from inside the visitor
+ *       by calling the method {@link #visitStream(Stream)} first. The semantics of {@link
+ *       #visitValue(JsonValue)} and {@link #visitEndArray()} is the same as in pull mode.
  * </ul>
  *
- * <p>Example in {@code push mode}, using {@link JsonReader#parse(java.io.Reader, Object)}
+ * <p>Example in {@link VisitorMode#PULL push mode}, using {@link JsonReader#parse(java.io.Reader,
+ * Object)}
  *
  * <pre>
  * String text = """
@@ -52,7 +56,7 @@ import java.util.stream.Stream;
  *     assertTrue(value.stringValue().startsWith("Jole"));
  *     return null;  // used in push mode
  *   }
- *   public Object visitEndArray(Stream&lt;Object&gt; unused) {
+ *   public Object visitEndArray() {
  *     return "end !";  // send result;
  *   }
  * };
@@ -60,7 +64,8 @@ import java.util.stream.Stream;
  * assertEquals(result, "end !");
  * </pre>
  *
- * <p>Example in {@code pull mode}, using {@link JsonReader#stream(java.io.Reader, ArrayVisitor)}
+ * <p>Example in {@link VisitorMode#PULL pull mode}, using {@link JsonReader#stream(java.io.Reader,
+ * ArrayVisitor)}
  *
  * <pre>
  * String text = """
@@ -78,12 +83,44 @@ import java.util.stream.Stream;
  *     return value.asObject();  // used in pull mode
  *   }
  *   public Object visitEndArray() {
- *     return null;  // return value ignored;
+ *     return null;  // return value ignored
  *   }
  * };
  * try(Stream&lt;Object&gt; stream = JsonReader.stream(text, visitor)) {
  *   assertEquals("Joleene", stream.skip(1).findFirst().orElseThrow());
  * }
+ * </pre>
+ *
+ * <p>Example in {@link VisitorMode#PULL_INSIDE pull inside mode},
+ * using {@link JsonReader#parse(java.io.Reader, Object)}
+ *
+ * <pre>
+ * String text = """
+ *   [ "Jolene", "Joleene", "Joleeeene" ]
+ *   """;
+ * ArrayVisitor visitor = new ArrayVisitor() {
+ *   public VisitorMode mode() {
+ *     return VisitorMode.PULL_INSIDE;
+ *   }
+ *   public Object visitStream(Stream&lt;Object&gt; stream) {
+ *     return stream.skip(1).findFirst().orElseThrow();
+ *   }
+ *   public Object visitValue(JsonValue value) {
+ *     assertTrue(value.stringValue().startsWith("Jole"));
+ *     return value.asObject(); // used in pull mode
+ *   }
+ *   public ObjectVisitor visitObject() {
+ *     return null; // skip it
+ *   }
+ *   public ArrayVisitor visitArray() {
+ *     return null; // skip it
+ *   }
+ *   public Object visitEndArray() {
+ *     return null; // return value ignored
+ *   }
+ * };
+ * Object result = JsonReader.parse(text, visitor);
+ * assertEquals("Joleene", result);
  * </pre>
  *
  * <p>This visitor has a builder semantics, if it want to remember the values seen, they have to be
@@ -97,20 +134,23 @@ import java.util.stream.Stream;
 public interface ArrayVisitor {
   /**
    * Returns the visitor mode of this visitor.
+   * The visitor mode is used by the {@link JsonReader} to know which methods of the API
+   * to call and in which order.
+   *
    * @return the visitor mode of this visitor.
    */
   VisitorMode mode();
 
   /**
-   * This method is called first with a Stream, consuming the stream will called the methods
-   * {@link #visitObject()}, {@link #visitArray()} and {@link #visitValue(JsonValue)}
-   * (in pull mode) depending on the kind of values in the array and the returned value
-   * will be inserted in the stream.
+   * In {@link VisitorMode#PULL_INSIDE pull inside mode}, this method is called before any other
+   * method. When the value of the Stream will be consumed, the method {@link #visitObject()},
+   * {@link #visitArray()} and {@link #visitValue(JsonValue)} will be called to transform
+   * the JSON values.
    *
-   * This stream
-   *
-   * @param stream
-   * @return
+   * @param stream the stream that will be used to control the parsing, this stream should not
+   *               escape the method.
+   * @return the result of the parsing, this value will be propagated as return value of
+   *         {@link JsonReader#parse(Reader, Object)}.
    */
   default Object visitStream(Stream<Object> stream) {
     return null;
