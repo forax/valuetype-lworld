@@ -5,7 +5,6 @@ import static java.util.Objects.requireNonNull;
 import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
-import fr.umlv.jsonapi.StreamVisitor;
 import fr.umlv.jsonapi.VisitorMode;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -25,6 +24,11 @@ public final class FilterArrayVisitor implements ArrayVisitor {
   }
 
   @Override
+  public Object visitStream(Stream<Object> stream) {
+    return delegate.visitStream(stream);
+  }
+
+  @Override
   public ObjectVisitor visitObject() {
     var objectVisitor = this.delegate.visitObject();
     return new FilterObjectVisitor(objectVisitor, predicate);
@@ -33,9 +37,6 @@ public final class FilterArrayVisitor implements ArrayVisitor {
   @Override
   public ArrayVisitor visitArray() {
     var arrayVisitor = delegate.visitArray();
-    if (arrayVisitor instanceof StreamVisitor streamVisitor) {
-      return new FilterStreamVisitor(streamVisitor, predicate);
-    }
     return new FilterArrayVisitor(arrayVisitor, predicate);
   }
 

@@ -268,7 +268,7 @@ public final class Binder {
     return new ArrayVisitor() {
       @Override
       public VisitorMode mode() {
-        return VisitorMode.PULL_MODE;
+        return VisitorMode.PULL;
       }
       @Override
       public ObjectVisitor visitObject() {

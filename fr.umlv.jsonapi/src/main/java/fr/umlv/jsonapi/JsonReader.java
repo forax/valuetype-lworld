@@ -5,6 +5,8 @@ import static com.fasterxml.jackson.core.JsonToken.END_OBJECT;
 import static com.fasterxml.jackson.core.JsonToken.FIELD_NAME;
 import static com.fasterxml.jackson.core.JsonToken.START_ARRAY;
 import static com.fasterxml.jackson.core.JsonToken.START_OBJECT;
+import static fr.umlv.jsonapi.VisitorMode.PULL;
+import static fr.umlv.jsonapi.VisitorMode.PULL_INSIDE;
 import static java.util.Objects.requireNonNull;
 
 import com.fasterxml.jackson.core.JsonFactory;
@@ -164,11 +166,12 @@ public final class JsonReader {
   }
 
   private static Object readArray(JsonParser parser, ArrayVisitor visitor, ArrayDeque<JsonToken> stack) throws IOException {
-    if (visitor instanceof StreamVisitor streamVisitor) {
-      return readStreamArray(parser, streamVisitor, stack);
+    var mode = visitor.mode();
+    if (mode == PULL_INSIDE) {
+      return readStreamArray(parser, visitor, stack);
     }
-    if (visitor.mode() == VisitorMode.PULL_MODE) {
-      throw new IllegalArgumentException("ArrayVisitor in pull mode not allowed");
+    if (mode == PULL) {
+      throw new IllegalArgumentException("ArrayVisitor pull mode not allowed");
     }
     return readPlainArray(parser, visitor, stack);
   }
@@ -200,7 +203,7 @@ public final class JsonReader {
     };
   }
 
-  private static Object readStreamArray(JsonParser parser, StreamVisitor visitor, ArrayDeque<JsonToken> stack) throws IOException {
+  private static Object readStreamArray(JsonParser parser, ArrayVisitor visitor, ArrayDeque<JsonToken> stack) throws IOException {
     var spliterator = new Spliterator<>() {
       private boolean ended;
       @Override
@@ -328,7 +331,7 @@ public final class JsonReader {
   public static Stream<Object> stream(Reader reader, ArrayVisitor visitor) throws IOException {
     requireNonNull(reader);
     requireNonNull(visitor);
-    if (visitor.mode() == VisitorMode.PUSH_MODE) {
+    if (visitor.mode() == VisitorMode.PUSH) {
       throw new IllegalArgumentException("only pull mode visitors are allowed");
     }
     var parser = new JsonFactory().createParser(reader);

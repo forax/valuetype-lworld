@@ -4,7 +4,6 @@ import static java.util.Objects.requireNonNull;
 
 import fr.umlv.jsonapi.filter.PostOpsArrayVisitor;
 import fr.umlv.jsonapi.filter.PostOpsObjectVisitor;
-import fr.umlv.jsonapi.filter.PostOpsStreamVisitor;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
@@ -127,7 +126,7 @@ public final class ObjectBuilder implements ObjectVisitor {
 
   @Override
   public VisitorMode mode() {
-    return VisitorMode.PUSH_MODE;
+    return VisitorMode.PUSH;
   }
 
   @Override
@@ -150,9 +149,6 @@ public final class ObjectBuilder implements ObjectVisitor {
       var arrayVisitor = delegate.visitMemberArray(name);
       if (arrayVisitor == null) {
         return null;
-      }
-      if (arrayVisitor instanceof StreamVisitor streamVisitor) {
-        return new PostOpsStreamVisitor<>(streamVisitor, list -> map.put(name, list));
       }
       return new PostOpsArrayVisitor<>(arrayVisitor, list -> map.put(name, list));
     }

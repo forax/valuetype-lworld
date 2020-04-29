@@ -28,7 +28,7 @@ final class BindClassVisitor implements ObjectVisitor {
 
   @Override
   public VisitorMode mode() {
-    return VisitorMode.PUSH_MODE;
+    return VisitorMode.PUSH;
   }
 
   @Override

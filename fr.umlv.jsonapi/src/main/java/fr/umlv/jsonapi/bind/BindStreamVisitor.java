@@ -4,12 +4,12 @@ import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
-import fr.umlv.jsonapi.StreamVisitor;
+import fr.umlv.jsonapi.VisitorMode;
 import fr.umlv.jsonapi.bind.Specs.StreamSpec;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
-final class BindStreamVisitor implements StreamVisitor {
+final class BindStreamVisitor implements ArrayVisitor {
   private final StreamSpec spec;
   private final BuilderConfig config;
 
@@ -23,6 +23,11 @@ final class BindStreamVisitor implements StreamVisitor {
 
   BindStreamVisitor(StreamSpec spec, BuilderConfig config) {
     this(spec, config, __ -> { /* empty */ });
+  }
+
+  @Override
+  public VisitorMode mode() {
+    return VisitorMode.PULL_INSIDE;
   }
 
   @Override

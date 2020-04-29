@@ -5,7 +5,6 @@ import static java.util.Objects.requireNonNull;
 import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.JsonValue;
-import fr.umlv.jsonapi.StreamVisitor;
 import fr.umlv.jsonapi.VisitorMode;
 import java.util.function.UnaryOperator;
 
@@ -32,9 +31,6 @@ public final class RenamerObjectVisitor implements ObjectVisitor {
   @Override
   public ArrayVisitor visitMemberArray(String name) {
     var arrayVisitor = delegate.visitMemberArray(renamer.apply(name));
-    if (arrayVisitor instanceof StreamVisitor streamVisitor) {
-      return new RenamerStreamVisitor(streamVisitor, renamer);
-    }
     return new RenamerArrayVisitor(arrayVisitor, renamer);
   }
 

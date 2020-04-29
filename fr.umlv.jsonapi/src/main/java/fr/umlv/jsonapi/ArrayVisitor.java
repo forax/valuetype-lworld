@@ -1,6 +1,7 @@
 package fr.umlv.jsonapi;
 
 import java.io.Reader;
+import java.util.stream.Stream;
 
 /**
  * Used when a JSON array is visited.
@@ -24,11 +25,11 @@ import java.io.Reader;
  * methods {@link #visitValue(JsonValue)} and {@link #visitEndArray()} is different.
  *
  * <ul>
- *   <li>in {@link VisitorMode#PUSH_MODE}, the data flows from the {@link JsonReader reader} to the
+ *   <li>in {@link VisitorMode#PUSH}, the data flows from the {@link JsonReader reader} to the
  *       visitor and to an eventual {@link JsonWriter writer}. The return value of {@link
  *       #visitValue(JsonValue)} is not used. The return value of {@link #visitEndArray()} is
  *       returned by the the method {@link JsonReader#parse(Reader, Object) parse} of the reader.
- *   <li>in {@link VisitorMode#PULL_MODE}, the data are pulled from the reader, by example using the
+ *   <li>in {@link VisitorMode#PULL}, the data are pulled from the reader, by example using the
  *       method {@link JsonReader#stream(java.io.Reader, ArrayVisitor)}, so the return value of
  *       {@link #visitValue(JsonValue)} is sent to the stream. The return value of the method {@link
  *       #visitEndArray()} is ignored.
@@ -89,7 +90,6 @@ import java.io.Reader;
  * stored in fields of the class implementing the visitor.
  *
  * @see ObjectVisitor
- * @see StreamVisitor
  * @see ArrayBuilder
  * @see JsonReader#parse(java.io.Reader, Object)
  * @see JsonReader#stream(java.io.Reader, ArrayVisitor)
@@ -100,6 +100,21 @@ public interface ArrayVisitor {
    * @return the visitor mode of this visitor.
    */
   VisitorMode mode();
+
+  /**
+   * This method is called first with a Stream, consuming the stream will called the methods
+   * {@link #visitObject()}, {@link #visitArray()} and {@link #visitValue(JsonValue)}
+   * (in pull mode) depending on the kind of values in the array and the returned value
+   * will be inserted in the stream.
+   *
+   * This stream
+   *
+   * @param stream
+   * @return
+   */
+  default Object visitStream(Stream<Object> stream) {
+    return null;
+  }
 
   /**
    * Called when the {@link JsonReader reader} see the start of an object, the current visitor
@@ -123,7 +138,7 @@ public interface ArrayVisitor {
    * Called when the {@link JsonReader reader} see a value of type either null, boolean, int, long,
    * double, String, BigInteger or BigDecimal.
    * <ul>
-   *   <li>In {@link VisitorMode#PUSH_MODE}, the return value of this method is ignored. *
+   *   <li>In {@link VisitorMode#PUSH}, the return value of this method is ignored. *
    *   <li>In VisitMode#PULL_MODE, the return value of this method is inserted in the stream.
    * </ul>
    *
@@ -137,9 +152,9 @@ public interface ArrayVisitor {
    * Called when all the values of the array have been parsed.
    *
    * <ul>
-   *   <li>In {@link VisitorMode#PUSH_MODE}, the return value of is propagated as return value
+   *   <li>In {@link VisitorMode#PUSH}, the return value of is propagated as return value
    *   of {@link JsonReader#parse(java.io.Reader, Object)}.
-   *   <li>In {@link VisitorMode#PULL_MODE}, the return value of this method is ignored.
+   *   <li>In {@link VisitorMode#PULL}, the return value of this method is ignored.
    * </ul>
    *
    * @return the result of the parsing in push mode or null in pull mode.

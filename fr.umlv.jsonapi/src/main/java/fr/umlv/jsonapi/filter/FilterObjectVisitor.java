@@ -5,7 +5,6 @@ import static java.util.Objects.requireNonNull;
 import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.JsonValue;
-import fr.umlv.jsonapi.StreamVisitor;
 import fr.umlv.jsonapi.VisitorMode;
 import java.util.function.Predicate;
 
@@ -37,11 +36,7 @@ public final class FilterObjectVisitor implements ObjectVisitor {
     if (!predicate.test(name)) {
       return null;
     }
-    var arrayVisitor = delegate.visitMemberArray(name);
-    if (arrayVisitor instanceof StreamVisitor streamVisitor) {
-      return new FilterStreamVisitor(streamVisitor, predicate);
-    }
-    return new FilterArrayVisitor(arrayVisitor, predicate);
+    return new FilterArrayVisitor(delegate.visitMemberArray(name), predicate);
   }
 
   @Override

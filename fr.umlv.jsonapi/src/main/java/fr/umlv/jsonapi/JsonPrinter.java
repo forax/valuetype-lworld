@@ -24,7 +24,7 @@ public final class JsonPrinter implements ObjectVisitor, ArrayVisitor {
 
   @Override
   public VisitorMode mode() {
-    return VisitorMode.PUSH_MODE;
+    return VisitorMode.PUSH;
   }
 
   @Override

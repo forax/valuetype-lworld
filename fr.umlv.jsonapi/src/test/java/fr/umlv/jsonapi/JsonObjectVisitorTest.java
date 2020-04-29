@@ -1,5 +1,7 @@
 package fr.umlv.jsonapi;
 
+import static fr.umlv.jsonapi.VisitorMode.PULL;
+import static fr.umlv.jsonapi.VisitorMode.PULL_INSIDE;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toUnmodifiableList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -33,7 +35,7 @@ public class JsonObjectVisitorTest {
     var visitor = new ObjectVisitor() {
       @Override
       public VisitorMode mode() {
-        return VisitorMode.PUSH_MODE;
+        return VisitorMode.PUSH;
       }
 
       @Override
@@ -115,7 +117,7 @@ public class JsonObjectVisitorTest {
     var visitor = new ArrayVisitor() {
       @Override
       public VisitorMode mode() {
-        return VisitorMode.PUSH_MODE;
+        return VisitorMode.PUSH;
       }
 
       @Override
@@ -184,7 +186,17 @@ public class JsonObjectVisitorTest {
         ]
         """;
     var methods = new ArrayList<String>();
-    var visitor = new StreamVisitor() {
+    var visitor = new ArrayVisitor() {
+      @Override
+      public VisitorMode mode() {
+        return PULL_INSIDE;
+      }
+
+      @Override
+      public Object visitStream(Stream<Object> stream) {
+        methods.add("visitStream");
+        return stream.collect(toList());
+      }
       @Override
       public ObjectVisitor visitObject() {
         methods.add("visitObject");
@@ -195,12 +207,6 @@ public class JsonObjectVisitorTest {
       public ArrayVisitor visitArray() {
         methods.add("visitArray");
         return null;
-      }
-
-      @Override
-      public Object visitStream(Stream<Object> stream) {
-        methods.add("visitStream");
-        return stream.collect(toList());
       }
 
       @Override
@@ -232,6 +238,11 @@ public class JsonObjectVisitorTest {
         }
         return value.asObject();
       }
+
+      @Override
+      public Object visitEndArray() {
+        return null;
+      }
     };
 
     var result = JsonReader.parse(text, visitor);
@@ -248,7 +259,11 @@ public class JsonObjectVisitorTest {
     var text = """
         [ "foo", "bar", 456 ]
         """;
-    var visitor = new StreamVisitor() {
+    var visitor = new ArrayVisitor() {
+      @Override
+      public VisitorMode mode() {
+        return PULL_INSIDE;
+      }
       @Override
       public Object visitStream(Stream<Object> stream) {
         return stream.findFirst().orElseThrow();
@@ -265,6 +280,10 @@ public class JsonObjectVisitorTest {
       @Override
       public Object visitValue(JsonValue value) {
         return value.asObject();
+      }
+      @Override
+      public Object visitEndArray() {
+        return null;
       }
     };
     var result = JsonReader.parse(text, visitor);
@@ -383,7 +402,12 @@ public class JsonObjectVisitorTest {
     var text = """
         [ { "x": 4, "y": 7 }, { "x": 14, "y": 71 } ]
         """;
-    var visitor = new StreamVisitor() {
+    var visitor = new ArrayVisitor() {
+      @Override
+      public VisitorMode mode() {
+        return PULL_INSIDE;
+      }
+
       @Override
       public Object visitStream(Stream<Object> stream) {
         return stream.map(v -> (Map<String, Integer>) v).filter(p -> p.get("y") < 10).collect(toUnmodifiableList());
@@ -401,6 +425,10 @@ public class JsonObjectVisitorTest {
       public Object visitValue(JsonValue value) {
         return value.asObject();
       }
+      @Override
+      public Object visitEndArray() {
+        return null;
+      }
     };
     var result = (List<Map<String, Integer>>) JsonReader.parse(text, visitor);
     assertEquals(List.of(Map.of("x", 4, "y", 7)), result);
@@ -417,7 +445,7 @@ public class JsonObjectVisitorTest {
     var visitor = BuilderConfig.defaults().newObjectBuilder(new ObjectVisitor() {
       @Override
       public VisitorMode mode() {
-        return VisitorMode.PULL_MODE;
+        return PULL;
       }
       @Override
       public ObjectVisitor visitMemberObject(String name) {
@@ -425,7 +453,11 @@ public class JsonObjectVisitorTest {
       }
       @Override
       public ArrayVisitor visitMemberArray(String name) {
-        return new StreamVisitor() {
+        return new ArrayVisitor() {
+          @Override
+          public VisitorMode mode() {
+            return PULL_INSIDE;
+          }
           @Override
           public Object visitStream(Stream<Object> stream) {
             return stream.mapToInt(o -> (int) o).sum();
@@ -443,9 +475,12 @@ public class JsonObjectVisitorTest {
           public ArrayVisitor visitArray() {
             return null;
           }
+          @Override
+          public Object visitEndArray() {
+            return null;
+          }
         };
       }
-
       @Override
       public Object visitMemberValue(String name, JsonValue value) {
         return value.asObject();
@@ -459,6 +494,38 @@ public class JsonObjectVisitorTest {
     assertEquals(Map.of("dataset", "kanga-3", "data", 100), map);
   }
 
+  public void testParseAsStreamOfString() {
+    var text = """
+        [ "foo", "bar", "baz", "whizz" ]
+        """;
+
+    var stream = JsonReader.stream(text, new ArrayVisitor() {
+      @Override
+      public VisitorMode mode() {
+        return PULL;
+      }
+
+      @Override
+      public ObjectVisitor visitObject() {
+        return null;
+      }
+      @Override
+      public ArrayVisitor visitArray() {
+        return null;
+      }
+      @Override
+      public Object visitValue(JsonValue value) {
+        return value.asObject();
+      }
+      @Override
+      public Object visitEndArray() {
+        return null;
+      }
+    });
+    var list = stream.limit(2).collect(toList());
+    assertEquals(List.of("foo", "bar"), list);
+  }
+
   @Test
   @SuppressWarnings("unchecked")
   public void testParseAsStreamOfObject() {
@@ -469,7 +536,7 @@ public class JsonObjectVisitorTest {
     var stream = JsonReader.stream(text, new ArrayVisitor() {
       @Override
       public VisitorMode mode() {
-        return VisitorMode.PULL_MODE;
+        return PULL;
       }
       @Override
       public ObjectVisitor visitObject() {

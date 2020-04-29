@@ -22,7 +22,7 @@ public class ExampleVisitorTest {
     var visitor = new ObjectVisitor() {
       @Override
       public VisitorMode mode() {
-        return VisitorMode.PUSH_MODE;
+        return VisitorMode.PUSH;
       }
       @Override
       public ObjectVisitor visitMemberObject(String name) {
@@ -59,7 +59,7 @@ public class ExampleVisitorTest {
     var visitor = builderConfig.newObjectBuilder(new ObjectVisitor() {
       @Override
       public VisitorMode mode() {
-        return VisitorMode.PULL_MODE;
+        return VisitorMode.PULL;
       }
       @Override
       public ObjectVisitor visitMemberObject(String name) {
@@ -92,7 +92,7 @@ public class ExampleVisitorTest {
     var visitor = new ArrayVisitor() {
       @Override
       public VisitorMode mode() {
-        return VisitorMode.PUSH_MODE;
+        return VisitorMode.PUSH;
       }
       @Override
       public ObjectVisitor visitObject() {
@@ -124,7 +124,7 @@ public class ExampleVisitorTest {
     var visitor = new ArrayVisitor() {
       @Override
       public VisitorMode mode() {
-        return VisitorMode.PULL_MODE;
+        return VisitorMode.PULL;
       }
       @Override
       public ObjectVisitor visitObject() {
@@ -154,11 +154,21 @@ public class ExampleVisitorTest {
     var text = """
         [ "Jolene", "Joleene", "Joleeeene" ]
         """;
-    var visitor = new StreamVisitor() {
+    var visitor = new ArrayVisitor() {
+      @Override
+      public VisitorMode mode() {
+        return VisitorMode.PULL_INSIDE;
+      }
       @Override
       public Object visitStream(Stream<Object> stream) {
         return stream.skip(1).findFirst().orElseThrow();
       }
+      @Override
+      public Object visitValue(JsonValue value) {
+        assertTrue(value.stringValue().startsWith("Jole"));
+        return value.asObject();  // used in pull mode
+      }
+
       @Override
       public ObjectVisitor visitObject() {
         return null;  // skip it
@@ -168,9 +178,8 @@ public class ExampleVisitorTest {
         return null;  // skip it
       }
       @Override
-      public Object visitValue(JsonValue value) {
-        assertTrue(value.stringValue().startsWith("Jole"));
-        return value.asObject();  // used in pull mode
+      public Object visitEndArray() {
+        return null;  // unused
       }
     };
     var result = JsonReader.parse(text, visitor);

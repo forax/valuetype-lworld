@@ -36,7 +36,7 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
 
   @Override
   public VisitorMode mode() {
-    return VisitorMode.PUSH_MODE;
+    return VisitorMode.PUSH;
   }
 
   @Override

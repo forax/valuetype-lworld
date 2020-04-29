@@ -28,18 +28,18 @@ import java.util.function.UnaryOperator;
  * {@link #visitEndObject()} is different.
  *
  * <ul>
- *   <li>in {@link VisitorMode#PUSH_MODE}, the data flows from the {@link JsonReader reader} to
+ *   <li>in {@link VisitorMode#PUSH}, the data flows from the {@link JsonReader reader} to
  *       the visitor and to an eventual {@link JsonWriter writer}. The return value of
  *       {@link #visitMemberValue(String, JsonValue)} is not used. The return value of
  *       {@link #visitEndObject()}
  *       is returned by the the method {@link JsonReader#parse(Reader, Object) parse} of the reader.
- *   <li>in {@link VisitorMode#PULL_MODE}, the data are pulled from the reader, by example using
+ *   <li>in {@link VisitorMode#PULL}, the data are pulled from the reader, by example using
  *       the method {@link JsonReader#stream(java.io.Reader, ArrayVisitor)}, so the return value
  *       of {@link #visitMemberValue(String, JsonValue)} is sent to the stream.
  *       The return value of the method {@link #visitEndObject()} is ignored.
  * </ul>
  *
- * <p>Example using the {@link VisitorMode#PUSH_MODE}
+ * <p>Example using the {@link VisitorMode#PUSH}
  * <pre>
  * String text = """
  *   {
@@ -69,7 +69,7 @@ import java.util.function.UnaryOperator;
  * assertEquals(result, "end !");
  * </pre>
  *
- * <p>Example using the {@link VisitorMode#PULL_MODE}
+ * <p>Example using the {@link VisitorMode#PULL}
  * <pre>
  * var text = """
  *   {
@@ -138,7 +138,7 @@ public interface ObjectVisitor {
    * with the type being either null, boolean, int, long, double, String, BigInteger
    * or BigDecimal).
    *
-   * <p>In {@link VisitorMode#PUSH_MODE}, the return value of this method is ignored.
+   * <p>In {@link VisitorMode#PUSH}, the return value of this method is ignored.
    * <p>In VisitMode#PULL_MODE, the return value of this method is inserted in the stream.
    *
    * @param name the name of the element
@@ -152,9 +152,9 @@ public interface ObjectVisitor {
    * Called when all the elements of the object have been parsed.
    *
    * <ul>
-   *   <li>In {@link VisitorMode#PUSH_MODE}, the return value of is propagated as return value
+   *   <li>In {@link VisitorMode#PUSH}, the return value of is propagated as return value
    *   of {@link JsonReader#parse(java.io.Reader, Object)}.
-   *   <li>In {@link VisitorMode#PULL_MODE}, the return value of this method is ignored.
+   *   <li>In {@link VisitorMode#PULL}, the return value of this method is ignored.
    * </ul>
    *
    * @return the result of the parsing in push mode or null in pull mode.
