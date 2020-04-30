@@ -1,12 +1,22 @@
 package fr.umlv.jsonapi.bind;
 
-import static java.lang.invoke.MethodType.methodType;
-import static java.util.Objects.requireNonNull;
-
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
+/**
+ *
+ *
+ * <pre>
+ * record Authorized() { }
+ * record Unauthorized() { }
+ * Binder binder = Binder.noDefaults();  // no finder registered !
+ * SpecFinder recordFinder = binder.newRecordSpecFinder(lookup());
+ * Set&lt;Class&lt;?&gt;&gt; restrictedSet = Set.of(Authorized.class);
+ * // register the finder filtered !
+ * binder.register(recordFinder.filter(restrictedSet::contains));
+ * </pre>
+ */
 @FunctionalInterface
 public interface SpecFinder {
   Optional<Spec> findSpec(Class<?> type);
