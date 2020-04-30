@@ -23,12 +23,12 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
   default Spec convert(Converter converter) {
     requireNonNull(converter);
     if (this instanceof ValueSpec valueSpec) {
-      return valueSpec.composeWith(converter);
+      return valueSpec.convertWith(converter);
     }
     throw new IllegalArgumentException("can not convert this spec");
   }
 
-  default Spec filter(Predicate<? super String> predicate) {
+  default Spec filterName(Predicate<? super String> predicate) {
     requireNonNull(predicate);
     if (this instanceof ObjectSpec objectSpec) {
       return objectSpec.filterWith(predicate);
@@ -37,6 +37,16 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
       return classSpec.filterWith(predicate);
     }
     throw new IllegalArgumentException("can not filter this spec");
+  }
+
+  default Spec mapLayout(Function<? super ClassLayout<Object>, ClassLayout<?>> mapper) {
+    requireNonNull(mapper);
+    if (this instanceof ClassSpec classSpec) {
+      @SuppressWarnings("unchecked")
+      var classLayout = (ClassLayout<Object>) classSpec.classLayout();
+      return typedClass(classSpec.name() + ".mapLayout()", mapper.apply(classLayout));
+    }
+    throw new IllegalArgumentException("can not map this spec");
   }
 
   default <V> V createBindVisitor(Class<V> visitorType) {
@@ -66,17 +76,17 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
     throw new AssertionError();
   }
 
-  static Spec typedClass(String name, ClassInfo<?> classInfo) {
+  static Spec typedClass(String name, ClassLayout<?> classLayout) {
     requireNonNull(name);
-    requireNonNull(classInfo);
-    return new ClassSpec(name, null, classInfo);
+    requireNonNull(classLayout);
+    return new ClassSpec(name, null, classLayout);
   }
   static Spec valueClass(String name, Converter converter) {
     requireNonNull(name);
     return new ValueSpec(name, converter);
   }
   
-  interface ClassInfo<B> {
+  interface ClassLayout<B> {
     Spec elementSpec(String name);
 
     B newBuilder();

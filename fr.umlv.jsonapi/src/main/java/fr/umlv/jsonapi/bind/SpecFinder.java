@@ -3,15 +3,9 @@ package fr.umlv.jsonapi.bind;
 import static java.lang.invoke.MethodType.methodType;
 import static java.util.Objects.requireNonNull;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles.Lookup;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
-
-import fr.umlv.jsonapi.JsonValue;
-import fr.umlv.jsonapi.bind.Spec.ClassInfo;
 
 @FunctionalInterface
 public interface SpecFinder {

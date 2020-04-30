@@ -3,7 +3,7 @@ package fr.umlv.jsonapi.bind;
 import static java.lang.invoke.MethodType.methodType;
 
 import fr.umlv.jsonapi.JsonValue;
-import fr.umlv.jsonapi.bind.Spec.ClassInfo;
+import fr.umlv.jsonapi.bind.Spec.ClassLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.util.HashMap;
@@ -41,11 +41,11 @@ final class SpecFinders {
       } catch (IllegalAccessException e) {
         throw (IllegalAccessError) new IllegalAccessError().initCause(e);
       }
-      return Optional.of(Spec.typedClass(type.getSimpleName(), new ClassInfo<Object[]>() {
+      return Optional.of(Spec.typedClass(type.getSimpleName(), new ClassLayout<Object[]>() {
         private RecordElement element(String name) {
           var recordElement = componentMap.get(name);
           if (recordElement == null) {
-            throw new IllegalStateException("no element " + name + " for class " + type);
+            throw new Binder.BindingException("no element " + name + " for class " + type);
           }
           return recordElement;
         }

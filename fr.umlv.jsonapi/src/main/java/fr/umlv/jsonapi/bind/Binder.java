@@ -23,14 +23,14 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
 public final class Binder {
-  public static final class SpecNoFoundException extends RuntimeException {
-    public SpecNoFoundException(String message) {
+  public static final class BindingException extends RuntimeException {
+    public BindingException(String message) {
       super(message);
     }
-    public SpecNoFoundException(String message, Throwable cause) {
+    public BindingException(String message, Throwable cause) {
       super(message, cause);
     }
-    public SpecNoFoundException(Throwable cause) {
+    public BindingException(Throwable cause) {
       super(cause);
     }
   }
@@ -42,7 +42,7 @@ public final class Binder {
       if (spec != null) {
         return spec;
       }
-      throw new SpecNoFoundException("no finder can resolve type " + type.getName());
+      throw new BindingException("no finder can resolve type " + type.getName());
     }
   };
   private final CopyOnWriteArrayList<SpecFinder> finders = new CopyOnWriteArrayList<>();
@@ -91,10 +91,7 @@ public final class Binder {
     return type -> Optional.ofNullable(lookup(type, finders));
   }
 
-  private Spec specForClass(Class<?> type) {
-    return specMap.get(type);
-  }
-  public Spec spec(Type type) throws SpecNoFoundException {
+  public Spec spec(Type type) throws BindingException {
     requireNonNull(type);
     if (type instanceof Class<?> clazz) {
       return specForClass(clazz);
@@ -104,7 +101,7 @@ public final class Binder {
       var actualTypeArguments = parameterizedType.getActualTypeArguments();
       if (rawType == Map.class) {
         if (actualTypeArguments[0] != String.class) {  //FIXME wildcard ?
-          throw new SpecNoFoundException("can not decode " + type.getTypeName());
+          throw new BindingException("can not decode " + type.getTypeName());
         }
         return spec(actualTypeArguments[1]).object();
       }
@@ -112,7 +109,10 @@ public final class Binder {
         return spec(actualTypeArguments[0]).array();
       }
     }
-    throw new SpecNoFoundException("can not decode unknown type " + type.getTypeName());
+    throw new BindingException("can not decode unknown type " + type.getTypeName());
+  }
+  private Spec specForClass(Class<?> type) {
+    return specMap.get(type);
   }
 
   static final BuilderConfig DEFAULT_CONFIG = BuilderConfig.defaults();

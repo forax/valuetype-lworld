@@ -5,7 +5,7 @@ import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.VisitorMode;
-import fr.umlv.jsonapi.bind.Spec.ClassInfo;
+import fr.umlv.jsonapi.bind.Spec.ClassLayout;
 import fr.umlv.jsonapi.bind.Specs.ClassSpec;
 import java.util.function.Consumer;
 
@@ -19,7 +19,7 @@ final class BindClassVisitor implements ObjectVisitor {
     this.spec = spec;
     this.config = config;
     this.postOp = postOp;
-    this.builder = spec.classInfo().newBuilder();
+    this.builder = spec.classLayout().newBuilder();
   }
 
   BindClassVisitor(ClassSpec spec, BuilderConfig config) {
@@ -38,7 +38,7 @@ final class BindClassVisitor implements ObjectVisitor {
       return null;
     }
     @SuppressWarnings("unchecked")
-    var classInfo = (ClassInfo<Object>) spec.classInfo();
+    var classInfo = (ClassLayout<Object>) spec.classLayout();
     return spec.newMemberObject(name, config, o -> builder = classInfo.addObject(builder, name, o));
   }
 
@@ -49,7 +49,7 @@ final class BindClassVisitor implements ObjectVisitor {
       return null;
     }
     @SuppressWarnings("unchecked")
-    var classInfo = (ClassInfo<Object>) spec.classInfo();
+    var classInfo = (ClassLayout<Object>) spec.classLayout();
     return spec.newMemberArray(name, config, a -> builder = classInfo.addArray(builder, name, a));
   }
 
@@ -60,7 +60,7 @@ final class BindClassVisitor implements ObjectVisitor {
       return null;
     }
     @SuppressWarnings("unchecked")
-    var classInfo = (ClassInfo<Object>) spec.classInfo();
+    var classInfo = (ClassLayout<Object>) spec.classLayout();
     var converted = Specs.convert(spec, name, value);
     builder = classInfo.addValue(builder, name, converted);
     return null;
@@ -69,7 +69,7 @@ final class BindClassVisitor implements ObjectVisitor {
   @Override
   public Object visitEndObject() {
     @SuppressWarnings("unchecked")
-    var classInfo = (ClassInfo<Object>) spec.classInfo();
+    var classInfo = (ClassLayout<Object>) spec.classLayout();
     var instance = classInfo.build(builder);
     builder = null;
     postOp.accept(instance);

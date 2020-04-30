@@ -13,8 +13,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonReader;
 import fr.umlv.jsonapi.JsonValue;
-import fr.umlv.jsonapi.bind.Binder.SpecNoFoundException;
-import fr.umlv.jsonapi.bind.Spec.ClassInfo;
+import fr.umlv.jsonapi.bind.Binder.BindingException;
+import fr.umlv.jsonapi.bind.Spec.ClassLayout;
 import fr.umlv.jsonapi.bind.Spec.Converter;
 import java.net.URI;
 import java.time.LocalDate;
@@ -32,7 +32,7 @@ public class BinderTest {
     var binder = Binder.noDefaults();
     assertNotNull(binder.spec(int.class));
     assertNotNull(binder.spec(String.class));
-    assertThrows(SpecNoFoundException.class, () -> binder.spec(URI.class));
+    assertThrows(BindingException.class, () -> binder.spec(URI.class));
   }
 
   @Test
@@ -157,7 +157,7 @@ public class BinderTest {
     var authorized = binder.read(json, Authorized.class);
     assertEquals(new Authorized(), authorized);
 
-    assertThrows(SpecNoFoundException.class, () -> binder.read(json, Unauthorized.class));
+    assertThrows(BindingException.class, () -> binder.read(json, Unauthorized.class));
   }
 
   @Test
@@ -193,9 +193,58 @@ public class BinderTest {
         """;
     record Author(String name, List<String> books) { }
     var authorSpec = binder.specFinder().findSpec(Author.class).orElseThrow();
-    binder.register(SpecFinder.of(Author.class, authorSpec.filter(not("age"::equals))));
+    binder.register(SpecFinder.of(Author.class, authorSpec.filterName(not("age"::equals))));
     var author = binder.read(json, Author.class);
     assertEquals(new Author("James Joyce", List.of("Finnegans Wake")), author);
+  }
+
+  @Test
+  public void readAndMapLayoutSpec() {
+    var binder = new Binder(lookup());
+    var json = """
+        {
+          "name": "James Joyce",
+          "age": 38,
+          "books": [
+            "Finnegans Wake"
+          ]
+        }
+        """;
+    record Author(String firstName, int age, List<String> books) { }
+    var authorSpec = binder.specFinder().findSpec(Author.class).orElseThrow();
+    binder.register(SpecFinder.of(Author.class, authorSpec.mapLayout(
+        layout -> new ClassLayout<Object>() {
+          private String rename(String name) {
+            return name.equals("name")? "firstName": name;
+          }
+          @Override
+          public Spec elementSpec(String name) {
+            return layout.elementSpec(rename(name));
+          }
+          @Override
+          public Object newBuilder() {
+            return layout.newBuilder();
+          }
+          @Override
+          public Object addObject(Object builder, String name, Object object) {
+            return layout.addObject(builder, rename(name), object);
+          }
+          @Override
+          public Object addArray(Object builder, String name, Object array) {
+            return layout.addArray(builder, rename(name), array);
+          }
+          @Override
+          public Object addValue(Object builder, String name, JsonValue value) {
+            return layout.addValue(builder, rename(name), value);
+          }
+          @Override
+          public Object build(Object builder) {
+            return layout.build(builder);
+          }
+        }
+    )));
+    var author = binder.read(json, Author.class);
+    assertEquals(new Author("James Joyce", 38, List.of("Finnegans Wake")), author);
   }
 
   @Test
@@ -227,7 +276,7 @@ public class BinderTest {
           "color": "red"
         }
         """;
-    class PixelClassInfo implements ClassInfo<Map<String, Object>> {
+    class PixelClassLayout implements ClassLayout<Map<String, Object>> {
       @Override
       public Spec elementSpec(String name) {
         return switch(name) {
@@ -260,7 +309,7 @@ public class BinderTest {
       }
     }
 
-    var pixelSpec = Spec.typedClass("Pixel", new PixelClassInfo());
+    var pixelSpec = Spec.typedClass("Pixel", new PixelClassLayout());
     @SuppressWarnings("unchecked")
     var pixel = (Map<String,Object>) Binder.read(json, pixelSpec, BuilderConfig.defaults());
     assertEquals(Map.of("x", 1, "y", 3, "color", "red"), pixel);
