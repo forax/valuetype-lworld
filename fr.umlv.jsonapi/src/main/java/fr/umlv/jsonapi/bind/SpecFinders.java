@@ -41,7 +41,7 @@ final class SpecFinders {
       } catch (IllegalAccessException e) {
         throw (IllegalAccessError) new IllegalAccessError().initCause(e);
       }
-      return Optional.of(Spec.typedClass(type.getSimpleName(), new ClassLayout<Object[]>() {
+      return Optional.of(Spec.typedObject(type.getSimpleName(), new ClassLayout<Object[]>() {
         private RecordElement element(String name) {
           var recordElement = componentMap.get(name);
           if (recordElement == null) {

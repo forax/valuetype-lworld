@@ -12,6 +12,7 @@ import fr.umlv.jsonapi.bind.Specs.StreamSpec;
 import fr.umlv.jsonapi.bind.Specs.ValueSpec;
 import fr.umlv.jsonapi.builder.BuilderConfig;
 
+import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -27,8 +28,8 @@ import java.util.stream.Stream;
  *
  * You can create your own Spec either
  * <ul>
- *   <li>Using the factory methods {@link Spec#typedClass(String, ClassLayout)} and
- *   {@link Spec#valueClass(String, Converter)} for respectively create a spec of a JSON object
+ *   <li>Using the factory methods {@link Spec#typedObject(String, ClassLayout)} and
+ *   {@link Spec#typedValue(String, Converter)} for respectively create a spec of a JSON object
  *   or a spec of a JSON value.
  *   <li>Using instance methods to create a spec from an existing spec, {@link #array()},
  *   {@link #stream(Function)}, {@link #object()} which respectively create an array of the spec
@@ -57,10 +58,32 @@ import java.util.stream.Stream;
  * </pre>
  */
 public /*sealed*/ interface Spec /*add permits clause*/ {
+
+  /**
+   * Wrap the current spec into a JSON array, the result will a {@link java.util.List}.
+   * @return a new spec that see a JSON array as a List.
+   */
   default Spec array() { return new ArraySpec(this); }
-  default Spec stream(Function<? super Stream<Object>, ?> aggregator) { return new StreamSpec(this, aggregator); }
+
+  /**
+   * Wrap the current spec into a JSON object, the result will a {@link java.util.Map}.
+   * @return a new spec that see a JSON object as a Map.
+   */
   default Spec object() { return new ObjectSpec(this, null); }
 
+  /**
+   * Wrap the current spec into a JSON array, the array is decoded using a {@link Stream stream}
+   * and the result is the return value of the aggregator function.
+   * @return a new spec that see a JSON array as a Stream.
+   */
+  default Spec stream(Function<? super Stream<Object>, ?> aggregator) { return new StreamSpec(this, aggregator); }
+
+  /**
+   * Returns a new spec that will apply the conversion functions when reading/writing JSON
+   * @param converter the converting functions
+   * @return a new spec that will apply the conversion functions when reading/writing JSON
+   * @throws IllegalArgumentException is the current spec doesn't represent a Java value
+   */
   default Spec convert(Converter converter) {
     requireNonNull(converter);
     if (this instanceof ValueSpec valueSpec) {
@@ -72,6 +95,12 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
     throw new IllegalArgumentException("can not apply a converter to this spec");
   }
 
+  /**
+   * Returns a new spec that allow to filter which object elements to keep
+   * @param predicate a boolean function that return true to keep the object element
+   * @return a new spec that allow to filter which object elements to keep
+   * @throws IllegalArgumentException is the current spec doesn't represent a JSON object
+   */
   default Spec filterName(Predicate<? super String> predicate) {
     requireNonNull(predicate);
     if (this instanceof ObjectSpec objectSpec) {
@@ -83,19 +112,54 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
     throw new IllegalArgumentException("can not apply a filter to this spec");
   }
 
+  /**
+   * Returns a new spec that transforms the layout of the current spec.
+   * @param mapper the layout transformation function
+   * @return a new spec that will transforms the layout of the current spec.
+   * @throws IllegalArgumentException is the current spec doesn't have a class layout
+   */
   default Spec mapLayout(Function<? super ClassLayout<Object>, ClassLayout<?>> mapper) {
     requireNonNull(mapper);
     if (this instanceof ClassSpec classSpec) {
       @SuppressWarnings("unchecked")
       var classLayout = (ClassLayout<Object>) classSpec.classLayout();
-      return typedClass(classSpec.name() + ".mapLayout()", mapper.apply(classLayout));
+      return typedObject(classSpec.name() + ".mapLayout()", mapper.apply(classLayout));
     }
     throw new IllegalArgumentException("can not apply a mapper to this spec");
   }
 
+
+  /**
+   * Returns either an {@link ObjectVisitor} or an {@link ArrayVisitor}, depending if the spec
+   * represents a JSON object or a JSON array, that can be used to read a JSON fragment.
+   * @param visitorType the type of visitor wanted ({@link ObjectVisitor} or {@link ArrayVisitor})
+   * @param <V> the type of the visitor
+   * @return a newly created {@link ObjectVisitor} or {@link ArrayVisitor}
+   *
+   * @throws IllegalArgumentException if the spec doesn't allow the kind of visitor requested
+   *
+   * @see Binder#read(Reader, Spec, BuilderConfig)
+   */
   default <V> V createBindVisitor(Class<V> visitorType) {
     return createBindVisitor(visitorType, Binder.DEFAULT_CONFIG, null);
   }
+
+  /**
+   * Returns either an {@link ObjectVisitor} or an {@link ArrayVisitor}, depending if the spec
+   * represents a JSON object or a JSON array, that can be used to read a JSON fragment.
+   * @param visitorType the type of visitor wanted ({@link ObjectVisitor} or {@link ArrayVisitor})
+   * @param config the configuration of the builder that will be used if necessary
+   * @param delegate a delegate if the spec represent a {@link java.util.List} or a
+   *                 {@link java.util.Map} or {code null}
+   *                 (see {@link BuilderConfig#newObjectBuilder(ObjectVisitor)})
+   * @param <V> the type of the visitor
+   * @return a newly created {@link ObjectVisitor} or {@link ArrayVisitor}
+   *
+   * @throws IllegalArgumentException if the spec doesn't allow the kind of visitor requested or
+   *         do not allow a non null delegate
+   *
+   * @see Binder#read(Reader, Spec, BuilderConfig)
+   */
   default <V> V createBindVisitor(Class<V> visitorType, BuilderConfig config, V delegate) {
     requireNonNull(visitorType);
     requireNonNull(config);
@@ -117,19 +181,39 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
     if (this instanceof ClassSpec classSpec) {
       return visitorType.cast(new BindClassVisitor(classSpec, config));
     }
-    throw new AssertionError();
+    throw new IllegalArgumentException("can not create a visitor on this spec");
   }
 
-  static Spec typedClass(String name, ClassLayout<?> classLayout) {
+  /**
+   * Create a spec corresponding to mapping of a JSON object to a Java object
+   * @param name the name of the spec for debugging purpose
+   * @param classLayout an abstraction describing how to build the Java object
+   *                    from the JSON object elements
+   * @return a spec that is able to convert a JSON object to a Java object
+   */
+  static Spec typedObject(String name, ClassLayout<?> classLayout) {
     requireNonNull(name);
     requireNonNull(classLayout);
     return new ClassSpec(name, null, classLayout);
   }
-  static Spec valueClass(String name, Converter converter) {
+
+  /**
+   * Creates a spec corresponding to a JSON value providing a converter
+   * from the JSON {@link JsonValue primitive value} to any value
+   * @param name the name of the spec for debugging purpose
+   * @param converter the converter to use.
+   * @return a spec that is able to convert a JSON value to another one
+   */
+  static Spec typedValue(String name, Converter converter) {
     requireNonNull(name);
     return new ValueSpec(name, converter);
   }
-  
+
+  interface Converter {
+    JsonValue convertTo(JsonValue value);
+    //JsonValue convertFrom(JsonValue value);
+  }
+
   interface ClassLayout<B> {
     Spec elementSpec(String name);
 
@@ -169,10 +253,5 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
         }
       };
     }
-  }
-
-  interface Converter {
-    JsonValue convertTo(JsonValue value);
-    //JsonValue convertFrom(JsonValue value);
   }
 }

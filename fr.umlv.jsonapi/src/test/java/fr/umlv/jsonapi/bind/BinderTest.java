@@ -310,7 +310,7 @@ public class BinderTest {
       }
     }
 
-    var pixelSpec = Spec.typedClass("Pixel", new PixelClassLayout());
+    var pixelSpec = Spec.typedObject("Pixel", new PixelClassLayout());
     @SuppressWarnings("unchecked")
     var pixel = (Map<String,Object>) Binder.read(json, pixelSpec, BuilderConfig.defaults());
     assertEquals(Map.of("x", 1, "y", 3, "color", "red"), pixel);
