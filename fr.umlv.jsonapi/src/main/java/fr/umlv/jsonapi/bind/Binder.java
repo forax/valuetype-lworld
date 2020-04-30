@@ -1,6 +1,7 @@
 package fr.umlv.jsonapi.bind;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.stream.Collectors.toList;
 
 import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.JsonReader;
@@ -72,7 +73,7 @@ public final class Binder {
     return this;
   }
 
-  private static Spec lookup(Class<?> type, CopyOnWriteArrayList<SpecFinder> finders) {
+  private static Spec lookup(Class<?> type, List<SpecFinder> finders) {
     if (type == boolean.class || type == int.class || type == long.class || type == double.class
         || type == String.class || type == BigInteger.class || type == BigDecimal.class
         || type == Object.class) {
@@ -88,7 +89,7 @@ public final class Binder {
   }
 
   public SpecFinder specFinder() {
-    var finders = this.finders;
+    var finders = List.of(this.finders.toArray(SpecFinder[]::new));
     return type -> Optional.ofNullable(lookup(type, finders));
   }
 
