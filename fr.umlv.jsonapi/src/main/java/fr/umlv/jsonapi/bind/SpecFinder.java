@@ -30,7 +30,7 @@ public interface SpecFinder {
     };
   }
 
-  static SpecFinder from(Map<Class<?>, ? extends Spec> specMap) {
+  static SpecFinder from(Map<? super Class<?>, ? extends Spec> specMap) {
     return type -> Optional.ofNullable(specMap.get(type));
   }
   static SpecFinder associate(Class<?> type, Spec spec) {
