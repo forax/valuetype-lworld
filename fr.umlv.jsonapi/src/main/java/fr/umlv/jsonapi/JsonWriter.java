@@ -73,8 +73,10 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
         case INT -> generator.writeNumberField(name, value.intValue());
         case LONG -> generator.writeNumberField(name, value.longValue());
         case DOUBLE -> generator.writeNumberField(name, value.doubleValue());
+        case STRING -> { generator.writeFieldName(name); generator.writeString(value.stringValue()); }
         case BIG_INTEGER -> { generator.writeFieldName(name); generator.writeNumber(value.bigIntegerValue()); }
-        case BIG_DECIMAL -> generator.writeNumberField(name, value.bigDecimalValue());
+        case OPAQUE -> { generator.writeFieldName(name); generator.writeString(value.toString()); }
+        default -> throw new AssertionError();
       }
       return null;
     } catch (IOException e) {
@@ -121,8 +123,10 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
         case INT -> generator.writeNumber(value.intValue());
         case LONG -> generator.writeNumber(value.longValue());
         case DOUBLE -> generator.writeNumber(value.doubleValue());
+        case STRING -> generator.writeString(value.stringValue());
         case BIG_INTEGER -> generator.writeNumber(value.bigIntegerValue());
-        case BIG_DECIMAL -> generator.writeNumber(value.bigDecimalValue());
+        case OPAQUE -> generator.writeString(value.toString());
+        default -> throw new AssertionError();
       }
       return null;
     } catch (IOException e) {

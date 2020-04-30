@@ -10,12 +10,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import fr.umlv.jsonapi.BuilderConfig;
 import fr.umlv.jsonapi.JsonReader;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.bind.Binder.BindingException;
 import fr.umlv.jsonapi.bind.Spec.ClassLayout;
 import fr.umlv.jsonapi.bind.Spec.Converter;
+import fr.umlv.jsonapi.builder.BuilderConfig;
+
 import java.net.URI;
 import java.time.LocalDate;
 import java.util.Arrays;
@@ -193,7 +194,7 @@ public class BinderTest {
         """;
     record Author(String name, List<String> books) { }
     var authorSpec = binder.specFinder().findSpec(Author.class).orElseThrow();
-    binder.register(SpecFinder.of(Author.class, authorSpec.filterName(not("age"::equals))));
+    binder.register(SpecFinder.associate(Author.class, authorSpec.filterName(not("age"::equals))));
     var author = binder.read(json, Author.class);
     assertEquals(new Author("James Joyce", List.of("Finnegans Wake")), author);
   }
@@ -212,10 +213,10 @@ public class BinderTest {
         """;
     record Author(String firstName, int age, List<String> books) { }
     var authorSpec = binder.specFinder().findSpec(Author.class).orElseThrow();
-    binder.register(SpecFinder.of(Author.class, authorSpec.mapLayout(
-        layout -> new ClassLayout<Object>() {
+    binder.register(SpecFinder.associate(Author.class, authorSpec.mapLayout(
+        layout -> new ClassLayout<>() {
           private String rename(String name) {
-            return name.equals("name")? "firstName": name;
+            return "name".equals(name)? "firstName": name;
           }
           @Override
           public Spec elementSpec(String name) {

@@ -2,7 +2,6 @@ package fr.umlv.jsonapi;
 
 import static java.util.Objects.requireNonNull;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Objects;
 
@@ -20,7 +19,6 @@ public final @__inline__ class JsonValue {
     DOUBLE(double.class),
     STRING(String.class),
     BIG_INTEGER(BigInteger.class),
-    BIG_DECIMAL(BigDecimal.class),
     OPAQUE(Object.class)
     ;
 
@@ -102,9 +100,6 @@ public final @__inline__ class JsonValue {
   public boolean isBigInteger() {
     return kind == Kind.BIG_INTEGER;
   }
-  public boolean isBigDecimal() {
-    return kind == Kind.BIG_DECIMAL;
-  }
   public boolean isOpaque() { return kind == Kind.OPAQUE; }
 
   public boolean booleanValue() {
@@ -143,12 +138,6 @@ public final @__inline__ class JsonValue {
     }
     return (BigInteger) box;
   }
-  public BigDecimal bigDecimalValue() {
-    if (kind != Kind.BIG_DECIMAL) {
-      throw new IllegalStateException("not a BigDecimal: " + this);
-    }
-    return (BigDecimal) box;
-  }
 
   public Object asObject() {
     return switch(kind) {
@@ -159,7 +148,7 @@ public final @__inline__ class JsonValue {
       case LONG-> data;
       case DOUBLE -> Double.longBitsToDouble(data);
       case STRING -> (String) box;
-      case BIG_INTEGER, BIG_DECIMAL, OPAQUE -> box;
+      case BIG_INTEGER, OPAQUE -> box;
     };
   }
 
@@ -169,7 +158,6 @@ public final @__inline__ class JsonValue {
       case LONG-> data;
       case DOUBLE -> Double.longBitsToDouble(data);
       case BIG_INTEGER -> ((BigInteger) box).doubleValue();
-      case BIG_DECIMAL -> ((BigDecimal) box).doubleValue();
       default -> throw new IllegalStateException("not a numeric value " + this);
     };
   }
@@ -213,10 +201,6 @@ public final @__inline__ class JsonValue {
     requireNonNull(value);
     return new JsonValue(Kind.BIG_INTEGER, 0, value);
   }
-  public static JsonValue from(BigDecimal value) {
-    requireNonNull(value);
-    return new JsonValue(Kind.BIG_DECIMAL, 0, value);
-  }
   public static JsonValue fromOpaque(Object value) {
     requireNonNull(value);
     return new JsonValue(Kind.OPAQUE, 0, value);
@@ -242,9 +226,6 @@ public final @__inline__ class JsonValue {
     }
     if (value instanceof BigInteger bigInteger) {
       return from(bigInteger);
-    }
-    if (value instanceof BigDecimal bigDecimal) {
-      return from(bigDecimal);
     }
     return fromOpaque(value);
   }

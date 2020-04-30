@@ -10,6 +10,10 @@ import java.util.Map;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
+import fr.umlv.jsonapi.builder.ArrayBuilder;
+import fr.umlv.jsonapi.builder.BuilderConfig;
+import fr.umlv.jsonapi.builder.ObjectBuilder;
+
 public class ExampleVisitorTest {
   @Test
   public void testSimpleObjectPushMode() {

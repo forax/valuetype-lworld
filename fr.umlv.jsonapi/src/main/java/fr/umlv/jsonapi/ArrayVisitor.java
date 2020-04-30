@@ -3,6 +3,8 @@ package fr.umlv.jsonapi;
 import java.io.Reader;
 import java.util.stream.Stream;
 
+import fr.umlv.jsonapi.builder.ArrayBuilder;
+
 /**
  * Used when a JSON array is visited.
  *

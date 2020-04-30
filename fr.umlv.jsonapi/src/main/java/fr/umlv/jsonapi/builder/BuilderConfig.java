@@ -1,8 +1,11 @@
-package fr.umlv.jsonapi;
+package fr.umlv.jsonapi.builder;
 
+import static fr.umlv.jsonapi.VisitorMode.PULL;
 import static java.util.Objects.requireNonNull;
 import static java.util.function.UnaryOperator.identity;
 
+import fr.umlv.jsonapi.ArrayVisitor;
+import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.bind.Spec;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -151,7 +154,7 @@ public class BuilderConfig {
    * @return a new object builder that delegate its operation to an object visitor.
    */
   public ObjectBuilder newObjectBuilder(ObjectVisitor delegate) {
-    if (delegate != null && delegate.mode() != VisitorMode.PULL) {
+    if (delegate != null && delegate.mode() != PULL) {
       throw new IllegalArgumentException("only pull mode visitors are allowed");
     }
     return new ObjectBuilder(this, delegate);
@@ -182,7 +185,7 @@ public class BuilderConfig {
    * @return a new object builder that delegate its operation to an object visitor.
    */
   public ArrayBuilder newArrayBuilder(ArrayVisitor delegate) {
-    if (delegate != null && delegate.mode() != VisitorMode.PULL) {
+    if (delegate != null && delegate.mode() != PULL) {
       throw new IllegalArgumentException("only pull mode visitors are allowed");
     }
     return new ArrayBuilder(this, delegate);

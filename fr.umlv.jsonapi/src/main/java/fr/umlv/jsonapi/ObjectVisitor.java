@@ -1,5 +1,6 @@
 package fr.umlv.jsonapi;
 
+import fr.umlv.jsonapi.builder.ObjectBuilder;
 import fr.umlv.jsonapi.filter.FilterObjectVisitor;
 import fr.umlv.jsonapi.filter.RenamerObjectVisitor;
 import java.io.Reader;

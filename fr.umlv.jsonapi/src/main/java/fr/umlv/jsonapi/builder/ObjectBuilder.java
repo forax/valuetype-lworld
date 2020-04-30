@@ -1,7 +1,13 @@
-package fr.umlv.jsonapi;
+package fr.umlv.jsonapi.builder;
 
+import static fr.umlv.jsonapi.VisitorMode.PUSH;
 import static java.util.Objects.requireNonNull;
 
+import fr.umlv.jsonapi.ArrayVisitor;
+import fr.umlv.jsonapi.JsonReader;
+import fr.umlv.jsonapi.JsonValue;
+import fr.umlv.jsonapi.ObjectVisitor;
+import fr.umlv.jsonapi.VisitorMode;
 import fr.umlv.jsonapi.filter.PostOpsArrayVisitor;
 import fr.umlv.jsonapi.filter.PostOpsObjectVisitor;
 import java.math.BigDecimal;
@@ -107,8 +113,8 @@ public final class ObjectBuilder implements ObjectVisitor {
    * will replace the existing one.
    *
    * If the class of {code value} is not one of boolean, int, long, double, String, BigInteger,
-   * BigDecimal, java.util.List or java.util.Map, the method {@link #accept(Supplier)} will fail
-   * to work because the type has no JSON mapping.
+   * java.util.List or java.util.Map, the method {@link #accept(Supplier)} will
+   * consider it as an {@link JsonValue#fromOpaque(Object) opaque value}.
    *
    * @param name name of the element to add
    * @param value value of the element to add
@@ -173,7 +179,7 @@ public final class ObjectBuilder implements ObjectVisitor {
 
   @Override
   public VisitorMode mode() {
-    return VisitorMode.PUSH;
+    return PUSH;
   }
 
   @Override
@@ -258,10 +264,6 @@ public final class ObjectBuilder implements ObjectVisitor {
         objectVisitor.visitMemberValue(name, JsonValue.from(value));
         continue;
       }
-      if (element instanceof BigDecimal value) {
-        objectVisitor.visitMemberValue(name, JsonValue.from(value));
-        continue;
-      }
       if (element instanceof Map<?,?> _map) {
         var visitor = objectVisitor.visitMemberObject(name);
         if (visitor != null) {
@@ -276,7 +278,8 @@ public final class ObjectBuilder implements ObjectVisitor {
         }
         continue;
       }
-      throw new IllegalStateException("invalid element " + element + " for name " + name);
+      // unknown value, send it as opaque value
+      objectVisitor.visitMemberValue(name, JsonValue.fromOpaque(element));
     }
     return objectVisitor.visitEndObject();
   }
@@ -284,6 +287,9 @@ public final class ObjectBuilder implements ObjectVisitor {
   /**
    * Replay all the elements as visits to the BuilderVisitor specified
    * as argument.
+   *
+   * If this builder contains values that are not primitive for JSON,
+   * those values will be visited as {@link JsonValue#fromOpaque(Object) opaque value}.
    *
    * @param supplier a supplier of the object visitor that will receive
    *                 all the visits

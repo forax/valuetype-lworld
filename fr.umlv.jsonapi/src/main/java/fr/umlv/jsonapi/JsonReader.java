@@ -197,9 +197,8 @@ public final class JsonReader {
     return switch(parser.getNumberType()) {
       case INT -> visitor.visitValue(JsonValue.from(parser.getValueAsInt()));
       case LONG -> visitor.visitValue(JsonValue.from(parser.getValueAsLong()));
-      case FLOAT, DOUBLE -> visitor.visitValue(JsonValue.from(parser.getValueAsDouble()));
+      case FLOAT, DOUBLE, BIG_DECIMAL -> visitor.visitValue(JsonValue.from(parser.getValueAsDouble()));
       case BIG_INTEGER -> visitor.visitValue(JsonValue.from(new BigInteger(parser.getValueAsString())));
-      case BIG_DECIMAL -> visitor.visitValue(JsonValue.from(new BigDecimal(parser.getValueAsString())));
     };
   }
 
@@ -303,9 +302,8 @@ public final class JsonReader {
     switch(parser.getNumberType()) {
       case INT -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsInt()));
       case LONG -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsLong()));
-      case FLOAT, DOUBLE -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsDouble()));
+      case FLOAT, DOUBLE, BIG_DECIMAL -> visitor.visitMemberValue(name, JsonValue.from(parser.getValueAsDouble()));
       case BIG_INTEGER -> visitor.visitMemberValue(name, JsonValue.from(new BigInteger(parser.getValueAsString())));
-      case BIG_DECIMAL -> visitor.visitMemberValue(name, JsonValue.from(new BigDecimal(parser.getValueAsString())));
       default -> throw new IOException("invalid number " + parser.getValueAsString());
     }
   }

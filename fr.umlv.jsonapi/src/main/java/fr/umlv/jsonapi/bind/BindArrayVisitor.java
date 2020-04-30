@@ -1,11 +1,12 @@
 package fr.umlv.jsonapi.bind;
 
-import fr.umlv.jsonapi.ArrayBuilder;
 import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.VisitorMode;
 import fr.umlv.jsonapi.bind.Specs.ArraySpec;
+import fr.umlv.jsonapi.builder.ArrayBuilder;
+
 import java.util.List;
 import java.util.function.Consumer;
 
