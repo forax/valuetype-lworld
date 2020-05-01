@@ -1,7 +1,5 @@
 package fr.umlv.jsonapi;
 
-import com.fasterxml.jackson.core.JsonFactory;
-import com.fasterxml.jackson.core.JsonGenerator;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -11,40 +9,40 @@ import java.nio.file.Path;
 import java.util.Objects;
 
 public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable {
-  private final JsonGenerator generator;
+  private final Writer writer;
+  private String separator = "";
 
-  public JsonWriter(Writer writer) throws IOException {
+  public JsonWriter(Writer writer) {
     Objects.requireNonNull(writer);
-    generator = new JsonFactory().createGenerator(writer);
+    this.writer = writer;
   }
 
   public JsonWriter(Path path) throws IOException {
     Objects.requireNonNull(path);
-    var writer = Files.newBufferedWriter(path);
-    try {
-      generator = new JsonFactory().createGenerator(writer);
-    } catch(IOException | OutOfMemoryError e) {
-      writer.close();
-      throw e;
-    }
+    writer = Files.newBufferedWriter(path);
   }
 
   @Override
   public void close() throws IOException {
-    generator.close();
+    writer.close();
   }
 
   @Override
-  public VisitorMode mode() {
-    return VisitorMode.PUSH;
+  public VisitorMode visitStartObject() {
+    try {
+      writer.write("{ ");
+      separator = "";
+      return VisitorMode.PUSH;
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
   }
 
   @Override
   public JsonWriter visitMemberObject(String name) {
     Objects.requireNonNull(name);
     try {
-      generator.writeFieldName(name);
-      generator.writeStartObject();
+      writer.write(separator + '"' + name + "\": ");
       return this;
     } catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -55,8 +53,7 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
   public JsonWriter visitMemberArray(String name) {
     Objects.requireNonNull(name);
     try {
-      generator.writeFieldName(name);
-      generator.writeStartArray();
+      writer.write(separator + '"' + name + "\": ");
       return this;
     } catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -67,17 +64,9 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
   public Void visitMemberValue(String name, JsonValue value) {
     Objects.requireNonNull(name);
     try {
-      switch(value.kind()) {
-        case NULL -> generator.writeNullField(name);
-        case TRUE, FALSE -> generator.writeBooleanField(name, value.booleanValue());
-        case INT -> generator.writeNumberField(name, value.intValue());
-        case LONG -> generator.writeNumberField(name, value.longValue());
-        case DOUBLE -> generator.writeNumberField(name, value.doubleValue());
-        case STRING -> { generator.writeFieldName(name); generator.writeString(value.stringValue()); }
-        case BIG_INTEGER -> { generator.writeFieldName(name); generator.writeNumber(value.bigIntegerValue()); }
-        case OPAQUE -> { generator.writeFieldName(name); generator.writeString(value.toString()); }
-        default -> throw new AssertionError();
-      }
+      writer.write(separator + '"' + name + "\": ");
+      writer.write(value.toString());
+      separator = ", ";
       return null;
     } catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -87,7 +76,8 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
   @Override
   public Void visitEndObject() {
     try {
-      generator.writeEndObject();
+      writer.write(" }");
+      separator = ", ";
       return null;
     } catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -95,39 +85,32 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
   }
 
   @Override
-  public JsonWriter visitObject() {
+  public VisitorMode visitStartArray() {
     try {
-      generator.writeStartObject();
-      return this;
+      writer.write("[ ");
+      separator = "";
+      return VisitorMode.PUSH;
     } catch (IOException e) {
       throw new UncheckedIOException(e);
     }
   }
 
   @Override
+  public JsonWriter visitObject() {
+    return this;
+  }
+
+  @Override
   public JsonWriter visitArray() {
-    try {
-      generator.writeStartArray();
-      return this;
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
+    return this;
   }
 
   @Override
   public Void visitValue(JsonValue value) {
     try {
-      switch(value.kind()) {
-        case NULL -> generator.writeNull();
-        case TRUE, FALSE -> generator.writeBoolean(value.booleanValue());
-        case INT -> generator.writeNumber(value.intValue());
-        case LONG -> generator.writeNumber(value.longValue());
-        case DOUBLE -> generator.writeNumber(value.doubleValue());
-        case STRING -> generator.writeString(value.stringValue());
-        case BIG_INTEGER -> generator.writeNumber(value.bigIntegerValue());
-        case OPAQUE -> generator.writeString(value.toString());
-        default -> throw new AssertionError();
-      }
+      writer.write(separator);
+      writer.write(value.toString());
+      separator = ", ";
       return null;
     } catch (IOException e) {
       throw new UncheckedIOException(e);
@@ -137,7 +120,8 @@ public final class JsonWriter implements ObjectVisitor, ArrayVisitor, Closeable 
   @Override
   public Void visitEndArray() {
     try {
-      generator.writeEndArray();
+      writer.write(" ]");
+      separator = ", ";
       return null;
     } catch (IOException e) {
       throw new UncheckedIOException(e);
