@@ -104,7 +104,7 @@ final class SpecFinders {
           for(var accessor: accessors) {
             Object elementValue;
             try {
-              elementValue = accessor.accessor.invoke();
+              elementValue = accessor.accessor.invoke(object);
             } catch(RuntimeException | Error e) {
               throw e;
             } catch (Throwable throwable) { // an accessor can not throw a checked exception

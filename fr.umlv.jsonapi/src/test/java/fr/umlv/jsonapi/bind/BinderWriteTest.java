@@ -93,4 +93,15 @@ public class BinderWriteTest {
         { "id": 2475, "date": "2020-2-14" }\
         """, map);
   }*/
+
+  @Test
+  public void writeARecord() {
+    var binder = new Binder(lookup());
+    record Person(String name, int age, boolean bald) { }
+    var person = new Person("Doctor X", 23, false);
+    var text = binder.write(person);
+    assertEquals("""
+        { "name": "Doctor X", "age": 23, "bald": false }\
+        """, text);
+  }
 }
