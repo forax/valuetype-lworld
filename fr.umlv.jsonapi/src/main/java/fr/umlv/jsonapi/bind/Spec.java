@@ -11,7 +11,6 @@ import fr.umlv.jsonapi.bind.Specs.ObjectSpec;
 import fr.umlv.jsonapi.bind.Specs.StreamSpec;
 import fr.umlv.jsonapi.bind.Specs.ValueSpec;
 import fr.umlv.jsonapi.builder.BuilderConfig;
-
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.function.Function;
@@ -160,7 +159,7 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
    *
    * @see Binder#read(Reader, Spec, BuilderConfig)
    */
-  default <V> V createBindVisitor(Class<V> visitorType, BuilderConfig config, V delegate) {
+  default <V> V createBindVisitor(Class<? extends V> visitorType, BuilderConfig config, V delegate) {
     requireNonNull(visitorType);
     requireNonNull(config);
     if (this instanceof ObjectSpec objectSpec) {
@@ -209,9 +208,10 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
     return new ValueSpec(name, converter);
   }
 
+
   interface Converter {
     JsonValue convertTo(JsonValue value);
-    //JsonValue convertFrom(JsonValue value);
+    Object convertFrom(Object object);
   }
 
   interface ClassLayout<B> {
@@ -223,6 +223,12 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
     B addValue(B builder, String name, JsonValue value);
     Object build(B builder);
 
+    void accept(Object object, ElementVisitor objectVisitor);
+
+    interface ElementVisitor {
+      void visitElement(String elementName, Object elementValue);
+    }
+
     // should be a private instance method, but IntelliJ has a bug :(
     private static ClassLayout<Object> convert(ClassLayout<Object> layout, Converter converter) {
       return new ClassLayout<>() {
@@ -230,6 +236,7 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
         public Spec elementSpec(String name) {
           return layout.elementSpec(name);
         }
+
         @Override
         public Object newBuilder() {
           return layout.newBuilder();
@@ -246,10 +253,14 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
         public Object addValue(Object builder, String name, JsonValue value) {
           return layout.addValue(builder, name, value);
         }
-
         @Override
         public Object build(Object builder) {
           return converter.convertTo(JsonValue.fromOpaque(layout.build(builder))).asObject();
+        }
+
+        @Override
+        public void accept(Object object, ElementVisitor objectVisitor) {
+           layout.accept(converter.convertFrom(object), objectVisitor);
         }
       };
     }

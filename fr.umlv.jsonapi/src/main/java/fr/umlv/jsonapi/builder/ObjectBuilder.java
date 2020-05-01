@@ -8,14 +8,10 @@ import fr.umlv.jsonapi.JsonReader;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.VisitorMode;
-import fr.umlv.jsonapi.filter.PostOpsArrayVisitor;
-import fr.umlv.jsonapi.filter.PostOpsObjectVisitor;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.util.List;
+import fr.umlv.jsonapi.internal.PostOpsArrayVisitor;
+import fr.umlv.jsonapi.internal.PostOpsObjectVisitor;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -113,7 +109,7 @@ public final class ObjectBuilder implements ObjectVisitor {
    * will replace the existing one.
    *
    * If the class of {code value} is not one of boolean, int, long, double, String, BigInteger,
-   * java.util.List or java.util.Map, the method {@link #accept(Supplier)} will
+   * java.util.List or java.util.Map, the method {@link #accept(ObjectVisitor)} will
    * consider it as an {@link JsonValue#fromOpaque(Object) opaque value}.
    *
    * @param name name of the element to add
@@ -178,7 +174,10 @@ public final class ObjectBuilder implements ObjectVisitor {
   }
 
   @Override
-  public VisitorMode mode() {
+  public VisitorMode visitStartObject() {
+    if (delegate != null) {
+      delegate.visitStartObject();
+    }
     return PUSH;
   }
 
@@ -231,59 +230,6 @@ public final class ObjectBuilder implements ObjectVisitor {
     return resultMap;
   }
 
-  static Object visitMap(Map<?,?> map, ObjectVisitor objectVisitor) {
-    for(var entry: map.entrySet()) {
-      var name = (String) entry.getKey();
-      var element = entry.getValue();
-
-      if (element == null) {
-        objectVisitor.visitMemberValue(name, JsonValue.nullValue());
-        continue;
-      }
-      if (element instanceof Boolean value) {
-        objectVisitor.visitMemberValue(name, JsonValue.from(value));
-        continue;
-      }
-      if (element instanceof Integer value) {
-        objectVisitor.visitMemberValue(name, JsonValue.from(value));
-        continue;
-      }
-      if (element instanceof Long value) {
-        objectVisitor.visitMemberValue(name, JsonValue.from(value));
-        continue;
-      }
-      if (element instanceof Double value) {
-        objectVisitor.visitMemberValue(name, JsonValue.from(value));
-        continue;
-      }
-      if (element instanceof String value) {
-        objectVisitor.visitMemberValue(name, JsonValue.from(value));
-        continue;
-      }
-      if (element instanceof BigInteger value) {
-        objectVisitor.visitMemberValue(name, JsonValue.from(value));
-        continue;
-      }
-      if (element instanceof Map<?,?> _map) {
-        var visitor = objectVisitor.visitMemberObject(name);
-        if (visitor != null) {
-          visitMap(_map, visitor);
-        }
-        continue;
-      }
-      if (element instanceof List<?> list) {
-        var visitor = objectVisitor.visitMemberArray(name);
-        if (visitor != null) {
-          ArrayBuilder.visitList(list, visitor);
-        }
-        continue;
-      }
-      // unknown value, send it as opaque value
-      objectVisitor.visitMemberValue(name, JsonValue.fromOpaque(element));
-    }
-    return objectVisitor.visitEndObject();
-  }
-
   /**
    * Replay all the elements as visits to the BuilderVisitor specified
    * as argument.
@@ -291,13 +237,12 @@ public final class ObjectBuilder implements ObjectVisitor {
    * If this builder contains values that are not primitive for JSON,
    * those values will be visited as {@link JsonValue#fromOpaque(Object) opaque value}.
    *
-   * @param supplier a supplier of the object visitor that will receive
-   *                 all the visits
+   * @param objectVisitor the object visitor that will receive all the visits
    * @return the value returned by the call to {@link ObjectVisitor#visitEndObject()} on the
    *         array visitor provided as argument
    */
-  public Object accept(Supplier<? extends ObjectVisitor> supplier) {
-    requireNonNull(supplier);
-    return visitMap(map, requireNonNull(supplier.get()));
+  public Object accept(ObjectVisitor objectVisitor) {
+    requireNonNull(objectVisitor);
+    return Acceptors.acceptMap(map, objectVisitor);
   }
 }

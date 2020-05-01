@@ -8,14 +8,10 @@ import fr.umlv.jsonapi.JsonReader;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.VisitorMode;
-import fr.umlv.jsonapi.filter.PostOpsArrayVisitor;
-import fr.umlv.jsonapi.filter.PostOpsObjectVisitor;
-import java.math.BigDecimal;
-import java.math.BigInteger;
+import fr.umlv.jsonapi.internal.PostOpsArrayVisitor;
+import fr.umlv.jsonapi.internal.PostOpsObjectVisitor;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /**
@@ -103,7 +99,7 @@ public final class ArrayBuilder implements ArrayVisitor {
    * Add any object to the builder.
    *
    * If the class of {code value} is not one of boolean, int, long, double, String, BigInteger,
-   * java.util.List or java.util.Map, the method {@link #accept(Supplier)} will
+   * java.util.List or java.util.Map, the method {@link #accept(ArrayVisitor)} will
    * consider it as an {@link JsonValue#fromOpaque(Object) opaque value}.
    *
    * @param value add this value to the builder.
@@ -156,7 +152,10 @@ public final class ArrayBuilder implements ArrayVisitor {
   }
 
   @Override
-  public VisitorMode mode() {
+  public VisitorMode visitStartArray() {
+    if (delegate != null) {
+      delegate.visitStartArray();
+    }
     return PUSH;
   }
 
@@ -206,56 +205,6 @@ public final class ArrayBuilder implements ArrayVisitor {
     return resultList;
   }
 
-  static Object visitList(List<?> list, ArrayVisitor arrayVisitor) {
-    for(Object element: list) {
-      if (element == null) {
-        arrayVisitor.visitValue(JsonValue.nullValue());
-        continue;
-      }
-      if (element instanceof Boolean value) {
-        arrayVisitor.visitValue(JsonValue.from(value));
-        continue;
-      }
-      if (element instanceof Integer value) {
-        arrayVisitor.visitValue(JsonValue.from(value));
-        continue;
-      }
-      if (element instanceof Long value) {
-        arrayVisitor.visitValue(JsonValue.from(value));
-        continue;
-      }
-      if (element instanceof Double value) {
-        arrayVisitor.visitValue(JsonValue.from(value));
-        continue;
-      }
-      if (element instanceof String value) {
-        arrayVisitor.visitValue(JsonValue.from(value));
-        continue;
-      }
-      if (element instanceof BigInteger value) {
-        arrayVisitor.visitValue(JsonValue.from(value));
-        continue;
-      }
-      if (element instanceof Map<?,?> map) {
-        var visitor = arrayVisitor.visitObject();
-        if (visitor != null) {
-          ObjectBuilder.visitMap(map, visitor);
-        }
-        continue;
-      }
-      if (element instanceof List<?> _list) {
-        var visitor = arrayVisitor.visitArray();
-        if (visitor != null) {
-          visitList(_list, visitor);
-        }
-        continue;
-      }
-      // unknown value, send it as an opaque value
-      arrayVisitor.visitValue(JsonValue.fromOpaque(element));
-    }
-    return arrayVisitor.visitEndArray();
-  }
-
   /**
    * Replay all the values as visits to the ArrayVisitor specified
    * as argument.
@@ -263,15 +212,14 @@ public final class ArrayBuilder implements ArrayVisitor {
    * If this builder contains values that are not primitive for JSON,
    * those values will be visited as {@link JsonValue#fromOpaque(Object) opaque value}.
    *
-   * @param supplier a supplier of the array visitor that will receive
-   *                 all the visits
+   * @param arrayVisitor the array visitor that will receive all the visits
    * @return the value returned by the call to {@link ArrayVisitor#visitEndArray()}
    *         on the array visitor provided as argument
    *         
    * @see #add(Object)
    */
-  public Object accept(Supplier<? extends ArrayVisitor> supplier) {
-    requireNonNull(supplier);
-    return visitList(list, requireNonNull(supplier.get()));
+  public Object accept(ArrayVisitor arrayVisitor) {
+    requireNonNull(arrayVisitor);
+    return Acceptors.acceptIterable(list, arrayVisitor);
   }
 }

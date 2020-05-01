@@ -23,7 +23,9 @@ public final class JsonPrinter implements ObjectVisitor, ArrayVisitor {
   }
 
   @Override
-  public VisitorMode mode() {
+  public VisitorMode visitStartObject() {
+    builder.append("{ ");
+    separator = "";
     return VisitorMode.PUSH;
   }
 
@@ -32,8 +34,7 @@ public final class JsonPrinter implements ObjectVisitor, ArrayVisitor {
     Objects.requireNonNull(name);
     builder.append(separator);
     appendText(builder, name);
-    builder.append(": { ");
-    separator = "";
+    builder.append(": ");
     return this;
   }
 
@@ -42,8 +43,7 @@ public final class JsonPrinter implements ObjectVisitor, ArrayVisitor {
     Objects.requireNonNull(name);
     builder.append(separator);
     appendText(builder, name);
-    builder.append("[ ");
-    separator = "";
+    builder.append(": ");
     return this;
   }
 
@@ -65,16 +65,21 @@ public final class JsonPrinter implements ObjectVisitor, ArrayVisitor {
   }
 
   @Override
-  public JsonPrinter visitObject() {
-    builder.append(separator).append("{ ");
+  public VisitorMode visitStartArray() {
+    builder.append("[ ");
     separator = "";
+    return VisitorMode.PUSH;
+  }
+
+  @Override
+  public JsonPrinter visitObject() {
+    builder.append(separator);
     return this;
   }
 
   @Override
   public JsonPrinter visitArray() {
-    builder.append(separator).append("[ ");
-    separator = "";
+    builder.append(separator);
     return this;
   }
 

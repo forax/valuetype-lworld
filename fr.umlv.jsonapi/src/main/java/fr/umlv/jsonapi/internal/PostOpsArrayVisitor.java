@@ -1,4 +1,4 @@
-package fr.umlv.jsonapi.filter;
+package fr.umlv.jsonapi.internal;
 
 import static fr.umlv.jsonapi.VisitorMode.PULL_INSIDE;
 import static java.util.Objects.requireNonNull;
@@ -21,14 +21,14 @@ public class PostOpsArrayVisitor<E> implements ArrayVisitor {
   }
 
   @Override
-  public VisitorMode mode() {
-    return delegate.mode();
+  public VisitorMode visitStartArray() {
+    return delegate.visitStartArray();
   }
 
   @Override
   public Object visitStream(Stream<Object> stream) {
     var result = delegate.visitStream(stream);
-    if (delegate.mode() == PULL_INSIDE) {
+    if (delegate.visitStartArray() == PULL_INSIDE) {
       postOp.accept(result);
     }
     return result;
@@ -52,7 +52,7 @@ public class PostOpsArrayVisitor<E> implements ArrayVisitor {
   @Override
   public Object visitEndArray() {
     var result = delegate.visitEndArray();
-    if (delegate.mode() != PULL_INSIDE) {
+    if (delegate.visitStartArray() != PULL_INSIDE) {
       postOp.accept(result);
     }
     return result;

@@ -154,7 +154,7 @@ public class BuilderConfig {
    * @return a new object builder that delegate its operation to an object visitor.
    */
   public ObjectBuilder newObjectBuilder(ObjectVisitor delegate) {
-    if (delegate != null && delegate.mode() != PULL) {
+    if (delegate != null && delegate.visitStartObject() != PULL) {
       throw new IllegalArgumentException("only pull mode visitors are allowed");
     }
     return new ObjectBuilder(this, delegate);
@@ -185,7 +185,7 @@ public class BuilderConfig {
    * @return a new object builder that delegate its operation to an object visitor.
    */
   public ArrayBuilder newArrayBuilder(ArrayVisitor delegate) {
-    if (delegate != null && delegate.mode() != PULL) {
+    if (delegate != null && delegate.visitStartArray() != PULL) {
       throw new IllegalArgumentException("only pull mode visitors are allowed");
     }
     return new ArrayBuilder(this, delegate);

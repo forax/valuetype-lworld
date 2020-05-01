@@ -1,26 +1,26 @@
-package fr.umlv.jsonapi.filter;
+package fr.umlv.jsonapi.internal;
 
 import static java.util.Objects.requireNonNull;
 
 import fr.umlv.jsonapi.ArrayVisitor;
-import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.JsonValue;
+import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.VisitorMode;
-import java.util.function.UnaryOperator;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
-public final class RenamerArrayVisitor implements ArrayVisitor {
+public final class FilterArrayVisitor implements ArrayVisitor {
   private final ArrayVisitor delegate;
-  private final UnaryOperator<String> renamer;
+  private final Predicate<? super String> predicate;
 
-  public RenamerArrayVisitor(ArrayVisitor delegate, UnaryOperator<String> renamer) {
+  public FilterArrayVisitor(ArrayVisitor delegate, Predicate<? super String> predicate) {
     this.delegate = requireNonNull(delegate);
-    this.renamer = requireNonNull(renamer);
+    this.predicate = requireNonNull(predicate);
   }
 
   @Override
-  public VisitorMode mode() {
-    return delegate.mode();
+  public VisitorMode visitStartArray() {
+    return delegate.visitStartArray();
   }
 
   @Override
@@ -30,12 +30,14 @@ public final class RenamerArrayVisitor implements ArrayVisitor {
 
   @Override
   public ObjectVisitor visitObject() {
-    return new RenamerObjectVisitor(delegate.visitObject(), renamer);
+    var objectVisitor = this.delegate.visitObject();
+    return new FilterObjectVisitor(objectVisitor, predicate);
   }
 
   @Override
   public ArrayVisitor visitArray() {
-    return new RenamerArrayVisitor(delegate.visitArray(), renamer);
+    var arrayVisitor = delegate.visitArray();
+    return new FilterArrayVisitor(arrayVisitor, predicate);
   }
 
   @Override

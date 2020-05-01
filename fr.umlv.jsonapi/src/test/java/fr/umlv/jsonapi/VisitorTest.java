@@ -31,7 +31,7 @@ public class VisitorTest {
     var methods = new ArrayList<String>();
     var visitor = new ObjectVisitor() {
       @Override
-      public VisitorMode mode() {
+      public VisitorMode visitStartObject() {
         return VisitorMode.PUSH;
       }
 
@@ -113,7 +113,7 @@ public class VisitorTest {
     var methods = new ArrayList<String>();
     var visitor = new ArrayVisitor() {
       @Override
-      public VisitorMode mode() {
+      public VisitorMode visitStartArray() {
         return VisitorMode.PUSH;
       }
 
@@ -185,7 +185,7 @@ public class VisitorTest {
     var methods = new ArrayList<String>();
     var visitor = new ArrayVisitor() {
       @Override
-      public VisitorMode mode() {
+      public VisitorMode visitStartArray() {
         return PULL_INSIDE;
       }
 
@@ -258,7 +258,7 @@ public class VisitorTest {
         """;
     var visitor = new ArrayVisitor() {
       @Override
-      public VisitorMode mode() {
+      public VisitorMode visitStartArray() {
         return PULL_INSIDE;
       }
       @Override
@@ -294,7 +294,7 @@ public class VisitorTest {
 
     var stream = JsonReader.stream(text, new ArrayVisitor() {
       @Override
-      public VisitorMode mode() {
+      public VisitorMode visitStartArray() {
         return PULL;
       }
 

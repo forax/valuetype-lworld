@@ -1,8 +1,8 @@
 package fr.umlv.jsonapi;
 
 import fr.umlv.jsonapi.builder.ObjectBuilder;
-import fr.umlv.jsonapi.filter.FilterObjectVisitor;
-import fr.umlv.jsonapi.filter.RenamerObjectVisitor;
+import fr.umlv.jsonapi.internal.FilterObjectVisitor;
+import fr.umlv.jsonapi.internal.RenamerObjectVisitor;
 import java.io.Reader;
 import java.util.function.Predicate;
 import java.util.function.UnaryOperator;
@@ -117,7 +117,7 @@ public interface ObjectVisitor {
    *
    * @return the visitor mode of this visitor.
    */
-  VisitorMode mode();
+  VisitorMode visitStartObject();
 
   /**
    * Called when the {@link JsonReader reader} see the start of an object, the current visitor

@@ -26,8 +26,8 @@ final class BindArrayVisitor implements ArrayVisitor {
   }
 
   @Override
-  public VisitorMode mode() {
-    return VisitorMode.PUSH;
+  public VisitorMode visitStartArray() {
+    return arrayBuilder.visitStartArray();
   }
 
   @Override

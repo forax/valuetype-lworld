@@ -11,7 +11,6 @@ import fr.umlv.jsonapi.JsonReader;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.VisitorMode;
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -122,11 +121,11 @@ public class BuilderTest {
     var builder = new ObjectBuilder()
         .add("firstName", "Bob")
         .add("age", 21);
-    var object2 = new ObjectBuilder();
-    builder.accept(() -> object2);
+    var builder2 = new ObjectBuilder();
+    builder.accept(builder2);
     assertEquals(
         Map.of("firstName", "Bob", "age", 21),
-        object2.toMap());
+        builder2.toMap());
   }
 
   @Test
@@ -138,7 +137,7 @@ public class BuilderTest {
         .add("spouse", null)
         .add("children", true);
     var builder2 = new BuilderConfig(TreeMap::new, ArrayList::new).newObjectBuilder();
-    builder.accept(() -> builder2);
+    builder.accept(builder2);
     assertEquals(
         List.of("age", "children", "firstName", "spouse", "weight"),
         new ArrayList<>(builder2.toMap().keySet()));
@@ -194,7 +193,7 @@ public class BuilderTest {
         """;
     var visitor = new ArrayVisitor() {
       @Override
-      public VisitorMode mode() {
+      public VisitorMode visitStartArray() {
         return PULL_INSIDE;
       }
 
@@ -234,7 +233,7 @@ public class BuilderTest {
         """;
     var visitor = BuilderConfig.defaults().newObjectBuilder(new ObjectVisitor() {
       @Override
-      public VisitorMode mode() {
+      public VisitorMode visitStartObject() {
         return PULL;
       }
       @Override
@@ -245,7 +244,7 @@ public class BuilderTest {
       public ArrayVisitor visitMemberArray(String name) {
         return new ArrayVisitor() {
           @Override
-          public VisitorMode mode() {
+          public VisitorMode visitStartArray() {
             return PULL_INSIDE;
           }
           @Override
@@ -293,7 +292,7 @@ public class BuilderTest {
 
     var stream = JsonReader.stream(text, new ArrayVisitor() {
       @Override
-      public VisitorMode mode() {
+      public VisitorMode visitStartArray() {
         return PULL;
       }
       @Override

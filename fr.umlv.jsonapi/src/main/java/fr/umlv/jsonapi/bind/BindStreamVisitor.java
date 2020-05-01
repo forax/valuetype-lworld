@@ -27,7 +27,7 @@ final class BindStreamVisitor implements ArrayVisitor {
   }
 
   @Override
-  public VisitorMode mode() {
+  public VisitorMode visitStartArray() {
     return VisitorMode.PULL_INSIDE;
   }
 

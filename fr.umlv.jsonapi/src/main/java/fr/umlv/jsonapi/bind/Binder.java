@@ -3,18 +3,24 @@ package fr.umlv.jsonapi.bind;
 import static java.util.Objects.requireNonNull;
 
 import fr.umlv.jsonapi.ArrayVisitor;
+import fr.umlv.jsonapi.JsonPrinter;
 import fr.umlv.jsonapi.JsonReader;
 import fr.umlv.jsonapi.JsonValue;
+import fr.umlv.jsonapi.JsonWriter;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.VisitorMode;
 import fr.umlv.jsonapi.builder.BuilderConfig;
+import fr.umlv.jsonapi.internal.RootVisitor;
 import java.io.IOException;
 import java.io.Reader;
+import java.io.UncheckedIOException;
+import java.io.Writer;
 import java.lang.invoke.MethodHandles.Lookup;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -139,7 +145,7 @@ public final class Binder {
    */
   public Binder(Lookup lookup) {
     requireNonNull(lookup);
-    finders.add(newRecordSpecFinder(lookup));
+    finders.add(SpecFinders.newRecordFinder(lookup, this::spec));
   }
 
   /**
@@ -150,19 +156,6 @@ public final class Binder {
    */
   public static Binder noDefaults() {
     return new Binder();
-  }
-
-  /**
-   * Creates a spec finder able to read/write any records.
-   * The returned spec finder is not {@link #register(SpecFinder) registered} to the binder.
-   *
-   * @param lookup the security context that will be used to load the class necessary when
-   *               {@link #read(Reader, Spec, BuilderConfig) reading} a JSON fragment.
-   * @return a spec finder able to read/write records.
-   */
-  public SpecFinder newRecordSpecFinder(Lookup lookup) {
-    requireNonNull(lookup);
-    return SpecFinders.newRecordFinder(lookup, this);
   }
 
   /**
@@ -181,6 +174,7 @@ public final class Binder {
 
   private static Spec lookup(Class<?> type, List<SpecFinder> finders) {
     if (type == boolean.class || type == int.class || type == long.class || type == double.class
+        || type == Boolean.class || type == Integer.class || type == Long.class || type == Double.class
         || type == String.class || type == BigInteger.class || type == BigDecimal.class
         || type == Object.class) {
       return Spec.typedValue(type.getName(), null);
@@ -702,7 +696,7 @@ public final class Binder {
   private static ArrayVisitor arrayForStreamVisitor(Spec spec, BuilderConfig config) {
     return new ArrayVisitor() {
       @Override
-      public VisitorMode mode() {
+      public VisitorMode visitStartArray() {
         return VisitorMode.PULL;
       }
       @Override
@@ -722,5 +716,53 @@ public final class Binder {
         return null;
       }
     };
+  }
+
+
+  public Object accept(Object value, Object visitor) {
+    return Specs.acceptRoot(value, this, RootVisitor.createFromOneVisitor(visitor));
+  }
+  public Object accept(Object value, ObjectVisitor objectVisitor, ArrayVisitor arrayVisitor) {
+    requireNonNull(objectVisitor);
+    requireNonNull(arrayVisitor);
+    return Specs.acceptRoot(value, this, new RootVisitor(RootVisitor.BOTH, objectVisitor, arrayVisitor));
+  }
+
+
+  @SuppressWarnings("resource")
+  public void write(Writer writer, Object value) throws IOException {
+    requireNonNull(writer);
+    requireNonNull(value);
+    var jsonWriter = new JsonWriter(writer);
+    try {
+      accept(value, jsonWriter, jsonWriter);
+    } catch(UncheckedIOException e) {
+      throw e.getCause();
+    }
+    // don't close here because it will close the writer
+  }
+
+  public String write(Object value) {
+    requireNonNull(value);
+    var printer = new JsonPrinter();
+    accept(value, printer, printer);
+    return printer.toString();
+
+    /*var stringWriter = new StringWriter();
+    try {
+      write(stringWriter, value);
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+    return stringWriter.toString();
+     */
+  }
+
+  public void write(Path path, Object value) throws IOException {
+    requireNonNull(path);
+    requireNonNull(value);
+    try(var writer = Files.newBufferedWriter(path)) {
+      write(writer, value);
+    }
   }
 }

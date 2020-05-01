@@ -12,6 +12,7 @@ import static java.util.Objects.requireNonNull;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import fr.umlv.jsonapi.internal.RootVisitor;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
@@ -27,37 +28,14 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public final class JsonReader {
-  private record RootVisitor(int kind, ObjectVisitor objectVisitor, ArrayVisitor arrayVisitor) {
-    private static final int OBJECT = 1;
-    private static final int ARRAY = 2;
-    private static final int BOTH = 3;
-
-    public ObjectVisitor visitObject() {
-      if ((kind & OBJECT) == 0) {
-        throw new IllegalStateException("root is an object but expect an array");
-      }
-      return objectVisitor;
-    }
-    public ArrayVisitor visitArray() {
-      if ((kind & ARRAY) == 0) {
-        throw new IllegalStateException("root is an array but expect an object");
-      }
-      return arrayVisitor;
-    }
-  }
-
   private JsonReader() {
     throw new AssertionError();
   }
 
-  public static Object parse(Path path, Object visitor) throws IOException{
-    if (visitor instanceof ObjectVisitor objectVisitor) {
-      return parseJson(path, new RootVisitor(RootVisitor.OBJECT, objectVisitor, null));
-    }
-    if (visitor instanceof ArrayVisitor arrayVisitor) {
-      return parseJson(path, new RootVisitor(RootVisitor.ARRAY, null, arrayVisitor));
-    }
-    throw new IllegalArgumentException("unknown visitor type " + visitor);
+  public static Object parse(Path path, Object visitor) throws IOException {
+    requireNonNull(path);
+    requireNonNull(visitor);
+    return parseJson(path, RootVisitor.createFromOneVisitor(visitor));
   }
   public static Object parse(Path path, ObjectVisitor objectVisitor, ArrayVisitor arrayVisitor) throws IOException {
     requireNonNull(objectVisitor);
@@ -72,13 +50,9 @@ public final class JsonReader {
   }
 
   public static Object parse(String text, Object visitor) {
-    if (visitor instanceof ObjectVisitor objectVisitor) {
-      return parseJson(text, new RootVisitor(RootVisitor.OBJECT, objectVisitor, null));
-    }
-    if (visitor instanceof ArrayVisitor arrayVisitor) {
-      return parseJson(text, new RootVisitor(RootVisitor.ARRAY, null, arrayVisitor));
-    }
-    throw new IllegalArgumentException("unknown visitor type " + visitor);
+    requireNonNull(text);
+    requireNonNull(visitor);
+    return parseJson(text, RootVisitor.createFromOneVisitor(visitor));
   }
   public static Object parse(String text, ObjectVisitor objectVisitor, ArrayVisitor arrayVisitor) {
     requireNonNull(objectVisitor);
@@ -94,14 +68,10 @@ public final class JsonReader {
     }
   }
 
-  public static Object parse(Reader reader, Object visitor) throws IOException{
-    if (visitor instanceof ObjectVisitor objectVisitor) {
-      return parseJson(reader, new RootVisitor(RootVisitor.OBJECT, objectVisitor, null));
-    }
-    if (visitor instanceof ArrayVisitor arrayVisitor) {
-      return parseJson(reader, new RootVisitor(RootVisitor.ARRAY, null, arrayVisitor));
-    }
-    throw new IllegalArgumentException("unknown visitor type " + visitor);
+  public static Object parse(Reader reader, Object visitor) throws IOException {
+    requireNonNull(reader);
+    requireNonNull(visitor);
+    return parseJson(reader, RootVisitor.createFromOneVisitor(visitor));
   }
   public static Object parse(Reader reader, ObjectVisitor objectVisitor, ArrayVisitor arrayVisitor) throws IOException {
     requireNonNull(objectVisitor);
@@ -166,7 +136,7 @@ public final class JsonReader {
   }
 
   private static Object readArray(JsonParser parser, ArrayVisitor visitor, ArrayDeque<JsonToken> stack) throws IOException {
-    var mode = visitor.mode();
+    var mode = visitor.visitStartArray();
     if (mode == PULL_INSIDE) {
       return readStreamArray(parser, visitor, stack);
     }
@@ -272,7 +242,7 @@ public final class JsonReader {
   }
 
   private static Object readObject(JsonParser parser, ObjectVisitor visitor, ArrayDeque<JsonToken> stack) throws IOException {
-    if (visitor.mode() == PULL) {
+    if (visitor.visitStartObject() == PULL) {
       throw new IllegalArgumentException("ObjectVisitor pull mode not allowed");
     }
     for(;;) {
@@ -332,7 +302,7 @@ public final class JsonReader {
   public static Stream<Object> stream(Reader reader, ArrayVisitor visitor) throws IOException {
     requireNonNull(reader);
     requireNonNull(visitor);
-    if (visitor.mode() == VisitorMode.PUSH) {
+    if (visitor.visitStartArray() == VisitorMode.PUSH) {
       throw new IllegalArgumentException("only pull mode visitors are allowed");
     }
     var parser = new JsonFactory().createParser(reader);

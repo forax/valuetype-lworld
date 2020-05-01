@@ -1,4 +1,4 @@
-package fr.umlv.jsonapi.filter;
+package fr.umlv.jsonapi.internal;
 
 import static java.util.Objects.requireNonNull;
 
@@ -18,8 +18,8 @@ public final class RenamerObjectVisitor implements ObjectVisitor {
   }
 
   @Override
-  public VisitorMode mode() {
-    return delegate.mode();
+  public VisitorMode visitStartObject() {
+    return delegate.visitStartObject();
   }
 
   @Override

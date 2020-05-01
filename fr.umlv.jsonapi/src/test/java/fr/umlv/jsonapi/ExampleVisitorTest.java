@@ -25,7 +25,7 @@ public class ExampleVisitorTest {
         """;
     var visitor = new ObjectVisitor() {
       @Override
-      public VisitorMode mode() {
+      public VisitorMode visitStartObject() {
         return VisitorMode.PUSH;
       }
       @Override
@@ -62,7 +62,7 @@ public class ExampleVisitorTest {
     var builderConfig =  BuilderConfig.defaults();
     var visitor = builderConfig.newObjectBuilder(new ObjectVisitor() {
       @Override
-      public VisitorMode mode() {
+      public VisitorMode visitStartObject() {
         return VisitorMode.PULL;
       }
       @Override
@@ -95,7 +95,7 @@ public class ExampleVisitorTest {
         """;
     var visitor = new ArrayVisitor() {
       @Override
-      public VisitorMode mode() {
+      public VisitorMode visitStartArray() {
         return VisitorMode.PUSH;
       }
       @Override
@@ -127,7 +127,7 @@ public class ExampleVisitorTest {
         """;
     var visitor = new ArrayVisitor() {
       @Override
-      public VisitorMode mode() {
+      public VisitorMode visitStartArray() {
         return VisitorMode.PULL;
       }
       @Override
@@ -160,7 +160,7 @@ public class ExampleVisitorTest {
         """;
     var visitor = new ArrayVisitor() {
       @Override
-      public VisitorMode mode() {
+      public VisitorMode visitStartArray() {
         return VisitorMode.PULL_INSIDE;
       }
       @Override
@@ -207,7 +207,7 @@ public class ExampleVisitorTest {
         .add("Jolene")
         .addAll("Joleene", "Joleeeene");
     var printer = new JsonPrinter();
-    arrayBuilder.accept(printer::visitArray);
+    arrayBuilder.accept(printer);
     assertEquals("""  
         [ "Jolene", "Joleene", "Joleeeene" ]\
         """, printer.toString());
@@ -235,7 +235,7 @@ public class ExampleVisitorTest {
             .add("street", "3rd")
             .add("city", "NY"));
     var printer = new JsonPrinter();
-    objectBuilder.accept(printer::visitObject);
+    objectBuilder.accept(printer);
     assertEquals("""
         { "name": "Franky", "address": { "street": "3rd", "city": "NY" } }\
         """, printer.toString());

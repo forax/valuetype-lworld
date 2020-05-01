@@ -26,8 +26,8 @@ final class BindObjectVisitor implements ObjectVisitor {
   }
 
   @Override
-  public VisitorMode mode() {
-    return VisitorMode.PUSH;
+  public VisitorMode visitStartObject() {
+    return objectBuilder.visitStartObject();
   }
 
   @Override

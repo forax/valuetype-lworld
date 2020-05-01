@@ -141,7 +141,7 @@ public interface ArrayVisitor {
    *
    * @return the visitor mode of this visitor.
    */
-  VisitorMode mode();
+  VisitorMode visitStartArray();
 
   /**
    * In {@link VisitorMode#PULL_INSIDE pull inside mode}, this method is called before any other
