@@ -28,8 +28,6 @@ final class Specs {
     }
 
     void acceptValue(Object value, ArrayVisitor visitor) {
-      System.err.println("found " + name + " " + value);
-
       //FIXME converter !
       visitor.visitValue(JsonValue.fromAny(value));
     }
