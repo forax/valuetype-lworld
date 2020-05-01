@@ -1,30 +1,12 @@
 package fr.umlv.jsonapi.bind;
 
-import static fr.umlv.jsonapi.bind.Binder.IN_ARRAY;
-import static fr.umlv.jsonapi.bind.Binder.IN_OBJECT;
 import static java.lang.invoke.MethodHandles.lookup;
-import static java.util.function.Predicate.not;
-import static java.util.stream.Collectors.toList;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 
-import fr.umlv.jsonapi.JsonReader;
-import fr.umlv.jsonapi.JsonValue;
-import fr.umlv.jsonapi.bind.Binder.BindingException;
-import fr.umlv.jsonapi.bind.Spec.ClassLayout;
-import fr.umlv.jsonapi.bind.Spec.Converter;
-import fr.umlv.jsonapi.builder.BuilderConfig;
-import java.net.URI;
-import java.time.LocalDate;
-import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 
@@ -102,6 +84,45 @@ public class BinderWriteTest {
     var text = binder.write(person);
     assertEquals("""
         { "name": "Doctor X", "age": 23, "bald": false }\
+        """, text);
+  }
+
+  @Test
+  public void writeARecordOfRecord() {
+    var binder = new Binder(lookup());
+    record Point(double x, double y) { }
+    record Circle(Point center, double radius) { }
+    var circle = new Circle(new Point(0, 0), 3);
+    var text = binder.write(circle);
+    assertEquals("""
+        { "center": { "x": 0.0, "y": 0.0 }, "radius": 3.0 }\
+        """, text);
+  }
+
+  @Test
+  public void writeAListOfRecord() {
+    var binder = new Binder(lookup());
+    record Book(long id, String title) { }
+    record Library(List<Book> books) { public Library { books = List.copyOf(books); } }
+    var library = new Library(List.of(new Book(12, "Black Ice"), new Book(17, "The Poet")));
+    var text = binder.write(library);
+    assertEquals("""
+        { "books": [ { "id": 12, "title": "Black Ice" }, { "id": 17, "title": "The Poet" } ] }\
+        """, text);
+  }
+
+  @Test
+  public void writeAMapOfRecord() {
+    var binder = new Binder(lookup());
+    record Person(String name, Map<String, Boolean> trueFriends) { }
+    var bob = new Person("Bob", Map.of());
+    var ana = new Person("Ana", Map.of("Bob", true));
+    var text = binder.write(List.of(bob, ana));
+    assertEquals("""
+        [\
+         { "name": "Bob", "trueFriends": {  } },\
+         { "name": "Ana", "trueFriends": { "Bob": true } } \
+        ]\
         """, text);
   }
 }
