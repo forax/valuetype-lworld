@@ -212,8 +212,8 @@ public class BinderReadTest {
           }
 
           @Override
-          public Spec elementSpec(String memberName) {
-            return layout.elementSpec(rename(memberName));
+          public Spec memberSpec(String memberName) {
+            return layout.memberSpec(rename(memberName));
           }
 
           @Override
@@ -279,7 +279,7 @@ public class BinderReadTest {
         """;
     class PixelObjectLayout implements ObjectLayout<Map<String, Object>> {
       @Override
-      public Spec elementSpec(String memberName) {
+      public Spec memberSpec(String memberName) {
         return switch(memberName) {
           case "x", "y" -> binder.spec(int.class);
           case "color" -> binder.spec(String.class);

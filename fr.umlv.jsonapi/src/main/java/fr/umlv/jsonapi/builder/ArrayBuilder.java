@@ -120,7 +120,7 @@ public final class ArrayBuilder implements ArrayVisitor {
    * @see #add(Object)
    */
   public ArrayBuilder addAll(List<?> list) {
-    list.forEach(this.list::add);  // implicit nullcheck
+    list.forEach(this.list::add);  // implicit null check
     return this;
   }
   /**
@@ -132,7 +132,7 @@ public final class ArrayBuilder implements ArrayVisitor {
    * @see #add(Object)
    */
   public ArrayBuilder addAll(Object... values) {
-    for(var value: values) {   // implicit nullcheck
+    for(var value: values) {   // implicit null check
       list.add(value);
     }
     return this;

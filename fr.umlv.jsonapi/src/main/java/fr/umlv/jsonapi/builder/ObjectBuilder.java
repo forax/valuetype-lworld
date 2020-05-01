@@ -40,7 +40,7 @@ import java.util.stream.Collectors;
  *
  * As a builder, it can be mutated using the methods {@link #add(String, Object)},
  * or {@link #addAll(Map)}.
- * Moreover there is a special method {@link #with(String, Consumer)} to create nested objets
+ * Moreover there is a special method {@link #with(String, Consumer)} to create nested objects
  *
  * <p>
  * Example to generate two JSON objects using an ObjectBuilder
@@ -103,17 +103,17 @@ public final class ObjectBuilder implements ObjectVisitor {
   }
 
   /**
-   * Add an element composed of a name and any object to the builder.
+   * Add a member composed of a name and any object to the builder.
    *
-   * If there is already an element with the same name, this new element
+   * If there is already a member with the same name, this new member
    * will replace the existing one.
    *
    * If the class of {code value} is not one of boolean, int, long, double, String, BigInteger,
    * java.util.List or java.util.Map, the method {@link #accept(ObjectVisitor)} will
    * consider it as an {@link JsonValue#fromOpaque(Object) opaque value}.
    *
-   * @param name name of the element to add
-   * @param value value of the element to add
+   * @param name name of the member to add
+   * @param value value of the member to add
    * @return itself
    */
   public ObjectBuilder add(String name, Object value) {
@@ -123,20 +123,20 @@ public final class ObjectBuilder implements ObjectVisitor {
   }
 
   /**
-   * Add several eleemnts to the builder.
+   * Add several members to the builder.
    *
-   * @param map add all the elements of the map into the builder.
+   * @param map add all the members of the map into the builder.
    * @return itself
    *
    * @see #add(String, Object)
    */
   public ObjectBuilder addAll(Map<String, ?> map) {
-    map.forEach(this.map::put);  // implicit nullcheck
+    map.forEach(this.map::put);  // implicit null check
     return this;
   }
 
   /**
-   * Create an object by specifying all its elements and add it to the current builder;
+   * Create an object by specifying all its members and add it to the current builder;
    *
    * <p>Example of usage
    * <pre>
@@ -147,7 +147,7 @@ public final class ObjectBuilder implements ObjectVisitor {
    *       .add("city", "NY"));
    * </pre>
    *
-   * @param name name of the object element that is added
+   * @param name name of the object member that is added
    * @param consumer a function that will called to create the object that will be added
    * @return itself
    */

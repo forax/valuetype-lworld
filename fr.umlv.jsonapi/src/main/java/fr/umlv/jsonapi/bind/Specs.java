@@ -159,7 +159,7 @@ final class Specs {
     }
 
     ObjectVisitor newMemberObject(String name, BuilderConfig config, Consumer<Object> postOp) {
-      var spec = objectLayout.elementSpec(name);
+      var spec = objectLayout.memberSpec(name);
       if (spec instanceof ObjectSpec objectSpec) {
         return new BindObjectVisitor(objectSpec, config.newObjectBuilder(), postOp);
       }
@@ -169,7 +169,7 @@ final class Specs {
       throw new BindingException("invalid component spec for an object " + spec + " for element " + name);
     }
     ArrayVisitor newMemberArray(String name, BuilderConfig config, Consumer<Object> postOp) {
-      var spec = objectLayout.elementSpec(name);
+      var spec = objectLayout.memberSpec(name);
       if (spec instanceof ArraySpec arraySpec) {
         return new BindArrayVisitor(arraySpec, config.newArrayBuilder(), postOp);
       }
@@ -215,7 +215,7 @@ final class Specs {
   }
 
   static JsonValue convert(ClassSpec spec, String name, JsonValue value) {
-    var elementSpec = spec.objectLayout.elementSpec(name);
+    var elementSpec = spec.objectLayout.memberSpec(name);
     if (elementSpec instanceof ValueSpec valueSpec) {
       return valueSpec.convertTo(value);
     }

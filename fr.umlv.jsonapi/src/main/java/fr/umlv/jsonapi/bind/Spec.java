@@ -39,13 +39,18 @@ import java.util.stream.Stream;
  *   by transforming the value in an ad-hoc way.
  * </ul>
  *
- * <p>By example to decode a JSON string has a {@link java.time.LocalDate}
+ * <p>By example to decode a JSON string as a {@link java.time.LocalDate} and vice-veras
  * <pre>
  * Binder binder = new Binder(lookup());
  * Spec stringSpec = binder.spec(String.class);
  * Spec localDateSpec = stringSpec.convert(new Converter() {
- *   public JsonValue convertTo(JsonValue value) {
+ *   public JsonValue convertTo(JsonValue value) {    // used when reading JSON
+ *     // see as an opaque object (i.e. not a JSON type)
  *     return JsonValue.fromOpaque(LocalDate.parse(value.stringValue()));
+ *   }
+ *   public JsonValue convertFrom(JsonValue object) {  // used when writing JSON
+ *     // convert to a JSON String
+ *     return JsonValue.from(object.toString());
  *   }
  * });
  * binder.register(SpecFinder.from(Map.of(LocalDate.class, localDateSpec)));
@@ -209,13 +214,63 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
   }
 
 
+  /**
+   * Convert a JSON type to a Java type (in both direction)
+   */
   interface Converter {
+    /**
+     * Receive a JSON value by example from reading a file and
+     * convert it to a JSON value for the binder.
+     *
+     * @param value a JSON value that comes from a JSON fragment
+     * @return a JSON value for the binder which allows more types
+     *
+     * @see JsonValue#fromAny(Object)
+     * @see JsonValue#fromOpaque(Object)
+     */
     JsonValue convertTo(JsonValue value);
+
+    /**
+     * Receive a Java object seen as a JSON value and convert it
+     * to a JSON value by example writable to a JSON file
+     * @param object a Java object seen as a JSON value
+     * @return a JSON value that can be written into a JSON fragment
+     */
     JsonValue convertFrom(JsonValue object);
   }
 
+  /**
+   * Abstraction that represent a Java class that can be decoded from JSON and encoded to JSON
+   *
+   * <p>The way to decode a JSON object to any class is to use a builder like API which
+   * works for both mutable and immutable builder. Obviously, the builder doesn't have to be
+   * a real builder, it can be an array of object, a map or whatever you want.
+   *
+   * <p>The API works that way
+   * <ul>
+   *   <li>{@link #newBuilder()} is called first to create a builder
+   *   <li>{@link #addObject(Object, String, Object)}, {@link #addArray(Object, String, Object)}
+   *       and {@link #addValue(Object, String, JsonValue)} are called each time a memeber
+   *       of the JSON object the class represent is seen
+   *   <li>{@link #build(Object)} is called at the end to transform the builder value to
+   *       the real object
+   * </ul>
+   *
+   * <p>The way to encode a JSON object is to receive a visitor that should be called
+   *    for each member of the class (the pair field name/field value).
+   *    The method {@link #accept(Object, MemberVisitor)} is called with an instance of
+   *    the class to encode to JSON and the visitor to call on a members.
+   *
+   * In both case, decoding and encoding, the binder has to know the {@link Spec spec}
+   * of member of the class, for that it uses the method {@link #memberSpec(String)}.
+   *
+   * @param <B> the type of the builder
+   */
   interface ObjectLayout<B> {
-    Spec elementSpec(String memberName);
+    Spec memberSpec(String memberName);
+
+    // TODO, create a Member interface ?  to encapsulate the spec instead of using a string (name)
+    // to avoid too many lookup
 
     B newBuilder();
     B addObject(B builder, String memberName, Object object);
@@ -234,8 +289,8 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
     private static ObjectLayout<Object> convert(ObjectLayout<Object> layout, Converter converter) {
       return new ObjectLayout<>() {
         @Override
-        public Spec elementSpec(String memberName) {
-          return layout.elementSpec(memberName);
+        public Spec memberSpec(String memberName) {
+          return layout.memberSpec(memberName);
         }
 
         @Override

@@ -29,7 +29,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Stream;
 
 /**
- * A binder is able to creates a tree of Java objetcs from a JSON text.
+ * A binder is able to creates a tree of Java objects from a JSON text.
  *
  * A binder associate an object {@link Spec} for each JSON value, a {@link Spec} instance
  * knows how to serialize/deserialize a JSON value.
@@ -39,17 +39,17 @@ import java.util.stream.Stream;
  * The creation of a {@link Spec} instance is delegated to several {@link SpecFinder}s
  * that are {@link #register(SpecFinder) registered} to the binder.
  * When {@link #spec(Type) looking up} for a spec, the binder will test the first registered
- * finder first.
+ * finder first, then the second, and so on.
  *
  * The method {@link #spec(Type)} is idempotent which means that once a Spec has been associated
  * to a type, it can not be changed, even by {@link #register(SpecFinder) registering}
  * a new {@link SpecFinder}.
  *
  * There are two ways to create a binder, to get a binder with the default spec finders
- * already registered use the constructor {@link Binder#Binder(Lookup)}.
- * To get a binder with no spec finders use {@link Binder#noDefaults()}.
+ * already registered use the constructor {@link Binder#Binder(Lookup)},
+ * to get a binder with no spec finders registered use {@link Binder#noDefaults()}.
  *
- * <p>To transform a JSON text to an object, the class Binder provide several variants of the method
+ * <p>To transform a JSON text to an object, it exists several variants of the method
  * {@link #read(Reader, Spec, BuilderConfig)} and {@link #stream(Reader, Spec, BuilderConfig)}.
  *
  * By example, to read a simple record
@@ -81,6 +81,24 @@ import java.util.stream.Stream;
  * record Point(int x, int y) { }
  * Stream&lt;Point&gt; stream = binder.stream(json, Point.class);
  * </pre>
+ *
+ * <p>Ton transform a Java object to a JSON text, it exists several variants of the method
+ * {@link #write(Writer, Object)}
+ *
+ * By example, to write a record
+ * <pre>
+ * record Person(String name, int age, boolean bald) { }
+ * Person person = new Person("Doctor X", 23, false);
+ * Binder binder = new Binder(lookup());
+ * String text = binder.write(person);
+ * </pre>
+ *
+ * Reading and writing objects is a not fully symmetrical process due to the fact that JSON
+ * format has less information than a Java class definition.
+ * So when reading a JSON text, the binder uses the information derived from the Java
+ * type definition available at compile time to guide the creation of objects.
+ * While when writing, the object class is available so the binder uses the dynamic type
+ * of the object instead of the static type.
  *
  * @see Spec
  * @see SpecFinder
@@ -718,9 +736,29 @@ public final class Binder {
   }
 
 
+  /**
+   * Generate calls to the visit methods of the visitor describing the Java object
+   * taken as argument as a JSON object/array.
+   *
+   * @param value any Java object or null.
+   * @param visitor either an {@link ObjectVisitor} or an {@link ArrayVisitor}
+   * @return the result returned by either the method {@link ObjectVisitor#visitEndObject()} or
+   *         by the method {@link ArrayVisitor#visitEndArray()} of the visitor
+   */
   public Object accept(Object value, Object visitor) {
     return Specs.acceptRoot(value, this, RootVisitor.createFromOneVisitor(visitor));
   }
+
+  /**
+   * Generate calls to the visit methods of the visitor describing the Java object
+   * taken as argument as a JSON object/array.
+   *
+   * @param value any Java object or null.
+   * @param objectVisitor the visitor used if the value is a convertible to a JSON object
+   * @param arrayVisitor the visitor used if the value is a convertible to a JSON array
+   * @return the result returned by either the method {@link ObjectVisitor#visitEndObject()} or
+   *         by the method {@link ArrayVisitor#visitEndArray()} of the visitors
+   */
   public Object accept(Object value, ObjectVisitor objectVisitor, ArrayVisitor arrayVisitor) {
     requireNonNull(objectVisitor);
     requireNonNull(arrayVisitor);
@@ -728,6 +766,17 @@ public final class Binder {
   }
 
 
+  /**
+   * Write a tree of Java objects as a JSON text into a {@code writer}.
+   *
+   * @param writer the writer to write into
+   * @param value the Java object to write
+   * @throws IOException if an IO error occurs
+   * @throws BindingException if an object has no corresponding {@link #spec(Type) spec}
+   *
+   * @see #accept(Object, Object)
+   * @see #spec(Type)
+   */
   @SuppressWarnings("resource")
   public void write(Writer writer, Object value) throws IOException {
     requireNonNull(writer);
@@ -741,6 +790,15 @@ public final class Binder {
     // don't close here because it will close the writer
   }
 
+  /**
+   * Write a tree of Java objects as a string
+   *
+   * @param value the Java object to write
+   * @return a string in JSON format of the Java object
+   * @throws BindingException if an object has no corresponding {@link #spec(Type) spec}
+   *
+   * @see #write(Writer, Object)
+   */
   public String write(Object value) {
     requireNonNull(value);
     var printer = new JsonPrinter();
@@ -748,6 +806,17 @@ public final class Binder {
     return printer.toString();
   }
 
+  /**
+   * Write a tree of Java objects as a JSON text into file.
+   *
+   * @param path the path to the file
+   * @param value the Java object to write
+   * @throws IOException if an IO error occurs
+   * @throws BindingException if an object has no corresponding {@link #spec(Type) spec}
+   *
+   * @see #accept(Object, Object)
+   * @see #spec(Type)
+   */
   public void write(Path path, Object value) throws IOException {
     requireNonNull(path);
     requireNonNull(value);

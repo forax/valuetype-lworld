@@ -65,7 +65,7 @@ final class SpecFinders {
         }
 
         @Override
-        public Spec elementSpec(String memberName) {
+        public Spec memberSpec(String memberName) {
           return element(memberName).spec;
         }
 

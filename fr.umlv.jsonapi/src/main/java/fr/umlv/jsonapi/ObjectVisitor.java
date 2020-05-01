@@ -113,7 +113,7 @@ public interface ObjectVisitor {
   /**
    * Returns the visitor mode of this visitor.
    * The visitor mode is used by the {@link JsonReader} to know how the methods of the API
-   * shuld be called.
+   * should be called.
    *
    * @return the visitor mode of this visitor.
    */

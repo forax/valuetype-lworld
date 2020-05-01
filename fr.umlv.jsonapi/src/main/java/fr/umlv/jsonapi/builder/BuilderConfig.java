@@ -197,7 +197,7 @@ public class BuilderConfig {
    * @return the configuration of an existing builder.
    */
   public static BuilderConfig extract(ObjectBuilder builder) {
-    return builder.config;   // implicit nullcheck
+    return builder.config;   // implicit null check
   }
 
   /**
@@ -206,6 +206,6 @@ public class BuilderConfig {
    * @return the configuration of an existing builder.
    */
   public static BuilderConfig extract(ArrayBuilder builder) {
-    return builder.config;  // implicit nullcheck
+    return builder.config;  // implicit null check
   }
 }
