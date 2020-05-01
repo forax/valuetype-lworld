@@ -211,7 +211,7 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
 
   interface Converter {
     JsonValue convertTo(JsonValue value);
-    Object convertFrom(Object object);
+    JsonValue convertFrom(JsonValue object);
   }
 
   interface ClassLayout<B> {
@@ -225,6 +225,7 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
 
     void accept(Object object, ElementVisitor objectVisitor);
 
+    @FunctionalInterface
     interface ElementVisitor {
       void visitElement(String elementName, Object elementValue);
     }
@@ -255,12 +256,14 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
         }
         @Override
         public Object build(Object builder) {
-          return converter.convertTo(JsonValue.fromOpaque(layout.build(builder))).asObject();
+          var result = layout.build(builder);
+          return converter.convertTo(JsonValue.fromOpaque(result)).asObject();
         }
 
         @Override
         public void accept(Object object, ElementVisitor objectVisitor) {
-           layout.accept(converter.convertFrom(object), objectVisitor);
+           var result = converter.convertFrom(JsonValue.fromOpaque(object)).asObject();
+           layout.accept(result, objectVisitor);
         }
       };
     }

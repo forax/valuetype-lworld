@@ -56,7 +56,7 @@ public interface SpecFinder {
     return SpecFinders.newRecordFinder(lookup, downwardFinder);
   }
 
-  static SpecFinder newAllowAnyTypeFinder() {
-    return SpecFinders.newAllowAnyTypeFinder();
+  static SpecFinder newAllowAnyTypeAsStringFinder() {
+    return SpecFinders.newAllowAnyTypeAsStringFinder();
   }
 }

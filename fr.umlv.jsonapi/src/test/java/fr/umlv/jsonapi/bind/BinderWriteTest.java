@@ -3,6 +3,7 @@ package fr.umlv.jsonapi.bind;
 import static java.lang.invoke.MethodHandles.lookup;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
+import java.time.LocalDate;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -63,18 +64,18 @@ public class BinderWriteTest {
         """, text);
   }
 
-  /*
   @Test
   public void writeAnOpaqueType() {
     var binder = new Binder(lookup());
+    binder.register(SpecFinder.newAllowAnyTypeAsStringFinder());
     var map = new LinkedHashMap<String, Object>();
     map.put("id", 2475);
     map.put("date", LocalDate.of(2020, 2, 14));
     var text = binder.write(map);
     assertEquals("""
-        { "id": 2475, "date": "2020-2-14" }\
-        """, map);
-  }*/
+        { "id": 2475, "date": "2020-02-14" }\
+        """, text);
+  }
 
   @Test
   public void writeARecord() {

@@ -59,7 +59,7 @@ final class SpecFinders {
         private RecordElement element(String name) {
           var recordElement = componentMap.get(name);
           if (recordElement == null) {
-            throw new Binder.BindingException("no element " + name + " for class " + type);
+            throw new Binder.BindingException("no element " + name + " for type " + type.getTypeName());
           }
           return recordElement;
         }
@@ -117,7 +117,7 @@ final class SpecFinders {
     };
   }
 
-  static SpecFinder newAllowAnyTypeFinder() {
+  static SpecFinder newAllowAnyTypeAsStringFinder() {
     return type -> Optional.of(Spec.typedValue(type.getTypeName(), new Converter() {
       @Override
       public JsonValue convertTo(JsonValue value) {
@@ -125,8 +125,8 @@ final class SpecFinders {
       }
 
       @Override
-      public Object convertFrom(Object object) {
-        return object.toString();
+      public JsonValue convertFrom(JsonValue value) {
+        return JsonValue.from(value.toString());   // convert to string
       }
     }));
   }

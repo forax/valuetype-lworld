@@ -28,12 +28,19 @@ final class Specs {
     }
 
     void acceptValue(Object value, ArrayVisitor visitor) {
-      //FIXME converter !
-      visitor.visitValue(JsonValue.fromAny(value));
+      var jsonValue = JsonValue.fromAny(value);
+      visitor.visitValue(convertFrom(jsonValue));
     }
     void acceptElement(String elementName, Object value, ObjectVisitor visitor) {
-      //FIXME converter !
-      visitor.visitMemberValue(elementName, JsonValue.fromAny(value));
+      var jsonValue = JsonValue.fromAny(value);
+      visitor.visitMemberValue(elementName, convertFrom(jsonValue));
+    }
+
+    private JsonValue convertFrom(JsonValue value) {
+      if (converter == null) {
+        return value;
+      }
+      return converter.convertFrom(value);
     }
 
     private JsonValue convertTo(JsonValue jsonValue) {
@@ -53,7 +60,7 @@ final class Specs {
               return converter.convertTo(currentConverter.convertTo(value));
             }
             @Override
-            public Object convertFrom(Object object) {
+            public JsonValue convertFrom(JsonValue object) {
               return currentConverter.convertFrom(converter.convertFrom(object));
             }
           };

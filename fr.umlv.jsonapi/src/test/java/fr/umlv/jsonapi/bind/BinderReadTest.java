@@ -7,7 +7,6 @@ import static java.util.function.Predicate.not;
 import static java.util.stream.Collectors.toList;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import fr.umlv.jsonapi.JsonReader;
@@ -16,8 +15,6 @@ import fr.umlv.jsonapi.bind.Binder.BindingException;
 import fr.umlv.jsonapi.bind.Spec.ClassLayout;
 import fr.umlv.jsonapi.bind.Spec.Converter;
 import fr.umlv.jsonapi.builder.BuilderConfig;
-
-import java.net.URI;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -93,8 +90,9 @@ public class BinderReadTest {
       }
 
       @Override
-      public Object convertFrom(Object object) {
-        return ((LocalDate) object).toString();
+      public JsonValue convertFrom(JsonValue object) {
+        // convert as String
+        return JsonValue.from(object.toString());
       }
     });
     binder.register(SpecFinder.from(Map.of(LocalDate.class, localDateSpec)));
@@ -171,7 +169,7 @@ public class BinderReadTest {
 
   @Test
   public void readAndFilterSpec() {
-    var binder = new Binder(lookup());
+    var binder = Binder.noDefaults();
     var json = """
         {
           "name": "James Joyce",
@@ -182,7 +180,8 @@ public class BinderReadTest {
         }
         """;
     record Author(String name, List<String> books) { }
-    var authorSpec = binder.specFinder().findSpec(Author.class).orElseThrow();
+    var recordFilter = SpecFinder.newRecordFinder(lookup(), binder::spec);
+    var authorSpec = recordFilter.findSpec(Author.class).orElseThrow();
     binder.register(SpecFinder.associate(Author.class, authorSpec.filterName(not("age"::equals))));
     var author = binder.read(json, Author.class);
     assertEquals(new Author("James Joyce", List.of("Finnegans Wake")), author);
@@ -190,7 +189,7 @@ public class BinderReadTest {
 
   @Test
   public void readAndMapLayoutSpec() {
-    var binder = new Binder(lookup());
+    var binder = Binder.noDefaults();
     var json = """
         {
           "name": "James Joyce",
@@ -201,7 +200,8 @@ public class BinderReadTest {
         }
         """;
     record Author(String firstName, int age, List<String> books) { }
-    var authorSpec = binder.specFinder().findSpec(Author.class).orElseThrow();
+    var recordFinder = SpecFinder.newRecordFinder(lookup(), binder::spec);
+    var authorSpec = recordFinder.findSpec(Author.class).orElseThrow();
     binder.register(SpecFinder.associate(Author.class, authorSpec.mapLayout(
         layout -> new ClassLayout<>() {
           private String rename(String name) {

@@ -38,9 +38,8 @@ import java.util.stream.Stream;
  *
  * The creation of a {@link Spec} instance is delegated to several {@link SpecFinder}s
  * that are {@link #register(SpecFinder) registered} to the binder.
- * When {@link #spec(Type) looking} up for a spec, the binder will start by asking to the most
- * recently registered {@link SpecFinder} to the first registered.
- * So adding a new {@link SpecFinder} allows to override the previous ones.
+ * When {@link #spec(Type) looking up} for a spec, the binder will test the first registered
+ * finder first.
  *
  * The method {@link #spec(Type)} is idempotent which means that once a Spec has been associated
  * to a type, it can not be changed, even by {@link #register(SpecFinder) registering}
@@ -126,7 +125,7 @@ public final class Binder {
       if (spec != null) {
         return spec;
       }
-      throw new BindingException("no finder can resolve type " + type.getName());
+      throw new BindingException("no finders can resolve type " + type.getName());
     }
   };
   private final CopyOnWriteArrayList<SpecFinder> finders = new CopyOnWriteArrayList<>();
@@ -160,8 +159,8 @@ public final class Binder {
 
   /**
    * Register a spec finder to the current binder.
-   * When {@link #spec(Type) looking up} for a spec, the most registered spec finder
-   * will be used first, the fist registered spec finder will be used last.
+   * When {@link #spec(Type) looking up} for a spec, the binder will test the first registered
+   * finder first.
    *
    * @param finder a spec finder to register
    * @return itself
@@ -179,8 +178,8 @@ public final class Binder {
         || type == Object.class) {
       return Spec.typedValue(type.getName(), null);
     }
-    for(var i = finders.size(); --i >= 0; ) {
-      var optSpec = finders.get(i).findSpec(type);
+    for(var finder: finders) {
+      var optSpec = finder.findSpec(type);
       if (optSpec.isPresent()) {
         return optSpec.orElseThrow();
       }
@@ -747,15 +746,6 @@ public final class Binder {
     var printer = new JsonPrinter();
     accept(value, printer, printer);
     return printer.toString();
-
-    /*var stringWriter = new StringWriter();
-    try {
-      write(stringWriter, value);
-    } catch (IOException e) {
-      throw new UncheckedIOException(e);
-    }
-    return stringWriter.toString();
-     */
   }
 
   public void write(Path path, Object value) throws IOException {
