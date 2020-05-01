@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import fr.umlv.jsonapi.JsonReader;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.bind.Binder.BindingException;
-import fr.umlv.jsonapi.bind.Spec.ClassLayout;
+import fr.umlv.jsonapi.bind.Spec.ObjectLayout;
 import fr.umlv.jsonapi.bind.Spec.Converter;
 import fr.umlv.jsonapi.builder.BuilderConfig;
 import java.time.LocalDate;
@@ -203,7 +203,7 @@ public class BinderReadTest {
     var recordFinder = SpecFinder.newRecordFinder(lookup(), binder::spec);
     var authorSpec = recordFinder.findSpec(Author.class).orElseThrow();
     binder.register(SpecFinder.associate(Author.class, authorSpec.mapLayout(
-        layout -> new ClassLayout<>() {
+        layout -> new ObjectLayout<>() {
           private String rename(String name) {
             return "name".equals(name)? "firstName": name;
           }
@@ -212,8 +212,8 @@ public class BinderReadTest {
           }
 
           @Override
-          public Spec elementSpec(String name) {
-            return layout.elementSpec(rename(name));
+          public Spec elementSpec(String memberName) {
+            return layout.elementSpec(rename(memberName));
           }
 
           @Override
@@ -221,16 +221,16 @@ public class BinderReadTest {
             return layout.newBuilder();
           }
           @Override
-          public Object addObject(Object builder, String name, Object object) {
-            return layout.addObject(builder, rename(name), object);
+          public Object addObject(Object builder, String memberName, Object object) {
+            return layout.addObject(builder, rename(memberName), object);
           }
           @Override
-          public Object addArray(Object builder, String name, Object array) {
-            return layout.addArray(builder, rename(name), array);
+          public Object addArray(Object builder, String memberName, Object array) {
+            return layout.addArray(builder, rename(memberName), array);
           }
           @Override
-          public Object addValue(Object builder, String name, JsonValue value) {
-            return layout.addValue(builder, rename(name), value);
+          public Object addValue(Object builder, String memberName, JsonValue value) {
+            return layout.addValue(builder, rename(memberName), value);
           }
           @Override
           public Object build(Object builder) {
@@ -238,8 +238,9 @@ public class BinderReadTest {
           }
 
           @Override
-          public void accept(Object object, ElementVisitor objectVisitor) {
-            layout.accept(object, (name, value) -> objectVisitor.visitElement(reverseRename(name), value));
+          public void accept(Object object, MemberVisitor memberVisitor) {
+            layout.accept(object, (name, value) -> memberVisitor
+                .visitMember(reverseRename(name), value));
           }
         }
     )));
@@ -276,10 +277,10 @@ public class BinderReadTest {
           "color": "red"
         }
         """;
-    class PixelClassLayout implements ClassLayout<Map<String, Object>> {
+    class PixelObjectLayout implements ObjectLayout<Map<String, Object>> {
       @Override
-      public Spec elementSpec(String name) {
-        return switch(name) {
+      public Spec elementSpec(String memberName) {
+        return switch(memberName) {
           case "x", "y" -> binder.spec(int.class);
           case "color" -> binder.spec(String.class);
           default -> throw new AssertionError();
@@ -291,16 +292,16 @@ public class BinderReadTest {
         return new HashMap<>();
       }
       @Override
-      public Map<String, Object> addObject(Map<String, Object> builder, String name, Object object) {
+      public Map<String, Object> addObject(Map<String, Object> builder, String memberName, Object object) {
         throw new AssertionError();
       }
       @Override
-      public Map<String, Object> addArray(Map<String, Object> builder, String name, Object array) {
+      public Map<String, Object> addArray(Map<String, Object> builder, String memberName, Object array) {
         throw new AssertionError();
       }
       @Override
-      public Map<String, Object> addValue(Map<String, Object> builder, String name, JsonValue value) {
-        builder.put(name, value.asObject());
+      public Map<String, Object> addValue(Map<String, Object> builder, String memberName, JsonValue value) {
+        builder.put(memberName, value.asObject());
         return builder;
       }
       @Override
@@ -309,12 +310,12 @@ public class BinderReadTest {
       }
 
       @Override
-      public void accept(Object object, ElementVisitor objectVisitor) {
+      public void accept(Object object, MemberVisitor memberVisitor) {
         throw new AssertionError();
       }
     }
 
-    var pixelSpec = Spec.typedObject("Pixel", new PixelClassLayout());
+    var pixelSpec = Spec.newTypedObject("Pixel", new PixelObjectLayout());
     @SuppressWarnings("unchecked")
     var pixel = (Map<String,Object>) Binder.read(json, pixelSpec, BuilderConfig.defaults());
     assertEquals(Map.of("x", 1, "y", 3, "color", "red"), pixel);

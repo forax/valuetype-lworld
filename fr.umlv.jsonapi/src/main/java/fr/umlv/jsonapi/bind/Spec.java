@@ -27,8 +27,8 @@ import java.util.stream.Stream;
  *
  * You can create your own Spec either
  * <ul>
- *   <li>Using the factory methods {@link Spec#typedObject(String, ClassLayout)} and
- *   {@link Spec#typedValue(String, Converter)} for respectively create a spec of a JSON object
+ *   <li>Using the factory methods {@link Spec#newTypedObject(String, ObjectLayout)} and
+ *   {@link Spec#newTypedValue(String, Converter)} for respectively create a spec of a JSON object
  *   or a spec of a JSON value.
  *   <li>Using instance methods to create a spec from an existing spec, {@link #array()},
  *   {@link #stream(Function)}, {@link #object()} which respectively create an array of the spec
@@ -89,7 +89,7 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
       return valueSpec.convertWith(converter);
     }
     if (this instanceof ClassSpec classSpec) {
-      return classSpec.mapLayout(layout -> ClassLayout.convert(layout, converter));
+      return classSpec.mapLayout(layout -> ObjectLayout.convert(layout, converter));
     }
     throw new IllegalArgumentException("can not apply a converter to this spec");
   }
@@ -117,12 +117,12 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
    * @return a new spec that will transforms the layout of the current spec.
    * @throws IllegalArgumentException is the current spec doesn't have a class layout
    */
-  default Spec mapLayout(Function<? super ClassLayout<Object>, ClassLayout<?>> mapper) {
+  default Spec mapLayout(Function<? super ObjectLayout<Object>, ObjectLayout<?>> mapper) {
     requireNonNull(mapper);
     if (this instanceof ClassSpec classSpec) {
       @SuppressWarnings("unchecked")
-      var classLayout = (ClassLayout<Object>) classSpec.classLayout();
-      return typedObject(classSpec.name() + ".mapLayout()", mapper.apply(classLayout));
+      var classLayout = (ObjectLayout<Object>) classSpec.objectLayout();
+      return newTypedObject(classSpec.name() + ".mapLayout()", mapper.apply(classLayout));
     }
     throw new IllegalArgumentException("can not apply a mapper to this spec");
   }
@@ -186,14 +186,14 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
   /**
    * Create a spec corresponding to mapping of a JSON object to a Java object
    * @param name the name of the spec for debugging purpose
-   * @param classLayout an abstraction describing how to build the Java object
+   * @param objectLayout an abstraction describing how to build the Java object
    *                    from the JSON object elements
    * @return a spec that is able to convert a JSON object to a Java object
    */
-  static Spec typedObject(String name, ClassLayout<?> classLayout) {
+  static Spec newTypedObject(String name, ObjectLayout<?> objectLayout) {
     requireNonNull(name);
-    requireNonNull(classLayout);
-    return new ClassSpec(name, null, classLayout);
+    requireNonNull(objectLayout);
+    return new ClassSpec(name, null, objectLayout);
   }
 
   /**
@@ -203,7 +203,7 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
    * @param converter the converter to use.
    * @return a spec that is able to convert a JSON value to another one
    */
-  static Spec typedValue(String name, Converter converter) {
+  static Spec newTypedValue(String name, Converter converter) {
     requireNonNull(name);
     return new ValueSpec(name, converter);
   }
@@ -214,28 +214,28 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
     JsonValue convertFrom(JsonValue object);
   }
 
-  interface ClassLayout<B> {
-    Spec elementSpec(String name);
+  interface ObjectLayout<B> {
+    Spec elementSpec(String memberName);
 
     B newBuilder();
-    B addObject(B builder, String name, Object object);
-    B addArray(B builder, String name, Object array);
-    B addValue(B builder, String name, JsonValue value);
+    B addObject(B builder, String memberName, Object object);
+    B addArray(B builder, String memberName, Object array);
+    B addValue(B builder, String memberName, JsonValue value);
     Object build(B builder);
 
-    void accept(Object object, ElementVisitor objectVisitor);
+    void accept(Object object, MemberVisitor memberVisitor);
 
     @FunctionalInterface
-    interface ElementVisitor {
-      void visitElement(String elementName, Object elementValue);
+    interface MemberVisitor {
+      void visitMember(String name, Object value);
     }
 
     // should be a private instance method, but IntelliJ has a bug :(
-    private static ClassLayout<Object> convert(ClassLayout<Object> layout, Converter converter) {
-      return new ClassLayout<>() {
+    private static ObjectLayout<Object> convert(ObjectLayout<Object> layout, Converter converter) {
+      return new ObjectLayout<>() {
         @Override
-        public Spec elementSpec(String name) {
-          return layout.elementSpec(name);
+        public Spec elementSpec(String memberName) {
+          return layout.elementSpec(memberName);
         }
 
         @Override
@@ -243,16 +243,16 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
           return layout.newBuilder();
         }
         @Override
-        public Object addObject(Object builder, String name, Object object) {
-          return layout.addObject(builder, name, object);
+        public Object addObject(Object builder, String memberName, Object object) {
+          return layout.addObject(builder, memberName, object);
         }
         @Override
-        public Object addArray(Object builder, String name, Object array) {
-          return layout.addArray(builder, name, array);
+        public Object addArray(Object builder, String memberName, Object array) {
+          return layout.addArray(builder, memberName, array);
         }
         @Override
-        public Object addValue(Object builder, String name, JsonValue value) {
-          return layout.addValue(builder, name, value);
+        public Object addValue(Object builder, String memberName, JsonValue value) {
+          return layout.addValue(builder, memberName, value);
         }
         @Override
         public Object build(Object builder) {
@@ -261,9 +261,9 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
         }
 
         @Override
-        public void accept(Object object, ElementVisitor objectVisitor) {
+        public void accept(Object object, MemberVisitor memberVisitor) {
            var result = converter.convertFrom(JsonValue.fromOpaque(object)).asObject();
-           layout.accept(result, objectVisitor);
+           layout.accept(result, memberVisitor);
         }
       };
     }

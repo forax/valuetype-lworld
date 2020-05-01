@@ -1,5 +1,7 @@
 package fr.umlv.jsonapi.bind;
 
+import static java.util.Objects.requireNonNull;
+
 import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
@@ -27,13 +29,13 @@ final class Specs {
       return name;
     }
 
-    void acceptValue(Object value, ArrayVisitor visitor) {
+    private void acceptValue(Object value, ArrayVisitor visitor) {
       var jsonValue = JsonValue.fromAny(value);
       visitor.visitValue(convertFrom(jsonValue));
     }
-    void acceptElement(String elementName, Object value, ObjectVisitor visitor) {
+    private void acceptMember(String name, Object value, ObjectVisitor visitor) {
       var jsonValue = JsonValue.fromAny(value);
-      visitor.visitMemberValue(elementName, convertFrom(jsonValue));
+      visitor.visitMemberValue(name, convertFrom(jsonValue));
     }
 
     private JsonValue convertFrom(JsonValue value) {
@@ -150,14 +152,14 @@ final class Specs {
     }
   }
 
-  record ClassSpec(String name, Predicate<? super String>filter, ClassLayout<?> classLayout) implements Spec {
+  record ClassSpec(String name, Predicate<? super String>filter, ObjectLayout<?>objectLayout) implements Spec {
     @Override
     public String toString() {
       return name;
     }
 
     ObjectVisitor newMemberObject(String name, BuilderConfig config, Consumer<Object> postOp) {
-      var spec = classLayout.elementSpec(name);
+      var spec = objectLayout.elementSpec(name);
       if (spec instanceof ObjectSpec objectSpec) {
         return new BindObjectVisitor(objectSpec, config.newObjectBuilder(), postOp);
       }
@@ -167,7 +169,7 @@ final class Specs {
       throw new BindingException("invalid component spec for an object " + spec + " for element " + name);
     }
     ArrayVisitor newMemberArray(String name, BuilderConfig config, Consumer<Object> postOp) {
-      var spec = classLayout.elementSpec(name);
+      var spec = objectLayout.elementSpec(name);
       if (spec instanceof ArraySpec arraySpec) {
         return new BindArrayVisitor(arraySpec, config.newArrayBuilder(), postOp);
       }
@@ -179,14 +181,14 @@ final class Specs {
 
     Object accept(Object value, Binder binder, ObjectVisitor objectVisitor) {
       objectVisitor.visitStartObject();
-      classLayout.accept(value, (name, elementValue) -> acceptElement(name, elementValue, binder, objectVisitor));
+      objectLayout.accept(value, (name, elementValue) -> acceptMember(name, elementValue, binder, objectVisitor));
       return objectVisitor.visitEndObject();
     }
 
     public ClassSpec filterWith(Predicate<? super String> predicate) {
        var filter = this.filter;
        Predicate<? super String> newFilter = (filter == null)? predicate: name -> predicate.test(name) && filter.test(name);
-       return new ClassSpec(name + ".filter()", newFilter, classLayout);
+       return new ClassSpec(name + ".filter()", newFilter, objectLayout);
     }
   }
 
@@ -213,7 +215,7 @@ final class Specs {
   }
 
   static JsonValue convert(ClassSpec spec, String name, JsonValue value) {
-    var elementSpec = spec.classLayout.elementSpec(name);
+    var elementSpec = spec.objectLayout.elementSpec(name);
     if (elementSpec instanceof ValueSpec valueSpec) {
       return valueSpec.convertTo(value);
     }
@@ -222,6 +224,7 @@ final class Specs {
 
 
   static Object acceptRoot(Object value, Binder binder, RootVisitor visitor) {
+    requireNonNull(value);  // help the JIT :)
     if (value instanceof Iterable<?> iterable) {
       var arrayVisitor = visitor.visitArray();
       if (arrayVisitor == null) {
@@ -262,6 +265,10 @@ final class Specs {
   }
 
   static void acceptValue(Object value, Binder binder, ArrayVisitor visitor) {
+    if (value == null) {
+      visitor.visitValue(JsonValue.nullValue());
+      return;
+    }
     if (value instanceof Iterable<?> list) {
       var arrayVisitor = visitor.visitArray();
       if (arrayVisitor != null) {
@@ -288,10 +295,6 @@ final class Specs {
       if (objectVisitor != null) {
         acceptMap(map, binder, objectVisitor);
       }
-      return;
-    }
-    if (value == null) {
-      visitor.visitValue(JsonValue.nullValue());
       return;
     }
     var spec = binder.spec(value.getClass());
@@ -309,7 +312,11 @@ final class Specs {
     visitor.visitValue(JsonValue.fromAny(value));
   }
 
-  static void acceptElement(String name, Object value, Binder binder, ObjectVisitor visitor) {
+  static void acceptMember(String name, Object value, Binder binder, ObjectVisitor visitor) {
+    if (value == null) {
+      visitor.visitMemberValue(name, JsonValue.nullValue());
+      return;
+    }
     if (value instanceof Iterable<?> list) {
       var arrayVisitor = visitor.visitMemberArray(name);
       if (arrayVisitor != null) {
@@ -338,10 +345,6 @@ final class Specs {
       }
       return;
     }
-    if (value == null) {
-      visitor.visitMemberValue(name, JsonValue.nullValue());
-      return;
-    }
     var spec = binder.spec(value.getClass());
     if (spec instanceof ClassSpec classSpec) {
       var objectVisitor = visitor.visitMemberObject(name);
@@ -351,7 +354,7 @@ final class Specs {
       return;
     }
     if (spec instanceof ValueSpec valueSpec) {
-      valueSpec.acceptElement(name, value, visitor);
+      valueSpec.acceptMember(name, value, visitor);
       return;
     }
     visitor.visitMemberValue(name, JsonValue.fromAny(value));
@@ -375,9 +378,7 @@ final class Specs {
 
   private static Object acceptStream(Stream<?> stream, Binder binder, ArrayVisitor arrayVisitor) {
     arrayVisitor.visitStartArray();
-    stream.forEach(item -> {
-      acceptValue(item, binder, arrayVisitor);
-    });
+    stream.forEach(item -> acceptValue(item, binder, arrayVisitor));
     return arrayVisitor.visitEndArray();
   }
 
@@ -385,7 +386,7 @@ final class Specs {
     objectVisitor.visitStartObject();
     map.forEach((key, value) -> {
       var name = key.toString();
-      acceptElement(name, value, binder, objectVisitor);
+      acceptMember(name, value, binder, objectVisitor);
     });
     return objectVisitor.visitEndObject();
   }

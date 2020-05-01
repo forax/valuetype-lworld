@@ -158,7 +158,7 @@ public final class Binder {
   }
 
   /**
-   * Register a spec finder to the current binder.
+   * Register a spec finder to the current binder after all the other spec finders.
    * When {@link #spec(Type) looking up} for a spec, the binder will test the first registered
    * finder first.
    *
@@ -176,7 +176,7 @@ public final class Binder {
         || type == Boolean.class || type == Integer.class || type == Long.class || type == Double.class
         || type == String.class || type == BigInteger.class || type == BigDecimal.class
         || type == Object.class) {
-      return Spec.typedValue(type.getName(), null);
+      return Spec.newTypedValue(type.getName(), null);
     }
     for(var finder: finders) {
       var optSpec = finder.findSpec(type);

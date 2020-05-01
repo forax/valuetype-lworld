@@ -45,18 +45,28 @@ public interface SpecFinder {
   /**
    * Creates a spec finder able to read/write any records.
    *
-   * The returned spec finder is not {@link Binder#register(SpecFinder) registered} to the binder.
-   *
    * @param lookup the security context that will be used to load the class necessary when
    *               {@link #read(Reader, Spec, BuilderConfig) reading} a JSON fragment.
    * @return a spec finder able to read/write records.
+   *
+   * @see Binder#register(SpecFinder)
    */
-  static SpecFinder newRecordFinder(
-      Lookup lookup, Function<? super Type, ? extends Spec> downwardFinder) {
+  static SpecFinder newRecordFinder(Lookup lookup, Function<? super Type, ? extends Spec> downwardFinder) {
     return SpecFinders.newRecordFinder(lookup, downwardFinder);
   }
 
-  static SpecFinder newAllowAnyTypeAsStringFinder() {
-    return SpecFinders.newAllowAnyTypeAsStringFinder();
+  /**
+   * Creates a spec finder that will returns
+   * {@link fr.umlv.jsonapi.JsonValue#fromOpaque(Object) opaque} value spec for any types.
+   *
+   * This spec finder should be the last registered, any finder registered later
+   * will never be called.
+   *
+   * @return a spec finder that consider any type as an opaque type.
+   *
+   * @see Binder#register(SpecFinder)
+   */
+  static SpecFinder newAnyTypesAsStringFinder() {
+    return SpecFinders.newAnyTypesAsStringFinder();
   }
 }

@@ -3,7 +3,7 @@ package fr.umlv.jsonapi.bind;
 import static java.lang.invoke.MethodType.methodType;
 
 import fr.umlv.jsonapi.JsonValue;
-import fr.umlv.jsonapi.bind.Spec.ClassLayout;
+import fr.umlv.jsonapi.bind.Spec.ObjectLayout;
 import fr.umlv.jsonapi.bind.Spec.Converter;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles.Lookup;
@@ -55,7 +55,7 @@ final class SpecFinders {
       } catch (NoSuchMethodException | IllegalAccessException e) {
         throw new Binder.BindingException(e);
       }
-      return Optional.of(Spec.typedObject(type.getSimpleName(), new ClassLayout<Object[]>() {
+      return Optional.of(Spec.newTypedObject(type.getSimpleName(), new ObjectLayout<Object[]>() {
         private RecordElement element(String name) {
           var recordElement = componentMap.get(name);
           if (recordElement == null) {
@@ -65,8 +65,8 @@ final class SpecFinders {
         }
 
         @Override
-        public Spec elementSpec(String name) {
-          return element(name).spec;
+        public Spec elementSpec(String memberName) {
+          return element(memberName).spec;
         }
 
         @Override
@@ -74,18 +74,18 @@ final class SpecFinders {
           return new Object[length];
         }
         @Override
-        public Object[] addObject(Object[] builder, String name, Object object) {
-          builder[element(name).index] = object;
+        public Object[] addObject(Object[] builder, String memberName, Object object) {
+          builder[element(memberName).index] = object;
           return builder;
         }
         @Override
-        public Object[] addArray(Object[] builder, String name, Object array) {
-          builder[element(name).index] = array;
+        public Object[] addArray(Object[] builder, String memberName, Object array) {
+          builder[element(memberName).index] = array;
           return builder;
         }
         @Override
-        public Object[] addValue(Object[] builder, String name, JsonValue value) {
-          builder[element(name).index] = value.asObject();
+        public Object[] addValue(Object[] builder, String memberName, JsonValue value) {
+          builder[element(memberName).index] = value.asObject();
           return builder;
         }
         @Override
@@ -100,7 +100,7 @@ final class SpecFinders {
         }
 
         @Override
-        public void accept(Object object, ElementVisitor elementVisitor) {
+        public void accept(Object object, MemberVisitor memberVisitor) {
           for(var accessor: accessors) {
             Object elementValue;
             try {
@@ -110,15 +110,15 @@ final class SpecFinders {
             } catch (Throwable throwable) { // an accessor can not throw a checked exception
               throw new Binder.BindingException(throwable);
             }
-            elementVisitor.visitElement(accessor.name, elementValue);
+            memberVisitor.visitMember(accessor.name, elementValue);
           }
         }
       }));
     };
   }
 
-  static SpecFinder newAllowAnyTypeAsStringFinder() {
-    return type -> Optional.of(Spec.typedValue(type.getTypeName(), new Converter() {
+  static SpecFinder newAnyTypesAsStringFinder() {
+    return type -> Optional.of(Spec.newTypedValue(type.getTypeName(), new Converter() {
       @Override
       public JsonValue convertTo(JsonValue value) {
         throw new Binder.BindingException("no default conversion");

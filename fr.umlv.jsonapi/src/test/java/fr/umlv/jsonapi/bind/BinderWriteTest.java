@@ -67,7 +67,7 @@ public class BinderWriteTest {
   @Test
   public void writeAnOpaqueType() {
     var binder = new Binder(lookup());
-    binder.register(SpecFinder.newAllowAnyTypeAsStringFinder());
+    binder.register(SpecFinder.newAnyTypesAsStringFinder());
     var map = new LinkedHashMap<String, Object>();
     map.put("id", 2475);
     map.put("date", LocalDate.of(2020, 2, 14));
