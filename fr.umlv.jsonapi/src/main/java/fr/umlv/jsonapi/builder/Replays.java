@@ -7,12 +7,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.stream.Stream;
 
-final class Acceptors {
-  private Acceptors() {
+final class Replays {
+  private Replays() {
     throw new AssertionError();
   }
 
-  private static void acceptValue(Object element, ArrayVisitor visitor) {
+  private static void replayValue(Object element, ArrayVisitor visitor) {
     if (element == null) {
       visitor.visitValue(JsonValue.nullValue());
       return;
@@ -20,28 +20,28 @@ final class Acceptors {
     if (element instanceof Iterable<?> iterable) {
       var arrayVisitor = visitor.visitArray();
       if (arrayVisitor == null) {
-        acceptIterable(iterable, arrayVisitor);
+        replayIterable(iterable, arrayVisitor);
       }
       return;
     }
     if (element instanceof Iterator<?> iterator) {
       var arrayVisitor = visitor.visitArray();
       if (arrayVisitor != null) {
-        acceptIterator(iterator, arrayVisitor);
+        replayIterator(iterator, arrayVisitor);
       }
       return;
     }
     if (element instanceof Stream<?> stream) {
       var arrayVisitor = visitor.visitArray();
       if (arrayVisitor != null) {
-        acceptStream(stream, arrayVisitor);
+        replayStream(stream, arrayVisitor);
       }
       return;
     }
     if (element instanceof Map<?,?> map) {
       var objectVisitor = visitor.visitObject();
       if (objectVisitor != null) {
-        acceptMap(map, objectVisitor);
+        replayMap(map, objectVisitor);
       }
       return;
     }
@@ -49,7 +49,7 @@ final class Acceptors {
     visitor.visitValue(value);
   }
 
-  private static void acceptMember(String name, Object element, ObjectVisitor visitor) {
+  private static void replayMember(String name, Object element, ObjectVisitor visitor) {
     if (element == null) {
       visitor.visitMemberValue(name, JsonValue.nullValue());
       return;
@@ -57,28 +57,28 @@ final class Acceptors {
     if (element instanceof Iterable<?> iterable) {
       var arrayVisitor = visitor.visitMemberArray(name);
       if (arrayVisitor != null) {
-        acceptIterable(iterable, arrayVisitor);
+        replayIterable(iterable, arrayVisitor);
       }
       return;
     }
     if (element instanceof Iterator<?> iterator) {
       var arrayVisitor = visitor.visitMemberArray(name);
       if (arrayVisitor != null) {
-        acceptIterator(iterator, arrayVisitor);
+        replayIterator(iterator, arrayVisitor);
       }
       return;
     }
     if (element instanceof Stream<?> stream) {
       var arrayVisitor = visitor.visitMemberArray(name);
       if (arrayVisitor != null) {
-        acceptStream(stream, arrayVisitor);
+        replayStream(stream, arrayVisitor);
       }
       return;
     }
     if (element instanceof Map<?,?> _map) {
       var objectVisitor = visitor.visitMemberObject(name);
       if (objectVisitor != null) {
-        acceptMap(_map, objectVisitor);
+        replayMap(_map, objectVisitor);
       }
       return;
     }
@@ -86,36 +86,36 @@ final class Acceptors {
     visitor.visitMemberValue(name, value);
   }
 
-  static Object acceptIterable(Iterable<?> iterable, ArrayVisitor arrayVisitor) {
+  static Object replayIterable(Iterable<?> iterable, ArrayVisitor arrayVisitor) {
     arrayVisitor.visitStartArray();
     for(Object item: iterable) {
-      acceptValue(item, arrayVisitor);
+      replayValue(item, arrayVisitor);
     }
     return arrayVisitor.visitEndArray();
   }
 
-  private static Object acceptIterator(Iterator<?> iterator, ArrayVisitor arrayVisitor) {
+  private static Object replayIterator(Iterator<?> iterator, ArrayVisitor arrayVisitor) {
     arrayVisitor.visitStartArray();
     while(iterator.hasNext()) {
-      acceptValue(iterator.next(), arrayVisitor);
+      replayValue(iterator.next(), arrayVisitor);
     }
     return arrayVisitor.visitEndArray();
   }
 
-  private static Object acceptStream(Stream<?> stream, ArrayVisitor arrayVisitor) {
+  private static Object replayStream(Stream<?> stream, ArrayVisitor arrayVisitor) {
     arrayVisitor.visitStartArray();
     stream.forEach(item -> {
-      acceptValue(item, arrayVisitor);
+      replayValue(item, arrayVisitor);
     });
     return arrayVisitor.visitEndArray();
   }
 
-  static Object acceptMap(Map<?,?> map, ObjectVisitor objectVisitor) {
+  static Object replayMap(Map<?,?> map, ObjectVisitor objectVisitor) {
     objectVisitor.visitStartObject();
     for(var entry: map.entrySet()) {
       var name = entry.getKey().toString();
       var value = entry.getValue();
-      acceptMember(name, value, objectVisitor);
+      replayMember(name, value, objectVisitor);
     }
     return objectVisitor.visitEndObject();
   }

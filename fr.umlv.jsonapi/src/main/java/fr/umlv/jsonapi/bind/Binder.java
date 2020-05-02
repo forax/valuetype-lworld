@@ -614,8 +614,8 @@ public final class Binder {
    * @return the result returned by either the method {@link ObjectVisitor#visitEndObject()} or
    *         by the method {@link ArrayVisitor#visitEndArray()} of the visitor
    */
-  public Object accept(Object value, Object visitor) {
-    return Specs.acceptRoot(value, this, RootVisitor.createFromOneVisitor(visitor));
+  public Object replay(Object value, Object visitor) {
+    return Specs.replayRoot(value, this, RootVisitor.createFromOneVisitor(visitor));
   }
 
   /**
@@ -628,10 +628,10 @@ public final class Binder {
    * @return the result returned by either the method {@link ObjectVisitor#visitEndObject()} or
    *         by the method {@link ArrayVisitor#visitEndArray()} of the visitors
    */
-  public Object accept(Object value, ObjectVisitor objectVisitor, ArrayVisitor arrayVisitor) {
+  public Object replay(Object value, ObjectVisitor objectVisitor, ArrayVisitor arrayVisitor) {
     requireNonNull(objectVisitor);
     requireNonNull(arrayVisitor);
-    return Specs.acceptRoot(value, this, new RootVisitor(RootVisitor.BOTH, objectVisitor, arrayVisitor));
+    return Specs.replayRoot(value, this, new RootVisitor(RootVisitor.BOTH, objectVisitor, arrayVisitor));
   }
 
 
@@ -643,7 +643,7 @@ public final class Binder {
    * @throws IOException if an IO error occurs
    * @throws BindingException if an object has no corresponding {@link #spec(Type) spec}
    *
-   * @see #accept(Object, Object)
+   * @see #replay(Object, Object)
    * @see #spec(Type)
    */
   @SuppressWarnings("resource")
@@ -652,7 +652,7 @@ public final class Binder {
     requireNonNull(value);
     var jsonWriter = new JsonWriter(writer);
     try {
-      accept(value, jsonWriter, jsonWriter);
+      replay(value, jsonWriter, jsonWriter);
     } catch(UncheckedIOException e) {
       throw e.getCause();
     }
@@ -671,7 +671,7 @@ public final class Binder {
   public String write(Object value) {
     requireNonNull(value);
     var printer = new JsonPrinter();
-    accept(value, printer, printer);
+    replay(value, printer, printer);
     return printer.toString();
   }
 
@@ -683,7 +683,7 @@ public final class Binder {
    * @throws IOException if an IO error occurs
    * @throws BindingException if an object has no corresponding {@link #spec(Type) spec}
    *
-   * @see #accept(Object, Object)
+   * @see #replay(Object, Object)
    * @see #spec(Type)
    */
   public void write(Path path, Object value) throws IOException {

@@ -237,8 +237,8 @@ public class BinderReadTest {
           }
 
           @Override
-          public void accept(Object object, MemberVisitor memberVisitor) {
-            layout.accept(object, (name, value) -> memberVisitor
+          public void replay(Object object, MemberVisitor memberVisitor) {
+            layout.replay(object, (name, value) -> memberVisitor
                 .visitMember(reverseRename(name), value));
           }
         }
@@ -307,7 +307,7 @@ public class BinderReadTest {
       }
 
       @Override
-      public void accept(Object object, MemberVisitor memberVisitor) {
+      public void replay(Object object, MemberVisitor memberVisitor) {
         throw new AssertionError();
       }
     }

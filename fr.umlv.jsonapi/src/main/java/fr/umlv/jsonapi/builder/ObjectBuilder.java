@@ -13,7 +13,6 @@ import fr.umlv.jsonapi.internal.PostOpsArrayVisitor;
 import fr.umlv.jsonapi.internal.PostOpsObjectVisitor;
 import java.util.Map;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * An untyped builder of a representation of a JSON object.
@@ -264,6 +263,6 @@ public final class ObjectBuilder implements ObjectVisitor {
    */
   public Object replay(ObjectVisitor objectVisitor) {
     requireNonNull(objectVisitor);
-    return Acceptors.acceptMap(map, objectVisitor);
+    return Replays.replayMap(map, objectVisitor);
   }
 }

@@ -166,7 +166,7 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
       }
 
       @Override
-      public void accept(Object object, MemberVisitor memberVisitor) {
+      public void replay(Object object, MemberVisitor memberVisitor) {
         @SuppressWarnings("unchecked")
         var map = (Map<String, Object>) object;
         map.forEach(memberVisitor::visitMember);
@@ -325,7 +325,7 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
     B addValue(B builder, JsonValue value);
     Object build(B builder);
 
-    //void accept(Object object, Consumer<? super Object> valueVisitor);
+    //void replay(Object object, Consumer<? super Object> valueVisitor);
   }
 
     /**
@@ -350,7 +350,7 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
    *
    * <p>The way to encode a JSON object is to receive a visitor that should be called
    *    for each member of the class (the pair field name/field value).
-   *    The method {@link #accept(Object, MemberVisitor)} is called with an instance of
+   *    The method {@link #replay(Object, MemberVisitor)} is called with an instance of
    *    the class to encode to JSON and the visitor to call on a members.
    *    When encoding, the {@link #memberSpec(String) member spec} is not used because
    *    it represent the compile time type of a member, the dynamic type of the member value
@@ -423,7 +423,7 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
      *        {@link MemberVisitor#visitMember(String, Object)} that should be called once
      *        per members with the member value
      */
-    void accept(Object object, MemberVisitor memberVisitor);
+    void replay(Object object, MemberVisitor memberVisitor);
 
     /**
      * A visitor of the member of a Java object
@@ -470,9 +470,9 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
         }
 
         @Override
-        public void accept(Object object, MemberVisitor memberVisitor) {
+        public void replay(Object object, MemberVisitor memberVisitor) {
            var result = converter.convertFrom(JsonValue.fromOpaque(object)).asObject();
-           layout.accept(result, memberVisitor);
+           layout.replay(result, memberVisitor);
         }
       };
     }

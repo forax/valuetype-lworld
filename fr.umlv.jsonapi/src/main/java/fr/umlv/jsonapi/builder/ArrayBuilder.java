@@ -220,6 +220,6 @@ public final class ArrayBuilder implements ArrayVisitor {
    */
   public Object replay(ArrayVisitor arrayVisitor) {
     requireNonNull(arrayVisitor);
-    return Acceptors.acceptIterable(list, arrayVisitor);
+    return Replays.replayIterable(list, arrayVisitor);
   }
 }

@@ -11,7 +11,8 @@ package fr.umlv.jsonapi;
  * specific method} inside the array visit.
  *
  * The code of the {@link JsonReader JSON reader} works differently depending on the visitor mode
- * and some methods throws an exception if they are called with a visitor not in the right mode.
+ * and some methods throws an {@link IllegalStateException} if they are called with a visitor
+ * not in the right mode.
  */
 public enum VisitorMode {
   PUSH, PULL, PULL_INSIDE

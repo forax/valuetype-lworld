@@ -100,7 +100,7 @@ final class SpecFinders {
         }
 
         @Override
-        public void accept(Object object, MemberVisitor memberVisitor) {
+        public void replay(Object object, MemberVisitor memberVisitor) {
           for(var accessor: accessors) {
             Object elementValue;
             try {
