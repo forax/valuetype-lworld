@@ -2,7 +2,6 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/fr.umlv.jsonapi/fr.umlv.jsonapi.iml" filepath="$PROJECT_DIR$/fr.umlv.jsonapi/fr.umlv.jsonapi.iml" />
       <module fileurl="file://$PROJECT_DIR$/fr.umlv.valuetype/fr.umlv.valuetype.iml" filepath="$PROJECT_DIR$/fr.umlv.valuetype/fr.umlv.valuetype.iml" />
       <module fileurl="file://$PROJECT_DIR$/valuetype-lword.iml" filepath="$PROJECT_DIR$/valuetype-lword.iml" />
     </modules>
