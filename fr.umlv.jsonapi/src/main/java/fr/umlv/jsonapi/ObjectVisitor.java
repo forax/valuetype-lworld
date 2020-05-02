@@ -165,10 +165,24 @@ public interface ObjectVisitor {
    */
   Object visitEndObject();
 
+  /**
+   * Returns a new object visitor that can rename each member name of the visited
+   * JSON objects recursively.
+   *
+   * @param renamer a function that give a new name to an object member
+   * @return a new object visitor that can rename members name of the visited JSON objects
+   */
   default ObjectVisitor mapName(UnaryOperator<String> renamer) {
     return new RenamerObjectVisitor(this, renamer);
   }
 
+  /**
+   * Returns a new object visitor that can remove members of the visited JSON objects recursively.
+   *
+   * @param predicate a function that is called for each object members seen.
+   *                  If the return value of the predicate is false, the member will not be visited.
+   * @return a new object visitor that can remove members of the visited JSON objects * recursively.
+   */
   default ObjectVisitor filterName(Predicate<? super String> predicate) {
     return new FilterObjectVisitor(this, predicate);
   }
