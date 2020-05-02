@@ -126,7 +126,7 @@ final class SpecFinders {
 
       @Override
       public JsonValue convertFrom(JsonValue value) {
-        return JsonValue.from(value.toString());   // convert to string
+        return JsonValue.from(value.convertToString());
       }
     }));
   }
