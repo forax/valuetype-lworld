@@ -2,17 +2,35 @@ package fr.umlv.jsonapi;
 
 import java.util.Objects;
 
+/**
+ * A visitor implementing bot {@link ObjectVisitor} and {@link ArrayVisitor} interfaces
+ * able to encode a series of visit calls to a JSON text
+ */
 public final class JsonPrinter implements ObjectVisitor, ArrayVisitor {
   private final StringBuilder builder;
   private String separator = "";
 
+  /**
+   * Creates a printer with a builder that will be used to store the JSON text
+   * @param builder the string builder
+   */
   public JsonPrinter(StringBuilder builder) {
     this.builder = Objects.requireNonNull(builder);
   }
+
+  /**
+   * Creates a printer
+   *
+   * @see #JsonPrinter(StringBuilder)
+   */
   public JsonPrinter() {
     this(new StringBuilder());
   }
 
+  /**
+   * Returns the JSON text
+   * @return the JSON text
+   */
   @Override
   public String toString() {
     return builder.toString();
