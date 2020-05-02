@@ -1,6 +1,8 @@
 package fr.umlv.jsonapi.builder;
 
 import static fr.umlv.jsonapi.VisitorMode.PULL;
+import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.unmodifiableMap;
 import static java.util.Objects.requireNonNull;
 import static java.util.function.UnaryOperator.identity;
 
@@ -135,7 +137,7 @@ public class BuilderConfig {
    * @return a new object builder initialized with the current configuration.
    */
   public ObjectBuilder newObjectBuilder() {
-    return new ObjectBuilder(this, null);
+    return new ObjectBuilder(this, (ObjectVisitor) null);
   }
 
   /**
@@ -161,13 +163,20 @@ public class BuilderConfig {
   }
 
   /**
+   * Creates an unmodifiable object builder that wrap an existing java.util.Map
+   * @param map a java.util.Map
+   */
+  public ObjectBuilder wrap(Map<String, ?> map) {
+    return new ObjectBuilder(this, unmodifiableMap(map));
+  }
+
+  /**
    * Returns a new array builder initialized with the current configuration.
    * @return a new array builder initialized with the current configuration.
    */
   public ArrayBuilder newArrayBuilder() {
-    return new ArrayBuilder(this, null);
+    return new ArrayBuilder(this, (ArrayVisitor) null);
   }
-
 
   /**
    * Return a new array builder initialized with the current configuration
@@ -189,6 +198,14 @@ public class BuilderConfig {
       throw new IllegalArgumentException("only pull mode visitors are allowed");
     }
     return new ArrayBuilder(this, delegate);
+  }
+
+  /**
+   * Creates an unmodifiable array builder that wrap an existing java.util.List
+   * @param list a java.util.List
+   */
+  public ArrayBuilder wrap(List<?> list) {
+    return new ArrayBuilder(this, unmodifiableList(list));
   }
 
   /**

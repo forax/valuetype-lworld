@@ -66,6 +66,13 @@ public final class ArrayBuilder implements ArrayVisitor {
     this.postOp = postOp;
   }
 
+  ArrayBuilder(BuilderConfig config, List<Object> list) {
+    this.list = list;
+    this.config = config;
+    this.delegate = null;
+    this.postOp = __ -> {};
+  }
+
   ArrayBuilder(BuilderConfig config, ArrayVisitor delegate) {
     this(config, delegate, __ -> {});
   }
@@ -77,7 +84,7 @@ public final class ArrayBuilder implements ArrayVisitor {
    * @see BuilderConfig
    */
   public ArrayBuilder() {
-    this(BuilderConfig.DEFAULT, null);
+    this(BuilderConfig.DEFAULT, (ArrayVisitor) null);
   }
 
 

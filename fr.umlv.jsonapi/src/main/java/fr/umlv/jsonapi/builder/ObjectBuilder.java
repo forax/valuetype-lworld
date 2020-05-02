@@ -74,6 +74,13 @@ public final class ObjectBuilder implements ObjectVisitor {
     this.postOp = postOp;
   }
 
+  ObjectBuilder(BuilderConfig config, Map<String, Object> map) {
+    this.map = map;
+    this.config = config;
+    this.delegate = null;
+    this.postOp = __ -> {};
+  }
+
   ObjectBuilder(BuilderConfig config, ObjectVisitor delegate) {
     this(config, delegate, __ -> {});
   }
@@ -85,7 +92,7 @@ public final class ObjectBuilder implements ObjectVisitor {
    * @see BuilderConfig
    */
   public ObjectBuilder() {
-    this(BuilderConfig.DEFAULT, null);
+    this(BuilderConfig.DEFAULT, (ObjectVisitor) null);
   }
 
   @Override
@@ -154,7 +161,7 @@ public final class ObjectBuilder implements ObjectVisitor {
   public ObjectBuilder with(String name, Consumer<? super ObjectBuilder> consumer) {
     requireNonNull(name);
     requireNonNull(consumer);
-    var builder = new ObjectBuilder(config, null);
+    var builder = new ObjectBuilder(config, (ObjectVisitor) null);
     consumer.accept(builder);
     add(name, builder.toMap());
     return this;

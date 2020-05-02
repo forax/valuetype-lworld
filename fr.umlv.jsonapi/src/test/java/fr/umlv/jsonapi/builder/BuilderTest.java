@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import fr.umlv.jsonapi.ArrayVisitor;
+import fr.umlv.jsonapi.JsonPrinter;
 import fr.umlv.jsonapi.JsonReader;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
@@ -314,5 +315,29 @@ public class BuilderTest {
     });
     var point = stream.map(o -> (Map<String, Object>) o).findFirst().orElseThrow();
     assertEquals(Map.of("x", 4, "y", 7), point);
+  }
+
+  @Test
+  public void testWrapObject() {
+    var map = new LinkedHashMap<String, Integer>();
+    map.put("x", 3);
+    map.put("y", 14);
+    var builder = BuilderConfig.DEFAULT.wrap(map);
+    var printer = new JsonPrinter();
+    builder.accept(printer);
+    assertEquals("""
+        { "x": 3, "y": 14 }\
+        """, printer.toString());
+  }
+
+  @Test
+  public void testWrapArray() {
+    var list = List.of(5, "foo", 5.6);
+    var builder = BuilderConfig.DEFAULT.wrap(list);
+    var printer = new JsonPrinter();
+    builder.accept(printer);
+    assertEquals("""
+        [ 5, "foo", 5.6 ]\
+        """, printer.toString());
   }
 }
