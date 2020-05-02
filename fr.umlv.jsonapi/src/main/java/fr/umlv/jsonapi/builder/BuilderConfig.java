@@ -207,22 +207,4 @@ public class BuilderConfig {
   public ArrayBuilder wrap(List<?> list) {
     return new ArrayBuilder(this, unmodifiableList(list));
   }
-
-  /**
-   * Extract the configuration of an existing builder.
-   * @param builder the builder which is configured with a configuration we request
-   * @return the configuration of an existing builder.
-   */
-  public static BuilderConfig extract(ObjectBuilder builder) {
-    return builder.config;   // implicit null check
-  }
-
-  /**
-   * Extract the configuration of an existing builder.
-   * @param builder the builder which is configured with a configuration we request
-   * @return the configuration of an existing builder.
-   */
-  public static BuilderConfig extract(ArrayBuilder builder) {
-    return builder.config;  // implicit null check
-  }
 }

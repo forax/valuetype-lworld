@@ -5,25 +5,21 @@ import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.VisitorMode;
 import fr.umlv.jsonapi.bind.Specs.StreamSpec;
-import fr.umlv.jsonapi.builder.BuilderConfig;
-
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 final class BindStreamVisitor implements ArrayVisitor {
   private final StreamSpec spec;
-  private final BuilderConfig config;
 
   private final Consumer<Object> postOp;
 
-  BindStreamVisitor(StreamSpec spec, BuilderConfig config, Consumer<Object> postOp) {
+  BindStreamVisitor(StreamSpec spec, Consumer<Object> postOp) {
     this.spec = spec;
-    this.config = config;
     this.postOp = postOp;
   }
 
-  BindStreamVisitor(StreamSpec spec, BuilderConfig config) {
-    this(spec, config, __ -> { /* empty */ });
+  BindStreamVisitor(StreamSpec spec) {
+    this(spec, __ -> { /* empty */ });
   }
 
   @Override
@@ -40,12 +36,12 @@ final class BindStreamVisitor implements ArrayVisitor {
 
   @Override
   public ObjectVisitor visitObject() {
-    return spec.newObjectFrom(config);
+    return spec.newObjectFrom();
   }
 
   @Override
   public ArrayVisitor visitArray() {
-    return spec.newArrayFrom(config);
+    return spec.newArrayFrom();
   }
 
   @Override

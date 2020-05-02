@@ -6,25 +6,21 @@ import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.VisitorMode;
 import fr.umlv.jsonapi.bind.Spec.ObjectLayout;
 import fr.umlv.jsonapi.bind.Specs.ClassSpec;
-import fr.umlv.jsonapi.builder.BuilderConfig;
-
 import java.util.function.Consumer;
 
 final class BindClassVisitor implements ObjectVisitor {
   private final ClassSpec spec;
-  private final BuilderConfig config;
   private Object builder;
   private final Consumer<Object> postOp;
 
-  BindClassVisitor(ClassSpec spec, BuilderConfig config, Consumer<Object> postOp) {
+  BindClassVisitor(ClassSpec spec, Consumer<Object> postOp) {
     this.spec = spec;
-    this.config = config;
     this.postOp = postOp;
     this.builder = spec.objectLayout().newBuilder();
   }
 
-  BindClassVisitor(ClassSpec spec, BuilderConfig config) {
-    this(spec, config, __ -> { /* empty */ });
+  BindClassVisitor(ClassSpec spec) {
+    this(spec, __ -> { /* empty */ });
   }
 
   @Override
@@ -39,8 +35,8 @@ final class BindClassVisitor implements ObjectVisitor {
       return null;
     }
     @SuppressWarnings("unchecked")
-    var classInfo = (ObjectLayout<Object>) spec.objectLayout();
-    return spec.newMemberObject(name, config, o -> builder = classInfo.addObject(builder, name, o));
+    var objectLayout = (ObjectLayout<Object>) spec.objectLayout();
+    return spec.newMemberObject(name, o -> builder = objectLayout.addObject(builder, name, o));
   }
 
   @Override
@@ -50,8 +46,8 @@ final class BindClassVisitor implements ObjectVisitor {
       return null;
     }
     @SuppressWarnings("unchecked")
-    var classInfo = (ObjectLayout<Object>) spec.objectLayout();
-    return spec.newMemberArray(name, config, a -> builder = classInfo.addArray(builder, name, a));
+    var objectLayout = (ObjectLayout<Object>) spec.objectLayout();
+    return spec.newMemberArray(name, a -> builder = objectLayout.addArray(builder, name, a));
   }
 
   @Override
@@ -61,17 +57,17 @@ final class BindClassVisitor implements ObjectVisitor {
       return null;
     }
     @SuppressWarnings("unchecked")
-    var classInfo = (ObjectLayout<Object>) spec.objectLayout();
+    var objectLayout = (ObjectLayout<Object>) spec.objectLayout();
     var converted = Specs.convert(spec, name, value);
-    builder = classInfo.addValue(builder, name, converted);
+    builder = objectLayout.addValue(builder, name, converted);
     return null;
   }
 
   @Override
   public Object visitEndObject() {
     @SuppressWarnings("unchecked")
-    var classInfo = (ObjectLayout<Object>) spec.objectLayout();
-    var instance = classInfo.build(builder);
+    var objectLayout = (ObjectLayout<Object>) spec.objectLayout();
+    var instance = objectLayout.build(builder);
     builder = null;
     postOp.accept(instance);
     return instance;

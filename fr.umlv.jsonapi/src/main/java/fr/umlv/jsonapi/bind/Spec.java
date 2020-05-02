@@ -1,20 +1,27 @@
 package fr.umlv.jsonapi.bind;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.function.UnaryOperator.identity;
 
 import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
-import fr.umlv.jsonapi.bind.Specs.ArraySpec;
 import fr.umlv.jsonapi.bind.Specs.ClassSpec;
-import fr.umlv.jsonapi.bind.Specs.ObjectSpec;
+import fr.umlv.jsonapi.bind.Specs.CollectionSpec;
 import fr.umlv.jsonapi.bind.Specs.StreamSpec;
 import fr.umlv.jsonapi.bind.Specs.ValueSpec;
 import fr.umlv.jsonapi.builder.BuilderConfig;
 import java.io.Reader;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
+import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 /**
@@ -68,13 +75,95 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
    * Wrap the current spec into a JSON array, the result will a {@link java.util.List}.
    * @return a new spec that see a JSON array as a List.
    */
-  default Spec array() { return new ArraySpec(this); }
+  default Spec array() { return array(ArrayList::new, Collections::unmodifiableList); }
+
+  default Spec array(Supplier<? extends List<Object>> supplier, UnaryOperator<List<Object>> op) {
+    requireNonNull(supplier);
+    requireNonNull(op);
+    return new CollectionSpec(this, new ArrayLayout<List<Object>>() {
+      @Override
+      public List<Object> newBuilder() {
+        return supplier.get();
+      }
+
+      @Override
+      public List<Object> addObject(List<Object> builder, Object object) {
+        builder.add(object);
+        return builder;
+      }
+
+      @Override
+      public List<Object> addArray(List<Object> builder, Object array) {
+        builder.add(array);
+        return builder;
+      }
+
+      @Override
+      public List<Object> addValue(List<Object> builder, JsonValue value) {
+        builder.add(value.asObject());
+        return builder;
+      }
+
+      @Override
+      public Object build(List<Object> builder) {
+        return op.apply(builder);
+      }
+    });
+  }
 
   /**
    * Wrap the current spec into a JSON object, the result will a {@link java.util.Map}.
    * @return a new spec that see a JSON object as a Map.
    */
-  default Spec object() { return new ObjectSpec(this, null); }
+  default Spec object() {
+    return object(HashMap::new, Collections::unmodifiableMap);
+  }
+
+  default Spec object(Supplier<? extends Map<String, Object>> supplier, UnaryOperator<Map<String, Object>> op) {
+    requireNonNull(supplier);
+    requireNonNull(op);
+    return new ClassSpec("Map", null, new ObjectLayout<Map<String, Object>>() {
+      @Override
+      public Spec memberSpec(String memberName) {
+        return Spec.this;
+      }
+
+      @Override
+      public Map<String, Object> newBuilder() {
+        return supplier.get();
+      }
+
+      @Override
+      public Map<String, Object> addObject(Map<String, Object> builder, String memberName, Object object) {
+        builder.put(memberName, object);
+        return builder;
+      }
+
+      @Override
+      public Map<String, Object> addArray(Map<String, Object> builder, String memberName, Object array) {
+        builder.put(memberName, array);
+        return builder;
+      }
+
+      @Override
+      public Map<String, Object> addValue(Map<String, Object> builder, String memberName, JsonValue value) {
+        builder.put(memberName, value.asObject());
+        return builder;
+      }
+
+      @Override
+      public Object build(Map<String, Object> builder) {
+        return op.apply(builder);
+      }
+
+      @Override
+      public void accept(Object object, MemberVisitor memberVisitor) {
+        @SuppressWarnings("unchecked")
+        var map = (Map<String, Object>) object;
+        map.forEach(memberVisitor::visitMember);
+      }
+    });
+  }
 
   /**
    * Wrap the current spec into a JSON array, the array is decoded using a {@link Stream stream}
@@ -108,9 +197,6 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
    */
   default Spec filterName(Predicate<? super String> predicate) {
     requireNonNull(predicate);
-    if (this instanceof ObjectSpec objectSpec) {
-      return objectSpec.filterWith(predicate);
-    }
     if (this instanceof ClassSpec classSpec) {
       return classSpec.filterWith(predicate);
     }
@@ -133,30 +219,10 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
     throw new IllegalArgumentException("can not apply a mapper to this spec");
   }
 
-
   /**
    * Returns either an {@link ObjectVisitor} or an {@link ArrayVisitor}, depending if the spec
    * represents a JSON object or a JSON array, that can be used to read a JSON fragment.
    * @param visitorType the type of visitor wanted ({@link ObjectVisitor} or {@link ArrayVisitor})
-   * @param <V> the type of the visitor
-   * @return a newly created {@link ObjectVisitor} or {@link ArrayVisitor}
-   *
-   * @throws IllegalArgumentException if the spec doesn't allow the kind of visitor requested
-   *
-   * @see Binder#read(Reader, Spec, BuilderConfig)
-   */
-  default <V> V createBindVisitor(Class<V> visitorType) {
-    return createBindVisitor(visitorType, Binder.DEFAULT_CONFIG, null);
-  }
-
-  /**
-   * Returns either an {@link ObjectVisitor} or an {@link ArrayVisitor}, depending if the spec
-   * represents a JSON object or a JSON array, that can be used to read a JSON fragment.
-   * @param visitorType the type of visitor wanted ({@link ObjectVisitor} or {@link ArrayVisitor})
-   * @param config the configuration of the builder that will be used if necessary
-   * @param delegate a delegate if the spec represent a {@link java.util.List} or a
-   *                 {@link java.util.Map} or {code null}
-   *                 (see {@link BuilderConfig#newObjectBuilder(ObjectVisitor)})
    * @param <V> the type of the visitor
    * @return a newly created {@link ObjectVisitor} or {@link ArrayVisitor}
    *
@@ -165,26 +231,16 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
    *
    * @see Binder#read(Reader, Spec, BuilderConfig)
    */
-  default <V> V createBindVisitor(Class<? extends V> visitorType, BuilderConfig config, V delegate) {
+  default <V> V createBindVisitor(Class<? extends V> visitorType) {
     requireNonNull(visitorType);
-    requireNonNull(config);
-    if (this instanceof ObjectSpec objectSpec) {
-      if (delegate != null && !(delegate instanceof ObjectVisitor)) {
-        throw new IllegalArgumentException("delegate should be a subclass of ObjectVisitor or null");
-      }
-      return visitorType.cast(new BindObjectVisitor(objectSpec, config.newObjectBuilder((ObjectVisitor) delegate)));
-    }
-    if (this instanceof ArraySpec arraySpec) {
-      if (delegate != null && !(delegate instanceof ArrayVisitor)) {
-        throw new IllegalArgumentException("delegate should be a subclass of ArrayVisitor or null");
-      }
-      return visitorType.cast(new BindArrayVisitor(arraySpec, config.newArrayBuilder((ArrayVisitor) delegate)));
+    if (this instanceof CollectionSpec collectionSpec) {
+      return visitorType.cast(new BindCollectionVisitor(collectionSpec));
     }
     if (this instanceof StreamSpec streamSpec) {
-      return visitorType.cast(new BindStreamVisitor(streamSpec, config));
+      return visitorType.cast(new BindStreamVisitor(streamSpec));
     }
     if (this instanceof ClassSpec classSpec) {
-      return visitorType.cast(new BindClassVisitor(classSpec, config));
+      return visitorType.cast(new BindClassVisitor(classSpec));
     }
     throw new IllegalArgumentException("can not create a visitor on this spec");
   }
@@ -240,7 +296,17 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
     JsonValue convertFrom(JsonValue object);
   }
 
-  /**
+  interface ArrayLayout<B> {
+    B newBuilder();
+    B addObject(B builder, Object object);
+    B addArray(B builder, Object array);
+    B addValue(B builder, JsonValue value);
+    Object build(B builder);
+
+    //void accept(Object object, Consumer<? super Object> valueVisitor);
+  }
+
+    /**
    * Abstraction that represent a Java class that can be decoded from JSON and encoded to JSON
    *
    * <p>The way to decode a JSON object to any class is to use a builder like API which

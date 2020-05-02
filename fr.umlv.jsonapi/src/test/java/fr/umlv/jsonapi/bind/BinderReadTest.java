@@ -12,9 +12,8 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import fr.umlv.jsonapi.JsonReader;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.bind.Binder.BindingException;
-import fr.umlv.jsonapi.bind.Spec.ObjectLayout;
 import fr.umlv.jsonapi.bind.Spec.Converter;
-import fr.umlv.jsonapi.builder.BuilderConfig;
+import fr.umlv.jsonapi.bind.Spec.ObjectLayout;
 import java.time.LocalDate;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -111,7 +110,7 @@ public class BinderReadTest {
         [ { "color": "red", "lines": 3 }, { "color": "blue", "lines": 1 } ]
         """;
     var any = binder.spec(Object.class);
-    Object array = Binder.read(json, any.object().array(), BuilderConfig.defaults());
+    Object array = Binder.read(json, any.object().array());
     assertEquals(
         List.of(
             Map.of("color", "red", "lines", 3),
@@ -127,7 +126,7 @@ public class BinderReadTest {
         """;
     record Shape(String color, int lines) { }
     var spec = binder.spec(Shape.class).stream(s -> s.findFirst().orElseThrow());
-    var shape = (Shape) Binder.read(json, spec, BuilderConfig.defaults());
+    var shape = (Shape) Binder.read(json, spec);
     assertEquals(new Shape("red", 3), shape);
   }
 
@@ -261,9 +260,7 @@ public class BinderReadTest {
         }
         """;
     record Author(String name, int age, List<String> books) { }
-    var config = BuilderConfig.defaults()
-        .withTransformOps(Map::copyOf, List::copyOf);
-    var author = binder.read(json, Author.class, config);
+    var author = binder.read(json, Author.class);
     assertThrows(UnsupportedOperationException.class, () -> author.books().add("foo"));
   }
 
@@ -317,7 +314,7 @@ public class BinderReadTest {
 
     var pixelSpec = Spec.newTypedObject("Pixel", new PixelObjectLayout());
     @SuppressWarnings("unchecked")
-    var pixel = (Map<String,Object>) Binder.read(json, pixelSpec, BuilderConfig.defaults());
+    var pixel = (Map<String,Object>) Binder.read(json, pixelSpec);
     assertEquals(Map.of("x", 1, "y", 3, "color", "red"), pixel);
     assertThrows(UnsupportedOperationException.class, () -> pixel.put("x", 100));
   }
@@ -342,7 +339,7 @@ public class BinderReadTest {
         [ [ 1, 2, 3, 4, 5 ], [ 4, 6, 8, 10 ] ]
         """;
     var streamSpec = binder.spec(Object.class).stream(s -> s.mapToInt(o -> (int) o).toArray());
-    Stream<int[]> stream = Binder.stream(json, streamSpec, BuilderConfig.defaults()).map(o -> (int[]) o);
+    Stream<int[]> stream = Binder.stream(json, streamSpec).map(o -> (int[]) o);
     assertArrayEquals(
         new int[] { 1, 2, 3, 4, 5, 4, 6, 8, 10 },
         stream.flatMapToInt(Arrays::stream).toArray());

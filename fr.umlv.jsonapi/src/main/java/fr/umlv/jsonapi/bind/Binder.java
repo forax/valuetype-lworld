@@ -50,7 +50,7 @@ import java.util.stream.Stream;
  * to get a binder with no spec finders registered use {@link Binder#noDefaults()}.
  *
  * <p>To transform a JSON text to an object, it exists several variants of the method
- * {@link #read(Reader, Spec, BuilderConfig)} and {@link #stream(Reader, Spec, BuilderConfig)}.
+ * {@link #read(Reader, Spec)} and {@link #stream(Reader, Spec)}.
  *
  * By example, to read a simple record
  * <pre>
@@ -155,7 +155,7 @@ public final class Binder {
   /**
    * Creates a binder with default {@link SpecFinder}s pre-{@link #register(SpecFinder) registered}.
    * @param lookup the security context that will be used to load the class necessary when
-   *               {@link #read(Reader, Spec, BuilderConfig) reading} a JSON fragment.
+   *               {@link #read(Reader, Spec) reading} a JSON fragment.
    *
    * @see java.lang.invoke.MethodHandles#lookup()
    * @see #noDefaults()
@@ -277,9 +277,10 @@ public final class Binder {
    */
   public static final ArrayToken IN_ARRAY = null;
 
+
   /**
    * Read a JSON fragment and convert it to an instance of the type in parameter.
-   * This method is a convenient method for {@link #read(Reader, Spec, BuilderConfig)}.
+   * This method is a convenient method for {@link #read(Reader, Spec)}.
    *
    * @param reader the reader containing the JSON fragment
    * @param type the type of the instance that should be returned
@@ -290,30 +291,12 @@ public final class Binder {
   public <T> T read(Reader reader, Class<? extends T> type) throws IOException {
     requireNonNull(reader);
     requireNonNull(type);
-    return read(reader, type, DEFAULT_CONFIG);
-  }
-
-  /**
-   * Read a JSON fragment and convert it to an instance of the type in parameter.
-   * This method is a convenient method for {@link #read(Reader, Spec, BuilderConfig)}.
-   *
-   * @param reader the reader containing the JSON fragment
-   * @param type the type of the instance that should be returned
-   * @param config the builder configuration used to create untyped JSON object and array
-   *               as {@link Map} and {@link List}.
-   * @param <T> the type of the instance that should be returned
-   * @return a new instance containing all the JSON data typed as Java values
-   * @throws IOException if an IO error occurs.
-   */
-  public <T> T read(Reader reader, Class<? extends T> type, BuilderConfig config) throws IOException {
-    requireNonNull(reader);
-    requireNonNull(type);
-    return type.cast(read(reader, specForClass(type), config));
+    return type.cast(read(reader, specForClass(type)));
   }
 
   /**
    * Read a JSON array and convert it to a list of instances of the type in parameter.
-   * This method is a convenient method for {@link #read(Reader, Spec, BuilderConfig)}.
+   * This method is a convenient method for {@link #read(Reader, Spec)}.
    *
    * @param reader the reader containing the JSON fragment
    * @param type the type of the instance that should be returned
@@ -328,12 +311,12 @@ public final class Binder {
   public <T> List<T> read(Reader reader, Class<? extends T> type, @SuppressWarnings("unused") ArrayToken __) throws IOException {
     requireNonNull(reader);
     requireNonNull(type);
-    return (List<T>) read(reader, specForClass(type).array(), DEFAULT_CONFIG);
+    return (List<T>) read(reader, specForClass(type).array());
   }
 
   /**
    * Read a JSON object and convert it to a map of instances of the type in parameter.
-   * This method is a convenient method for {@link #read(Reader, Spec, BuilderConfig)}.
+   * This method is a convenient method for {@link #read(Reader, Spec)}.
    *
    * @param reader the reader containing the JSON fragment
    * @param type the type of the instance that should be returned
@@ -346,7 +329,7 @@ public final class Binder {
   public <T> Map<String, T> read(Reader reader, Class<? extends T> type, @SuppressWarnings("unused") ObjectToken __) throws IOException {
     requireNonNull(reader);
     requireNonNull(type);
-    return (Map<String, T>) read(reader, specForClass(type).object(), DEFAULT_CONFIG);
+    return (Map<String, T>) read(reader, specForClass(type).object());
   }
 
   /**
@@ -354,21 +337,18 @@ public final class Binder {
    *
    * @param reader the reader containing the JSON fragment
    * @param spec the spec, a representation of how to decode a JSON value to a Java instance.
-   * @param config the builder configuration used to create untyped JSON object and array
-   *               as {@link Map} and {@link List}.
    * @return a new instance containing all the JSON data typed as Java values
    * @throws IOException if an IO error occurs.
    */
-  public static Object read(Reader reader, Spec spec, BuilderConfig config) throws IOException {
+  public static Object read(Reader reader, Spec spec) throws IOException {
     requireNonNull(reader);
     requireNonNull(spec);
-    requireNonNull(config);
-    return JsonReader.parse(reader, spec.createBindVisitor(Object.class, config, null));
+    return JsonReader.parse(reader, spec.createBindVisitor(Object.class));
   }
 
   /**
    * Read a JSON text and convert it to an instance of the type in parameter.
-   * This method is a convenient method for {@link #read(String, Spec, BuilderConfig)}.
+   * This method is a convenient method for {@link #read(String, Spec)}.
    *
    * @param text the text containing the JSON
    * @param type the type of the instance that should be returned
@@ -378,29 +358,12 @@ public final class Binder {
   public <T> T read(String text, Class<? extends T> type) {
     requireNonNull(text);
     requireNonNull(type);
-    return read(text, type, DEFAULT_CONFIG);
-  }
-
-  /**
-   * Read a JSON text and convert it to an instance of the type in parameter.
-   * This method is a convenient method for {@link #read(String, Spec, BuilderConfig)}.
-   *
-   * @param text the text containing the JSON
-   * @param type the type of the instance that should be returned
-   * @param config the builder configuration used to create untyped JSON object and array
-   *               as {@link Map} and {@link List}.
-   * @param <T> the type of the instance that should be returned
-   * @return a new instance containing all the JSON data typed as Java values
-   */
-  public <T> T read(String text, Class<? extends T> type, BuilderConfig config) {
-    requireNonNull(text);
-    requireNonNull(type);
-    return type.cast(read(text, specForClass(type), config));
+    return type.cast(read(text, specForClass(type)));
   }
 
   /**
    * Read a JSON text and convert it to a list of instances of the type in parameter.
-   * This method is a convenient method for {@link #read(String, Spec, BuilderConfig)}.
+   * This method is a convenient method for {@link #read(String, Spec)}.
    *
    * @param text the text containing the JSON
    * @param type the type of the instance that should be returned
@@ -414,12 +377,12 @@ public final class Binder {
   public <T> List<T> read(String text, Class<? extends T> type, @SuppressWarnings("unused") ArrayToken __) {
     requireNonNull(text);
     requireNonNull(type);
-    return (List<T>) read(text, specForClass(type).array(), DEFAULT_CONFIG);
+    return (List<T>) read(text, specForClass(type).array());
   }
 
   /**
    * Read a JSON object and convert it to a map of instances of the type in parameter.
-   * This method is a convenient method for {@link #read(Reader, Spec, BuilderConfig)}.
+   * This method is a convenient method for {@link #read(Reader, Spec)}.
    *
    * @param text the text containing the JSON
    * @param type the type of the instance that should be returned
@@ -431,7 +394,7 @@ public final class Binder {
   public <T> Map<String, T> read(String text, Class<? extends T> type, @SuppressWarnings("unused") ObjectToken __) {
     requireNonNull(text);
     requireNonNull(type);
-    return (Map<String, T>) read(text, specForClass(type).object(), DEFAULT_CONFIG);
+    return (Map<String, T>) read(text, specForClass(type).object());
   }
 
   /**
@@ -439,20 +402,17 @@ public final class Binder {
    *
    * @param text the text containing the JSON
    * @param spec the spec, a representation of how to decode a JSON value to a Java instance.
-   * @param config the builder configuration used to create untyped JSON object and array
-   *               as {@link Map} and {@link List}.
    * @return a new instance containing all the JSON data typed as Java values
    */
-  public static Object read(String text, Spec spec, BuilderConfig config) {
+  public static Object read(String text, Spec spec) {
     requireNonNull(text);
     requireNonNull(spec);
-    requireNonNull(config);
-    return JsonReader.parse(text, spec.createBindVisitor(Object.class, config, null));
+    return JsonReader.parse(text, spec.createBindVisitor(Object.class));
   }
 
   /**
    * Read a JSON file and convert it to an instance of the type in parameter.
-   * This method is a convenient method for {@link #read(Path, Spec, BuilderConfig)}.
+   * This method is a convenient method for {@link #read(Path, Spec)}.
    *
    * @param path the path to the file containing the JSON
    * @param type the type of the instance that should be returned
@@ -463,30 +423,12 @@ public final class Binder {
   public <T> T read(Path path, Class<? extends T> type) throws IOException {
     requireNonNull(path);
     requireNonNull(type);
-    return read(path, type, DEFAULT_CONFIG);
-  }
-
-  /**
-   * Read a JSON file and convert it to an instance of the type in parameter.
-   * This method is a convenient method for {@link #read(Path, Spec, BuilderConfig)}.
-   *
-   * @param path the path to the file containing the JSON
-   * @param type the type of the instance that should be returned
-   * @param config the builder configuration used to create untyped JSON object and array
-   *               as {@link Map} and {@link List}.
-   * @param <T> the type of the instance that should be returned
-   * @return a new instance containing all the JSON data typed as Java values
-   * @throws IOException if an IO error occurs.
-   */
-  public <T> T read(Path path, Class<? extends T> type, BuilderConfig config) throws IOException {
-    requireNonNull(path);
-    requireNonNull(type);
-    return type.cast(read(path, specForClass(type), config));
+    return type.cast(read(path, specForClass(type)));
   }
 
   /**
    * Read a JSON file and convert it to list of instances of the type in parameter.
-   * This method is a convenient method for {@link #read(Path, Spec, BuilderConfig)}.
+   * This method is a convenient method for {@link #read(Path, Spec)}.
    *
    * @param path the path to the file containing the JSON
    * @param type the type of the instance that should be returned
@@ -501,12 +443,12 @@ public final class Binder {
   public <T> List<T> read(Path path, Class<? extends T> type, @SuppressWarnings("unused") ArrayToken __) throws IOException {
     requireNonNull(path);
     requireNonNull(type);
-    return (List<T>) read(path, specForClass(type).array(), DEFAULT_CONFIG);
+    return (List<T>) read(path, specForClass(type).array());
   }
 
   /**
    * Read a JSON object and convert it to a map of instances of the type in parameter.
-   * This method is a convenient method for {@link #read(Reader, Spec, BuilderConfig)}.
+   * This method is a convenient method for {@link #read(Reader, Spec)}.
    *
    * @param path the path to the file containing the JSON
    * @param type the type of the instance that should be returned
@@ -519,7 +461,7 @@ public final class Binder {
   public <T> Map<String, T> read(Path path, Class<? extends T> type, @SuppressWarnings("unused") ObjectToken __) throws IOException {
     requireNonNull(path);
     requireNonNull(type);
-    return (Map<String, T>) read(path, specForClass(type).object(), DEFAULT_CONFIG);
+    return (Map<String, T>) read(path, specForClass(type).object());
   }
 
   /**
@@ -527,21 +469,19 @@ public final class Binder {
    *
    * @param path the path to the file containing the JSON
    * @param spec the spec, a representation of how to decode a JSON value to a Java instance
-   * @param config the builder configuration used to create untyped JSON object and array
-   *               as {@link Map} and {@link List}.
    * @return a new instance containing all the JSON data typed as Java values
    * @throws IOException if an IO error occurs.
    */
-  public static Object read(Path path, Spec spec, BuilderConfig config) throws IOException {
+  public static Object read(Path path, Spec spec) throws IOException {
     requireNonNull(path);
     requireNonNull(spec);
-    requireNonNull(config);
-    return JsonReader.parse(path, spec.createBindVisitor(Object.class, config, null));
+    return JsonReader.parse(path, spec.createBindVisitor(Object.class));
   }
+
 
   /**
    * Read a JSON array as a stream of instances of the type in parameter.
-   * This method is a convenient method for {@link #stream(Reader, Spec, BuilderConfig)}.
+   * This method is a convenient method for {@link #stream(Reader, Spec)}.
    *
    * @param reader the reader containing the JSON fragment
    * @param type the type of the instance that should be returned
@@ -554,28 +494,7 @@ public final class Binder {
   public <T> Stream<T> stream(Reader reader, Class<? extends T> type) throws IOException {
     requireNonNull(reader);
     requireNonNull(type);
-    return stream(reader, type, DEFAULT_CONFIG);
-  }
-
-  /**
-   * Read a JSON array as a stream of instances of the type in parameter.
-   * This method is a convenient method for {@link #stream(Reader, Spec, BuilderConfig)}.
-   *
-   * @param reader the reader containing the JSON fragment
-   * @param type the type of the instance that should be returned
-   * @param config the builder configuration used to create untyped JSON object and array
-   *               as {@link Map} and {@link List}.
-   * @param <T> the type of the instance that should be returned
-   * @return a new instance containing all the JSON data typed as Java values
-   * @throws IOException if an IO error occurs when opening the file.
-   *
-   * @see #read(Reader, Class, ArrayToken)
-   */
-  public <T> Stream<T> stream(Reader reader, Class<? extends T> type, BuilderConfig config) throws IOException {
-    requireNonNull(reader);
-    requireNonNull(type);
-    requireNonNull(config);
-    return stream(reader, specForClass(type), config).map(type::cast);
+    return stream(reader, specForClass(type)).map(type::cast);
   }
 
   /**
@@ -583,23 +502,20 @@ public final class Binder {
    *
    * @param reader the reader containing the JSON fragment
    * @param spec the spec, a representation of how to decode a JSON value to a Java instance
-   * @param config the builder configuration used to create untyped JSON object and array
-   *               as {@link Map} and {@link List}.
    * @return a new instance containing all the JSON data typed as Java values
    * @throws IOException if an IO error occurs when opening the file.
    *
    * @see #read(Reader, Class, ArrayToken)
    */
-  public static Stream<Object> stream(Reader reader, Spec spec, BuilderConfig config) throws IOException {
+  public static Stream<Object> stream(Reader reader, Spec spec) throws IOException {
     requireNonNull(reader);
     requireNonNull(spec);
-    requireNonNull(config);
-    return JsonReader.stream(reader, arrayForStreamVisitor(spec, config));
+    return JsonReader.stream(reader, arrayForStreamVisitor(spec));
   }
 
   /**
    * Read a JSON array as a stream of instances of the type in parameter.
-   * This method is a convenient method for {@link #stream(Reader, Spec, BuilderConfig)}.
+   * This method is a convenient method for {@link #stream(Reader, Spec)}.
    *
    * @param text the text containing the JSON
    * @param type the type of the instance that should be returned
@@ -608,30 +524,10 @@ public final class Binder {
    *
    * @see #read(Reader, Class, ArrayToken)
    */
-  public <T> Stream<T> stream(String text, Class<? extends T> type) {
+  public <T> Stream<T> stream(String text, Class<? extends T> type)  {
     requireNonNull(text);
     requireNonNull(type);
-    return stream(text, type, DEFAULT_CONFIG);
-  }
-
-  /**
-   * Read a JSON array as a stream of instances of the type in parameter.
-   * This method is a convenient method for {@link #stream(Reader, Spec, BuilderConfig)}.
-   *
-   * @param text the text containing the JSON
-   * @param type the type of the instance that should be returned
-   * @param config the builder configuration used to create untyped JSON object and array
-   *               as {@link Map} and {@link List}.
-   * @param <T> the type of the instance that should be returned
-   * @return a new instance containing all the JSON data typed as Java values
-   *
-   * @see #read(Reader, Class, ArrayToken)
-   */
-  public <T> Stream<T> stream(String text, Class<? extends T> type, BuilderConfig config)  {
-    requireNonNull(text);
-    requireNonNull(type);
-    requireNonNull(config);
-    return stream(text, specForClass(type), config).map(type::cast);
+    return stream(text, specForClass(type)).map(type::cast);
   }
 
   /**
@@ -639,22 +535,19 @@ public final class Binder {
    *
    * @param text the text containing the JSON
    * @param spec the spec, a representation of how to decode a JSON value to a Java instance
-   * @param config the builder configuration used to create untyped JSON object and array
-   *               as {@link Map} and {@link List}.
    * @return a new instance containing all the JSON data typed as Java values
    *
    * @see #read(Reader, Class, ArrayToken)
    */
-  public static Stream<Object> stream(String text, Spec spec, BuilderConfig config) {
+  public static Stream<Object> stream(String text, Spec spec) {
     requireNonNull(text);
     requireNonNull(spec);
-    requireNonNull(config);
-    return JsonReader.stream(text, arrayForStreamVisitor(spec, config));
+    return JsonReader.stream(text, arrayForStreamVisitor(spec));
   }
 
   /**
    * Read a JSON array as a stream of instances of the type in parameter.
-   * This method is a convenient method for {@link #stream(Reader, Spec, BuilderConfig)}.
+   * This method is a convenient method for {@link #stream(Reader, Spec)}.
    *
    * @param path the path to the file containing the JSON
    * @param type the type of the instance that should be returned
@@ -667,28 +560,7 @@ public final class Binder {
   public <T> Stream<T> stream(Path path, Class<? extends T> type) throws IOException {
     requireNonNull(path);
     requireNonNull(type);
-    return stream(path, type, DEFAULT_CONFIG);
-  }
-
-  /**
-   * Read a JSON array as a stream of instances of the type in parameter.
-   * This method is a convenient method for {@link #stream(Reader, Spec, BuilderConfig)}.
-   *
-   * @param path the path to the file containing the JSON
-   * @param type the type of the instance that should be returned
-   * @param config the builder configuration used to create untyped JSON object and array
-   *               as {@link Map} and {@link List}.
-   * @param <T> the type of the instance that should be returned
-   * @return a new instance containing all the JSON data typed as Java values
-   * @throws IOException if an IO error occurs when opening the file.
-   *
-   * @see #read(Reader, Class, ArrayToken)
-   */
-  public <T> Stream<T> stream(Path path, Class<? extends T> type, BuilderConfig config) throws IOException {
-    requireNonNull(path);
-    requireNonNull(type);
-    requireNonNull(config);
-    return stream(path, specForClass(type), config).map(type::cast);
+    return stream(path, specForClass(type)).map(type::cast);
   }
 
   /**
@@ -696,21 +568,18 @@ public final class Binder {
    *
    * @param path the path to the file containing the JSON
    * @param spec the spec, a representation of how to decode a JSON value to a Java instance
-   * @param config the builder configuration used to create untyped JSON object and array
-   *               as {@link Map} and {@link List}.
    * @return a new instance containing all the JSON data typed as Java values
    * @throws IOException if an IO error occurs when opening the file.
    *
    * @see #read(Reader, Class, ArrayToken)
    */
-  public static Stream<Object> stream(Path path, Spec spec, BuilderConfig config) throws IOException {
+  public static Stream<Object> stream(Path path, Spec spec) throws IOException {
     requireNonNull(path);
     requireNonNull(spec);
-    requireNonNull(config);
-    return JsonReader.stream(path, arrayForStreamVisitor(spec, config));
+    return JsonReader.stream(path, arrayForStreamVisitor(spec));
   }
 
-  private static ArrayVisitor arrayForStreamVisitor(Spec spec, BuilderConfig config) {
+  private static ArrayVisitor arrayForStreamVisitor(Spec spec) {
     return new ArrayVisitor() {
       @Override
       public VisitorMode visitStartArray() {
@@ -718,11 +587,11 @@ public final class Binder {
       }
       @Override
       public ObjectVisitor visitObject() {
-        return spec.createBindVisitor(ObjectVisitor.class, config, null);
+        return spec.createBindVisitor(ObjectVisitor.class);
       }
       @Override
       public ArrayVisitor visitArray() {
-        return spec.createBindVisitor(ArrayVisitor.class, config, null);
+        return spec.createBindVisitor(ArrayVisitor.class);
       }
       @Override
       public Object visitValue(JsonValue value) {
