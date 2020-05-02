@@ -5,6 +5,8 @@ import java.util.Objects;
 /**
  * A visitor implementing bot {@link ObjectVisitor} and {@link ArrayVisitor} interfaces
  * able to encode a series of visit calls to a JSON text
+ *
+ * @see JsonWriter
  */
 public final class JsonPrinter implements ObjectVisitor, ArrayVisitor {
   private final StringBuilder builder;
