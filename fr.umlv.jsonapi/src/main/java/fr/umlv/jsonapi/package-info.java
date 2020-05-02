@@ -29,7 +29,7 @@
  *   <li>Tree transformer API. A new tree is result,<br>
  *       JSON data stream output from trees,<br>
  *       builders methods {@link fr.umlv.jsonapi.builder.ObjectBuilder#replay(fr.umlv.jsonapi.ObjectVisitor)}
- *       and {@link fr.umlv.jsonapi.builder.ObjectBuilder#replay(fr.umlv.jsonapi.ObjectVisitor)}
+ *       and {@link fr.umlv.jsonapi.builder.ArrayBuilder#replay(fr.umlv.jsonapi.ArrayVisitor)}
  *       generates JSON events from the values of a builder.
  *   <li>Generator style API for JSON data stream output and for JSON "literals",
  *       {@link fr.umlv.jsonapi.JsonPrinter} and {@link fr.umlv.jsonapi.JsonWriter}

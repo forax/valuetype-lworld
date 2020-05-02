@@ -25,7 +25,7 @@ The JEP 198 ask for supporting different usage modes:
 - Tree transformer API. A new tree is result,<br>
   JSON data stream output from trees,<br>
   builders methods [ObjectBuilder#replay(ObjectVisitor)](fr/umlv/jsonapi/builder/ObjectBuilder.java)
-  and [ObjectBuilder#replay(ObjectVisitor)](fr/umlv/jsonapi/builder/ObjectBuilder.java)
+  and [ArrayBuilder#replay(ArrayVisitor)](fr/umlv/jsonapi/builder/ArrayBuilder.java)
   generates JSON events from the values of a builder.
 - Generator style API for JSON data stream output and for JSON "literals",
   [JsonPrinter](fr/umlv/jsonapi/JsonPrinter.java) and [JsonWriter](fr/umlv/jsonapi/JsonWriter.java)

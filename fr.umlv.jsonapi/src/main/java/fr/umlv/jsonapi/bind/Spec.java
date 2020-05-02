@@ -328,7 +328,7 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
     //void replay(Object object, Consumer<? super Object> valueVisitor);
   }
 
-    /**
+  /**
    * Abstraction that represent a Java class that can be decoded from JSON and encoded to JSON
    *
    * <p>The way to decode a JSON object to any class is to use a builder like API which
