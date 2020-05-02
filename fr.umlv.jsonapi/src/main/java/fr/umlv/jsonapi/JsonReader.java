@@ -12,31 +12,131 @@ import static java.util.Objects.requireNonNull;
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
+import fr.umlv.jsonapi.builder.ArrayBuilder;
+import fr.umlv.jsonapi.builder.ObjectBuilder;
 import fr.umlv.jsonapi.internal.RootVisitor;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
-import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayDeque;
+import java.util.List;
+import java.util.Map;
 import java.util.Spliterator;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+/**
+ * A class that provides static methods to read the content of a JSON file/text
+ * into method calls to two visitors {@link ObjectVisitor} if the content is a
+ * JSON object or {@link ArrayVisitor} is the content is a JSON array.
+ *
+ * This API provides two different ways of reading a JSON content
+ * <ul>
+ *   <li>in {@link VisitorMode#PUSH push mode}, the JSON values are {@link #parse(Reader, Object)}
+ *       by the reader and the visit methods are called, the visitor stores the information
+ *       in its fields and at the end the method {@link ObjectVisitor#visitEndObject()}
+ *       or {@link ArrayVisitor#visitEndArray()} return the value processed by the visitor.
+ *   <li>in {@link VisitorMode#PULL pull mode}, the method {@link #stream(Reader, ArrayVisitor)}
+ *       of the reader return a stream that consume the JSON values by pulling them from
+ *       the visitors by calling the methods visit and using the values returned by these
+ *       methods. The return value of {@link ObjectVisitor#visitEndObject()} or
+ *       {@link ArrayVisitor#visitEndArray()} is ignored.
+ * </ul>
+ *
+ * Moreover, for the method {@link ObjectVisitor#visitMemberObject(String)},
+ * {@link ObjectVisitor#visitMemberArray(String)}, {@link ArrayVisitor#visitObject()} and
+ * {@link ArrayVisitor#visitArray()}, if a visitor return {@code null}, the reader
+ * will skip all the tokens until the end of the corresponding object/array.
+ */
 public final class JsonReader {
   private JsonReader() {
     throw new AssertionError();
   }
 
+  /**
+   * Parse the content of a file in JSON format and calls the visit methods of the visitor.
+   * If the content is a JSON object, the visitor should be an {@link ObjectVisitor},
+   * if the content is a JSON array, the visitor should be an {@link ArrayVisitor}.
+   * If you don't know, use {0link {@link #parse(Path, ObjectVisitor, ArrayVisitor)}} instead.
+   *
+   * @param path the path to the file
+   * @param visitor either an {@link ObjectVisitor} or an {@link ArrayVisitor}
+   * @return the return value of {@link ObjectVisitor#visitEndObject()} or
+   *         {@link ArrayVisitor#visitEndArray()}.
+   * @throws IOException if an IO errors occurs
+   * @throws IllegalStateException if the JSON contains an object but the visitor is
+   *         an {@link ArrayVisitor}, if the JSON contains an array and the visitor
+   *         is an {@link ObjectVisitor}, if one returned visitors is in
+   *         {@link VisitorMode#PULL} mode
+   *
+   * @see #parse(Reader, ObjectVisitor, ArrayVisitor)
+   */
   public static Object parse(Path path, Object visitor) throws IOException {
     requireNonNull(path);
     requireNonNull(visitor);
     return parseJson(path, RootVisitor.createFromOneVisitor(visitor));
   }
+
+  /**
+   * Parse the content of a file in JSON format and returns the result
+   * as {@link Map&lt;String, Object&gt;}.
+   *
+   * @param path the path to the file
+   * @param builder an object builder
+   * @return a map containing the content of the file
+   * @throws IOException if an IO errors occurs
+   * @throws IllegalStateException if the JSON contains an array
+   *
+   * @see fr.umlv.jsonapi.builder.BuilderConfig
+   * @see #parse(Path, Object)
+   */
+  @SuppressWarnings("unchecked")
+  public static Map<String, Object> parse(Path path, ObjectBuilder builder) throws IOException {
+    requireNonNull(path);
+    requireNonNull(builder);
+    return (Map<String, Object>) parse(path, (Object) builder);
+  }
+
+  /**
+   * Parse the content of a file in JSON format and returns the result
+   * as {@link List&lt;Object&gt;}.
+   *
+   * @param path the path to the file
+   * @param builder an array builder
+   * @return a list containing the content of the file
+   * @throws IOException if an IO errors occurs
+   * @throws IllegalStateException if the JSON contains an array
+   *
+   * @see fr.umlv.jsonapi.builder.BuilderConfig
+   * @see #parse(Path, Object)
+   */
+  @SuppressWarnings("unchecked")
+  public static List<Object> parse(Path path, ArrayBuilder builder) throws IOException {
+    requireNonNull(path);
+    requireNonNull(builder);
+    return (List<Object>) parse(path, (Object) builder);
+  }
+
+  /**
+   * Parse the content of a file in JSON format and calls the visit methods
+   * of one of the visitors.
+   * If the content is a JSON object, the {@code objectVisitor} will be called
+   * if the content is a JSON array, the {@code arrayVisitor} will be called
+   *
+   * @param path path to the file
+   * @param objectVisitor the visitor called if the content is an object
+   * @param arrayVisitor the visitor called is the content is an array
+   * @return the return value of {@link ObjectVisitor#visitEndObject()} or
+   *         {@link ArrayVisitor#visitEndArray()}.
+   * @throws IOException if an IO errors occurs
+   * @throws IllegalStateException if one returned visitors is in
+   *         {@link VisitorMode#PULL} mode
+   */
   public static Object parse(Path path, ObjectVisitor objectVisitor, ArrayVisitor arrayVisitor) throws IOException {
     requireNonNull(objectVisitor);
     requireNonNull(arrayVisitor);
@@ -49,11 +149,81 @@ public final class JsonReader {
     }
   }
 
+  /**
+   * Parse the content of a text in JSON format and calls the visit methods of the visitor.
+   * If the text is a JSON object, the visitor should be an {@link ObjectVisitor},
+   * if the text is a JSON array, the visitor should be an {@link ArrayVisitor}.
+   * If you don't know, use {0link {@link #parse(String, ObjectVisitor, ArrayVisitor)}} instead.
+   *
+   * @param text the content in JSON format
+   * @param visitor either an {@link ObjectVisitor} or an {@link ArrayVisitor}
+   * @return the return value of {@link ObjectVisitor#visitEndObject()} or
+   *         {@link ArrayVisitor#visitEndArray()}.
+   * @throws IllegalStateException if the JSON contains an object but the visitor is
+   *         an {@link ArrayVisitor}, if the JSON contains an array and the visitor
+   *         is an {@link ObjectVisitor}, if one returned visitors is in
+   *         {@link VisitorMode#PULL} mode
+   *
+   * @see #parse(Reader, ObjectVisitor, ArrayVisitor)
+   */
   public static Object parse(String text, Object visitor) {
     requireNonNull(text);
     requireNonNull(visitor);
     return parseJson(text, RootVisitor.createFromOneVisitor(visitor));
   }
+
+  /**
+   * Parse the content of a text in JSON format and returns the result
+   * as {@link Map&lt;String, Object&gt;}.
+   *
+   * @param text a text in JSON format
+   * @param builder an object builder
+   * @return a map containing the content of the text
+   * @throws IllegalStateException if the JSON contains an array
+   *
+   * @see fr.umlv.jsonapi.builder.BuilderConfig
+   * @see #parse(String, Object)
+   */
+  @SuppressWarnings("unchecked")
+  public static Map<String, Object> parse(String text, ObjectBuilder builder) {
+    requireNonNull(text);
+    requireNonNull(builder);
+    return (Map<String, Object>) parse(text, (Object) builder);
+  }
+
+  /**
+   * Parse the content of a text in JSON format and returns the result
+   * as {@link List&lt;Object&gt;}.
+   *
+   * @param text the content in JSON format
+   * @param builder an array builder
+   * @return a list containing the content of the text
+   * @throws IllegalStateException if the JSON contains an array
+   *
+   * @see fr.umlv.jsonapi.builder.BuilderConfig
+   * @see #parse(Reader, Object)
+   */
+  @SuppressWarnings("unchecked")
+  public static List<Object> parse(String text, ArrayBuilder builder) {
+    requireNonNull(text);
+    requireNonNull(builder);
+    return (List<Object>) parse(text, (Object) builder);
+  }
+
+  /**
+   * Parse the content of a reader in JSON format and calls the visit methods
+   * of one of the visitors.
+   * If the content is a JSON object, the {@code objectVisitor} will be called
+   * if the content is a JSON array, the {@code arrayVisitor} will be called
+   *
+   * @param text the text to parse in JSON format
+   * @param objectVisitor the visitor called if the content is an object
+   * @param arrayVisitor the visitor called is the content is an array
+   * @return the return value of {@link ObjectVisitor#visitEndObject()} or
+   *         {@link ArrayVisitor#visitEndArray()}.
+   * @throws IllegalStateException if one returned visitors is in
+   *         {@link VisitorMode#PULL} mode
+   */
   public static Object parse(String text, ObjectVisitor objectVisitor, ArrayVisitor arrayVisitor) {
     requireNonNull(objectVisitor);
     requireNonNull(arrayVisitor);
@@ -68,11 +238,85 @@ public final class JsonReader {
     }
   }
 
+  /**
+   * Parse the content of a reader in JSON format and calls the visit methods of the visitor.
+   * If the content is a JSON object, the visitor should be an {@link ObjectVisitor},
+   * if the content is a JSON array, the visitor should be an {@link ArrayVisitor}.
+   * If you don't know, use {0link {@link #parse(Reader, ObjectVisitor, ArrayVisitor)}} instead.
+   *
+   * @param reader the content in JSON format
+   * @param visitor either an {@link ObjectVisitor} or an {@link ArrayVisitor}
+   * @return the return value of {@link ObjectVisitor#visitEndObject()} or
+   *         {@link ArrayVisitor#visitEndArray()}.
+   * @throws IOException if an IO errors occurs
+   * @throws IllegalStateException if the JSON contains an object but the visitor is
+   *         an {@link ArrayVisitor}, if the JSON contains an array and the visitor
+   *         is an {@link ObjectVisitor}, if one returned visitors is in
+   *         {@link VisitorMode#PULL} mode
+   *
+   * @see #parse(Reader, ObjectVisitor, ArrayVisitor)
+   */
   public static Object parse(Reader reader, Object visitor) throws IOException {
     requireNonNull(reader);
     requireNonNull(visitor);
     return parseJson(reader, RootVisitor.createFromOneVisitor(visitor));
   }
+
+  /**
+   * Parse the content of a reader in JSON format and returns the result
+   * as {@link Map&lt;String, Object&gt;}.
+   *
+   * @param reader the content in JSON format
+   * @param builder an object builder
+   * @return a map containing the content of the {@code reader}
+   * @throws IOException if an IO errors occurs
+   * @throws IllegalStateException if the JSON contains an array
+   *
+   * @see fr.umlv.jsonapi.builder.BuilderConfig
+   * @see #parse(Reader, Object)
+   */
+  @SuppressWarnings("unchecked")
+  public static Map<String, Object> parse(Reader reader, ObjectBuilder builder) throws IOException {
+    requireNonNull(reader);
+    requireNonNull(builder);
+    return (Map<String, Object>) parse(reader, (Object) builder);
+  }
+
+  /**
+   * Parse the content of a reader in JSON format and returns the result
+   * as {@link List&lt;Object&gt;}.
+   *
+   * @param reader the content in JSON format
+   * @param builder an array builder
+   * @return a list containing the content of the {@code reader}
+   * @throws IOException if an IO errors occurs
+   * @throws IllegalStateException if the JSON contains an array
+   *
+   * @see fr.umlv.jsonapi.builder.BuilderConfig
+   * @see #parse(Reader, Object)
+   */
+  @SuppressWarnings("unchecked")
+  public static List<Object> parse(Reader reader, ArrayBuilder builder) throws IOException {
+    requireNonNull(reader);
+    requireNonNull(builder);
+    return (List<Object>) parse(reader, (Object) builder);
+  }
+
+  /**
+   * Parse the content of a reader in JSON format and calls the visit methods
+   * of one of the visitors.
+   * If the content is a JSON object, the {@code objectVisitor} will be called
+   * if the content is a JSON array, the {@code arrayVisitor} will be called
+   *
+   * @param reader the content in JSON format
+   * @param objectVisitor the visitor called if the content is an object
+   * @param arrayVisitor the visitor called is the content is an array
+   * @return the return value of {@link ObjectVisitor#visitEndObject()} or
+   *         {@link ArrayVisitor#visitEndArray()}.
+   * @throws IOException if an IO errors occurs
+   * @throws IllegalStateException if one returned visitors is in
+   *         {@link VisitorMode#PULL} mode
+   */
   public static Object parse(Reader reader, ObjectVisitor objectVisitor, ArrayVisitor arrayVisitor) throws IOException {
     requireNonNull(objectVisitor);
     requireNonNull(arrayVisitor);
@@ -279,6 +523,23 @@ public final class JsonReader {
   }
 
 
+  /**
+   * Returns a Stream that will trigger the reading of the content of the file
+   * each time the Stream need an object.
+   * In details, when an item of the Stream is needed, the reader will read
+   * the necessary tokens on the reader, call the {@link ArrayVisitor} and
+   * use the return value to send the value to the Stream.
+   *
+   * @param path the for to the file
+   * @param arrayVisitor an {@link ArrayVisitor} in {@link VisitorMode#PULL pull mode}
+   * @return a stream that can be used to pull the JSON value from the file
+   * @throws IOException if an IO errors occurs. Note that if an IO exception occurs when the
+   *         Stream is already returned, an {@link UncheckedIOException} will be thrown
+   *         by the {@link Stream} methods.
+   * @throws IllegalStateException if the JSON contains an object, if the visitor is not in
+   *         {@link VisitorMode#PULL pull mode} or one of the subsequent returned visitors is in
+   *         {@link VisitorMode#PULL pull mode}.
+   */
   public static Stream<Object> stream(Path path, ArrayVisitor arrayVisitor) throws IOException {
     requireNonNull(path);
     requireNonNull(arrayVisitor);
@@ -290,6 +551,21 @@ public final class JsonReader {
       throw e;
     }
   }
+
+  /**
+   * Returns a Stream that will trigger the reading of the content of the text
+   * each time the Stream need an object.
+   * In details, when an item of the Stream is needed, this JSON reader will read
+   * the necessary tokens of the text, calls the {@link ArrayVisitor} and
+   * use the return value to send the value to the Stream.
+   *
+   * @param text the text in JSON format
+   * @param arrayVisitor an {@link ArrayVisitor} in {@link VisitorMode#PULL pull mode}
+   * @return a stream that can be used to pull the JSON value from the text
+   * @throws IllegalStateException if the JSON contains an object, if the visitor is not in
+   *         {@link VisitorMode#PULL pull mode} or one of the subsequent returned visitors is in
+   *         {@link VisitorMode#PULL pull mode}.
+   */
   public static Stream<Object> stream(String text, ArrayVisitor arrayVisitor) {
     requireNonNull(text);
     requireNonNull(arrayVisitor);
@@ -299,10 +575,28 @@ public final class JsonReader {
       throw new UncheckedIOException(e);
     }
   }
+
+  /**
+   * Returns a Stream that will trigger the reading of the content of the reader
+   * each time the Stream need an object.
+   * In details, when an item of the Stream is needed, the reader will read
+   * the necessary tokens on the reader, call the {@link ArrayVisitor} and
+   * use the return value to send the value to the Stream.
+   *
+   * @param reader the content in JSON format
+   * @param visitor an {@link ArrayVisitor} in {@link VisitorMode#PULL pull mode}
+   * @return a stream that can be used to pull the JSON value from the reader
+   * @throws IOException if an IO errors occurs. Note that if an IO exception occurs when the
+   *         Stream is already returned, an {@link UncheckedIOException} will be thrown
+   *         by the {@link Stream} methods.
+   * @throws IllegalStateException if the JSON contains an object, if the visitor is not in
+   *         {@link VisitorMode#PULL pull mode} or one of the subsequent returned visitors is in
+   *         {@link VisitorMode#PULL pull mode}.
+   */
   public static Stream<Object> stream(Reader reader, ArrayVisitor visitor) throws IOException {
     requireNonNull(reader);
     requireNonNull(visitor);
-    if (visitor.visitStartArray() == VisitorMode.PUSH) {
+    if (visitor.visitStartArray() != PULL) {
       throw new IllegalArgumentException("only pull mode visitors are allowed");
     }
     var parser = new JsonFactory().createParser(reader);
@@ -380,15 +674,5 @@ public final class JsonReader {
       parser.close();
       throw e;
     }
-  }
-
-  private static Object readNumericValueAndBox(JsonParser parser) throws IOException {
-    return switch(parser.getNumberType()) {
-      case INT -> parser.getValueAsInt();
-      case LONG -> parser.getValueAsLong();
-      case FLOAT, DOUBLE -> parser.getValueAsDouble();
-      case BIG_INTEGER -> new BigInteger(parser.getValueAsString());
-      case BIG_DECIMAL -> new BigDecimal(parser.getValueAsString());
-    };
   }
 }

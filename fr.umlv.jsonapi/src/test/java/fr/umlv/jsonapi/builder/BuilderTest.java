@@ -123,7 +123,7 @@ public class BuilderTest {
         .add("firstName", "Bob")
         .add("age", 21);
     var builder2 = new ObjectBuilder();
-    builder.accept(builder2);
+    builder.replay(builder2);
     assertEquals(
         Map.of("firstName", "Bob", "age", 21),
         builder2.toMap());
@@ -138,7 +138,7 @@ public class BuilderTest {
         .add("spouse", null)
         .add("children", true);
     var builder2 = new BuilderConfig(TreeMap::new, ArrayList::new).newObjectBuilder();
-    builder.accept(builder2);
+    builder.replay(builder2);
     assertEquals(
         List.of("age", "children", "firstName", "spouse", "weight"),
         new ArrayList<>(builder2.toMap().keySet()));
@@ -324,7 +324,7 @@ public class BuilderTest {
     map.put("y", 14);
     var builder = BuilderConfig.DEFAULT.wrap(map);
     var printer = new JsonPrinter();
-    builder.accept(printer);
+    builder.replay(printer);
     assertEquals("""
         { "x": 3, "y": 14 }\
         """, printer.toString());
@@ -335,7 +335,7 @@ public class BuilderTest {
     var list = List.of(5, "foo", 5.6);
     var builder = BuilderConfig.DEFAULT.wrap(list);
     var printer = new JsonPrinter();
-    builder.accept(printer);
+    builder.replay(printer);
     assertEquals("""
         [ 5, "foo", 5.6 ]\
         """, printer.toString());

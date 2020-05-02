@@ -161,7 +161,7 @@ public class BinderReadTest {
         """;
     record Author(String name, List<String> books) { }
     var authorSpec = binder.spec(Author.class);
-    var classVisitor = authorSpec.createBindVisitor(BindClassVisitor.class);
+    var classVisitor = authorSpec.createBindVisitor(BindObjectVisitor.class);
     var author = (Author)JsonReader.parse(json, classVisitor.filterName(not("age"::equals)));
     assertEquals(new Author("James Joyce", List.of("Finnegans Wake")), author);
   }

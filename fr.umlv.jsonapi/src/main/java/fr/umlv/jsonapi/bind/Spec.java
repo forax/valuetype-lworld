@@ -1,27 +1,24 @@
 package fr.umlv.jsonapi.bind;
 
 import static java.util.Objects.requireNonNull;
-import static java.util.function.UnaryOperator.identity;
 
 import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
-import fr.umlv.jsonapi.bind.Specs.ClassSpec;
-import fr.umlv.jsonapi.bind.Specs.CollectionSpec;
+import fr.umlv.jsonapi.bind.Specs.ArraySpec;
+import fr.umlv.jsonapi.bind.Specs.ObjectSpec;
 import fr.umlv.jsonapi.bind.Specs.StreamSpec;
 import fr.umlv.jsonapi.bind.Specs.ValueSpec;
-import fr.umlv.jsonapi.builder.BuilderConfig;
 import java.io.Reader;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 import java.util.stream.Stream;
 
 /**
@@ -72,88 +69,100 @@ import java.util.stream.Stream;
 public /*sealed*/ interface Spec /*add permits clause*/ {
 
   /**
-   * Wrap the current spec into a JSON array, the result will a {@link java.util.List}.
+   * Wrap the current spec into a JSON array, the result is an unmodifiable {@link java.util.List}.
    * @return a new spec that see a JSON array as a List.
    */
   default Spec array() { return array(ArrayList::new, Collections::unmodifiableList); }
 
-  default Spec array(Supplier<? extends List<Object>> supplier, UnaryOperator<List<Object>> op) {
+  /**
+   * Wrap the current spec into a JSON array, the result is a {@link java.util.List}.
+   * @param supplier the factory to create instances of List
+   * @param transformOp the function to apply when the list is fully build before returning it
+   * @return a new spec that see a JSON array as a List.
+   */
+  default <C extends Collection<Object>> Spec array(Supplier<? extends C> supplier, Function<? super C, ?> transformOp) {
     requireNonNull(supplier);
-    requireNonNull(op);
-    return new CollectionSpec(this, new ArrayLayout<List<Object>>() {
+    requireNonNull(transformOp);
+    return newTypedArray(this, new ArrayLayout<C>() {
       @Override
-      public List<Object> newBuilder() {
+      public C newBuilder() {
         return supplier.get();
       }
 
       @Override
-      public List<Object> addObject(List<Object> builder, Object object) {
+      public C addObject(C builder, Object object) {
         builder.add(object);
         return builder;
       }
 
       @Override
-      public List<Object> addArray(List<Object> builder, Object array) {
+      public C addArray(C builder, Object array) {
         builder.add(array);
         return builder;
       }
 
       @Override
-      public List<Object> addValue(List<Object> builder, JsonValue value) {
+      public C addValue(C builder, JsonValue value) {
         builder.add(value.asObject());
         return builder;
       }
 
       @Override
-      public Object build(List<Object> builder) {
-        return op.apply(builder);
+      public Object build(C builder) {
+        return transformOp.apply(builder);
       }
     });
   }
 
   /**
-   * Wrap the current spec into a JSON object, the result will a {@link java.util.Map}.
+   * Wrap the current spec into a JSON object, the result is an unmodifiable {@link java.util.Map}.
    * @return a new spec that see a JSON object as a Map.
    */
   default Spec object() {
-    return object(HashMap::new, Collections::unmodifiableMap);
+    return object(LinkedHashMap::new, Collections::unmodifiableMap);
   }
 
-  default Spec object(Supplier<? extends Map<String, Object>> supplier, UnaryOperator<Map<String, Object>> op) {
+  /**
+   * Wrap the current spec into a JSON object, the result is an unmodifiable {@link java.util.Map}.
+   * @param supplier the factory to create instances of Map
+   * @param transformOp the function to apply when the map is fully build before returning it
+   * @return a new spec that see a JSON array as a Map.
+   */
+  default <M extends Map<String,Object>> Spec object(Supplier<? extends M> supplier, Function<? super M, ?> transformOp) {
     requireNonNull(supplier);
-    requireNonNull(op);
-    return new ClassSpec("Map", null, new ObjectLayout<Map<String, Object>>() {
+    requireNonNull(transformOp);
+    return new ObjectSpec("Map", null, new ObjectLayout<M>() {
       @Override
       public Spec memberSpec(String memberName) {
         return Spec.this;
       }
 
       @Override
-      public Map<String, Object> newBuilder() {
+      public M newBuilder() {
         return supplier.get();
       }
 
       @Override
-      public Map<String, Object> addObject(Map<String, Object> builder, String memberName, Object object) {
+      public M addObject(M builder, String memberName, Object object) {
         builder.put(memberName, object);
         return builder;
       }
 
       @Override
-      public Map<String, Object> addArray(Map<String, Object> builder, String memberName, Object array) {
+      public M addArray(M builder, String memberName, Object array) {
         builder.put(memberName, array);
         return builder;
       }
 
       @Override
-      public Map<String, Object> addValue(Map<String, Object> builder, String memberName, JsonValue value) {
+      public M addValue(M builder, String memberName, JsonValue value) {
         builder.put(memberName, value.asObject());
         return builder;
       }
 
       @Override
-      public Object build(Map<String, Object> builder) {
-        return op.apply(builder);
+      public Object build(M builder) {
+        return transformOp.apply(builder);
       }
 
       @Override
@@ -183,8 +192,8 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
     if (this instanceof ValueSpec valueSpec) {
       return valueSpec.convertWith(converter);
     }
-    if (this instanceof ClassSpec classSpec) {
-      return classSpec.mapLayout(layout -> ObjectLayout.convert(layout, converter));
+    if (this instanceof ObjectSpec objectSpec) {
+      return objectSpec.mapLayout(layout -> ObjectLayout.convert(layout, converter));
     }
     throw new IllegalArgumentException("can not apply a converter to this spec");
   }
@@ -197,8 +206,8 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
    */
   default Spec filterName(Predicate<? super String> predicate) {
     requireNonNull(predicate);
-    if (this instanceof ClassSpec classSpec) {
-      return classSpec.filterWith(predicate);
+    if (this instanceof ObjectSpec objectSpec) {
+      return objectSpec.filterWith(predicate);
     }
     throw new IllegalArgumentException("can not apply a filter to this spec");
   }
@@ -211,10 +220,10 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
    */
   default Spec mapLayout(Function<? super ObjectLayout<Object>, ObjectLayout<?>> mapper) {
     requireNonNull(mapper);
-    if (this instanceof ClassSpec classSpec) {
+    if (this instanceof ObjectSpec objectSpec) {
       @SuppressWarnings("unchecked")
-      var classLayout = (ObjectLayout<Object>) classSpec.objectLayout();
-      return newTypedObject(classSpec.name() + ".mapLayout()", mapper.apply(classLayout));
+      var classLayout = (ObjectLayout<Object>) objectSpec.objectLayout();
+      return newTypedObject(objectSpec.name() + ".mapLayout()", mapper.apply(classLayout));
     }
     throw new IllegalArgumentException("can not apply a mapper to this spec");
   }
@@ -229,37 +238,50 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
    * @throws IllegalArgumentException if the spec doesn't allow the kind of visitor requested or
    *         do not allow a non null delegate
    *
-   * @see Binder#read(Reader, Spec, BuilderConfig)
+   * @see Binder#read(Reader, Spec)
    */
   default <V> V createBindVisitor(Class<? extends V> visitorType) {
     requireNonNull(visitorType);
-    if (this instanceof CollectionSpec collectionSpec) {
-      return visitorType.cast(new BindCollectionVisitor(collectionSpec));
+    if (this instanceof ArraySpec arraySpec) {
+      return visitorType.cast(new BindArrayVisitor(arraySpec));
     }
     if (this instanceof StreamSpec streamSpec) {
       return visitorType.cast(new BindStreamVisitor(streamSpec));
     }
-    if (this instanceof ClassSpec classSpec) {
-      return visitorType.cast(new BindClassVisitor(classSpec));
+    if (this instanceof ObjectSpec objectSpec) {
+      return visitorType.cast(new BindObjectVisitor(objectSpec));
     }
     throw new IllegalArgumentException("can not create a visitor on this spec");
   }
 
   /**
-   * Create a spec corresponding to mapping of a JSON object to a Java object
+   * Create a spec corresponding to the mapping of a JSON object to a Java object
    * @param name the name of the spec for debugging purpose
    * @param objectLayout an abstraction describing how to build the Java object
-   *                    from the JSON object elements
+   *                    from the JSON object members
    * @return a spec that is able to convert a JSON object to a Java object
    */
   static Spec newTypedObject(String name, ObjectLayout<?> objectLayout) {
     requireNonNull(name);
     requireNonNull(objectLayout);
-    return new ClassSpec(name, null, objectLayout);
+    return new ObjectSpec(name, null, objectLayout);
   }
 
   /**
-   * Creates a spec corresponding to a JSON value providing a converter
+   * Create a spec corresponding to a the mapping of a JSON array to a Java object
+   * @param component the spec of the content of the array
+   * @param arrayLayout an abstraction describing how to build the Java object
+   *                    from the JSON object values
+   * @return a spec that is able to convert a JSON array to a Java object
+   */
+  static Spec newTypedArray(Spec component, ArrayLayout<?> arrayLayout) {
+    requireNonNull(component);
+    requireNonNull(arrayLayout);
+    return new ArraySpec(component, arrayLayout);
+  }
+
+  /**
+   * Creates a spec corresponding to a JSON value with a value converter
    * from the JSON {@link JsonValue primitive value} to any value
    * @param name the name of the spec for debugging purpose
    * @param converter the converter to use.

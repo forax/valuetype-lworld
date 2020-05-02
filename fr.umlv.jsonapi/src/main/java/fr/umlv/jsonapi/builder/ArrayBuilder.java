@@ -4,6 +4,7 @@ import static fr.umlv.jsonapi.VisitorMode.PUSH;
 import static java.util.Objects.requireNonNull;
 
 import fr.umlv.jsonapi.ArrayVisitor;
+import fr.umlv.jsonapi.JsonPrinter;
 import fr.umlv.jsonapi.JsonReader;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
@@ -12,7 +13,6 @@ import fr.umlv.jsonapi.internal.PostOpsArrayVisitor;
 import fr.umlv.jsonapi.internal.PostOpsObjectVisitor;
 import java.util.List;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 /**
  * An untyped builder of a representation of a JSON array.
@@ -31,27 +31,20 @@ import java.util.stream.Collectors;
  *   """;
  * ArrayBuilder arrayBuilder = new ArrayBuilder();
  * List&lt;Object&gt; list = JsonReader.parse(text, arrayBuilder);
- * assertEquals(List.of("Jolene", "Joleene", "Joleeeene"), list);
  * </pre>
  *
  * As a builder, it can be mutated using the methods {@link #add(Object)},
  * {@link #addAll(Object...)} or/and {@link #addAll(List)}.
  *
  * <p>
- * Example to generate a JSON from an ArrayBuilder
+ * Example to generate a JSON from an ArrayBuilder, the method {@link #replay(ArrayVisitor)},
+ * replay the sequence of visits from the builder values
  * <pre>
  * ArrayBuilder arrayBuilder = new ArrayBuilder()
- *     .add("Jolene")
- *     .addAll("Joleene", "Joleeeene");
+ *     .addAll("Jolene", "Joleene", "Joleeeene");
  * JsonPrinter printer = new JsonPrinter();
- * arrayBuilder.accept(printer::visitArray);
- * assertEquals("""
- *   [ "Jolene", "Joleene", "Joleeeene" ]\
- *   """, printer.toString());
+ * String text = arrayBuilder.replay(printer).toString();
  * </pre>
- *
- * The example above is a little ridiculous because,
- * calling {@link ArrayBuilder#toString()} also work !
  */
 public final class ArrayBuilder implements ArrayVisitor {
   private final List<Object> list;
@@ -99,14 +92,14 @@ public final class ArrayBuilder implements ArrayVisitor {
 
   @Override
   public String toString() {
-    return list.stream().map(String::valueOf).collect(Collectors.joining(", ", "[", "]"));
+    return replay(new JsonPrinter()).toString();
   }
 
   /**
    * Add any object to the builder.
    *
    * If the class of {code value} is not one of boolean, int, long, double, String, BigInteger,
-   * java.util.List or java.util.Map, the method {@link #accept(ArrayVisitor)} will
+   * java.util.List or java.util.Map, the method {@link #replay(ArrayVisitor)} will
    * consider it as an {@link JsonValue#fromOpaque(Object) opaque value}.
    *
    * @param value add this value to the builder.
@@ -225,7 +218,7 @@ public final class ArrayBuilder implements ArrayVisitor {
    *         
    * @see #add(Object)
    */
-  public Object accept(ArrayVisitor arrayVisitor) {
+  public Object replay(ArrayVisitor arrayVisitor) {
     requireNonNull(arrayVisitor);
     return Acceptors.acceptIterable(list, arrayVisitor);
   }

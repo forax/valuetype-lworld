@@ -73,14 +73,14 @@ final class Specs {
     }
 
     ObjectVisitor newObjectFrom() {
-      if (component instanceof ClassSpec classSpec) {
-        return new BindClassVisitor(classSpec);
+      if (component instanceof ObjectSpec objectSpec) {
+        return new BindObjectVisitor(objectSpec);
       }
       throw new BindingException("invalid component spec for an object " + component);
     }
     ArrayVisitor newArrayFrom() {
-      if (component instanceof CollectionSpec collectionSpec) {
-        return new BindCollectionVisitor(collectionSpec);
+      if (component instanceof ArraySpec arraySpec) {
+        return new BindArrayVisitor(arraySpec);
       }
       if (component instanceof StreamSpec streamSpec) {
         return new BindStreamVisitor(streamSpec);
@@ -89,7 +89,7 @@ final class Specs {
     }
   }
 
-  record ClassSpec(String name, Predicate<? super String>filter, ObjectLayout<?>objectLayout) implements Spec {
+  record ObjectSpec(String name, Predicate<? super String>filter, ObjectLayout<?>objectLayout) implements Spec {
     @Override
     public String toString() {
       return name;
@@ -97,15 +97,15 @@ final class Specs {
 
     ObjectVisitor newMemberObject(String name, Consumer<Object> postOp) {
       var spec = objectLayout.memberSpec(name);
-      if (spec instanceof ClassSpec classSpec) {
-        return new BindClassVisitor(classSpec, postOp);
+      if (spec instanceof ObjectSpec objectSpec) {
+        return new BindObjectVisitor(objectSpec, postOp);
       }
       throw new BindingException("invalid component spec for an object " + spec + " for element " + name);
     }
     ArrayVisitor newMemberArray(String name, Consumer<Object> postOp) {
       var spec = objectLayout.memberSpec(name);
-      if (spec instanceof CollectionSpec collectionSpec) {
-        return new BindCollectionVisitor(collectionSpec, postOp);
+      if (spec instanceof ArraySpec arraySpec) {
+        return new BindArrayVisitor(arraySpec, postOp);
       }
       if (spec instanceof StreamSpec streamSpec) {
         return new BindStreamVisitor(streamSpec, postOp);
@@ -119,28 +119,28 @@ final class Specs {
       return objectVisitor.visitEndObject();
     }
 
-    public ClassSpec filterWith(Predicate<? super String> predicate) {
+    public ObjectSpec filterWith(Predicate<? super String> predicate) {
        var filter = this.filter;
        Predicate<? super String> newFilter = (filter == null)? predicate: name -> predicate.test(name) && filter.test(name);
-       return new ClassSpec(name + ".filter()", newFilter, objectLayout);
+       return new ObjectSpec(name + ".filter()", newFilter, objectLayout);
     }
   }
 
-  record CollectionSpec(Spec component, ArrayLayout<?> arrayLayout) implements Spec {
+  record ArraySpec(Spec component, ArrayLayout<?> arrayLayout) implements Spec {
     @Override
     public String toString() {
-      return component + ".collection()";
+      return component + ".array()";
     }
 
     ObjectVisitor newObject(Consumer<Object> postOp) {
-      if (component instanceof ClassSpec classSpec) {
-        return new BindClassVisitor(classSpec, postOp);
+      if (component instanceof ObjectSpec objectSpec) {
+        return new BindObjectVisitor(objectSpec, postOp);
       }
       throw new BindingException("invalid component spec for an object " + component);
     }
     ArrayVisitor newArray(Consumer<Object> postOp) {
-      if (component instanceof CollectionSpec collectionSpec) {
-        return new BindCollectionVisitor(collectionSpec, postOp);
+      if (component instanceof ArraySpec arraySpec) {
+        return new BindArrayVisitor(arraySpec, postOp);
       }
       if (component instanceof StreamSpec streamSpec) {
         return new BindStreamVisitor(streamSpec, postOp);
@@ -155,7 +155,7 @@ final class Specs {
     }*/
   }
 
-  static JsonValue convert(CollectionSpec spec, JsonValue value) {
+  static JsonValue convert(ArraySpec spec, JsonValue value) {
     var elementSpec = spec.component;
     if (elementSpec instanceof ValueSpec valueSpec) {
       return valueSpec.convertTo(value);
@@ -169,7 +169,7 @@ final class Specs {
     }
     throw new BindingException(spec + " can not convert " + value + " to " + elementSpec);
   }
-  static JsonValue convert(ClassSpec spec, String name, JsonValue value) {
+  static JsonValue convert(ObjectSpec spec, String name, JsonValue value) {
     var elementSpec = spec.objectLayout.memberSpec(name);
     if (elementSpec instanceof ValueSpec valueSpec) {
       return valueSpec.convertTo(value);
@@ -209,12 +209,12 @@ final class Specs {
       return acceptMap(map, binder, objectVisitor);
     }
     var spec = binder.spec(value.getClass());
-    if (spec instanceof ClassSpec classSpec) {
+    if (spec instanceof ObjectSpec objectSpec) {
       var objectVisitor = visitor.visitObject();
       if (objectVisitor == null) {
         return null;
       }
-      return classSpec.accept(value, binder, objectVisitor);
+      return objectSpec.accept(value, binder, objectVisitor);
     }
     throw new BindingException("can not accept " + value + " of spec " + spec);
   }
@@ -253,10 +253,10 @@ final class Specs {
       return;
     }
     var spec = binder.spec(value.getClass());
-    if (spec instanceof ClassSpec classSpec) {
+    if (spec instanceof ObjectSpec objectSpec) {
       var objectVisitor = visitor.visitObject();
       if (objectVisitor != null) {
-        classSpec.accept(value, binder, objectVisitor);
+        objectSpec.accept(value, binder, objectVisitor);
       }
       return;
     }
@@ -301,10 +301,10 @@ final class Specs {
       return;
     }
     var spec = binder.spec(value.getClass());
-    if (spec instanceof ClassSpec classSpec) {
+    if (spec instanceof ObjectSpec objectSpec) {
       var objectVisitor = visitor.visitMemberObject(name);
       if (objectVisitor != null) {
-        classSpec.accept(value, binder, objectVisitor);
+        objectSpec.accept(value, binder, objectVisitor);
       }
       return;
     }

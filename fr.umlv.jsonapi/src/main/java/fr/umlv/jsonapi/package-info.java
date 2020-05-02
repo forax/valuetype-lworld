@@ -1,5 +1,5 @@
 /**
- * Proposal for a Light-Weight JSON API (prototype of JEP 198)
+ * Proposal implementation for a Light-Weight JSON API (JEP 198)
  *
  * <p>This API is derived from the discussion we had on the OpenJDK mailing list about what should
  * be a light weight JSON API for Java All the mistakes are mine.
@@ -23,19 +23,20 @@
  *   <li>Tree constructed using Builder-style API,<br>
  *       builders have several constructions methods among
  *       {@link fr.umlv.jsonapi.builder.ObjectBuilder#add(java.lang.String, java.lang.Object)},
- *       {@link fr.umlv.jsonapi.builder.ObjectBuilder#with(java.lang.String, java.util.function.Consumer)}
+ *       {@link fr.umlv.jsonapi.builder.ObjectBuilder#withObject(java.lang.String, java.util.function.Consumer)},
+ *       {@link fr.umlv.jsonapi.builder.ObjectBuilder#withArray(java.lang.String, java.util.function.Consumer)}
  *       and {@link fr.umlv.jsonapi.builder.ArrayBuilder#add(java.lang.Object)}.
  *   <li>Tree transformer API. A new tree is result,<br>
  *       JSON data stream output from trees,<br>
- *       builders methods {@link fr.umlv.jsonapi.builder.ObjectBuilder#accept(fr.umlv.jsonapi.ObjectVisitor)}
- *       and {@link fr.umlv.jsonapi.builder.ObjectBuilder#accept(fr.umlv.jsonapi.ObjectVisitor)}
- *       generates JSON events from a builder.
+ *       builders methods {@link fr.umlv.jsonapi.builder.ObjectBuilder#replay(fr.umlv.jsonapi.ObjectVisitor)}
+ *       and {@link fr.umlv.jsonapi.builder.ObjectBuilder#replay(fr.umlv.jsonapi.ObjectVisitor)}
+ *       generates JSON events from the values of a builder.
  *   <li>Generator style API for JSON data stream output and for JSON "literals",
- *       {@link fr.umlv.jsonapi.JsonPrinter} and {@link fr.umlv.jsonapi.JsonWriter} emit JSON text
- *       fragment from JSON events.
+ *       {@link fr.umlv.jsonapi.JsonPrinter} and {@link fr.umlv.jsonapi.JsonWriter}
+ *       generate JSON text fragment from JSON events.
  * </ul>
  *
- * Moreover this API also support a high level API, the {@link fr.umlv.jsonapi.bind.Binder}, able to
+ * Moreover this API also support a high level API, the {@link fr.umlv.jsonapi.bind.Binder}
  * <ul>
  *   <li>High-level API to encode any Java objects to JSON in a controlled manner,<br>
  *       {@link fr.umlv.jsonapi.bind.Binder#write(java.io.Writer, java.lang.Object)}.

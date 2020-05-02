@@ -336,9 +336,6 @@
     </inspection_tool>
     <inspection_tool class="OnDemandImport" enabled="true" level="WARNING" enabled_by_default="true" />
     <inspection_tool class="OptionalContainsCollection" enabled="true" level="WARNING" enabled_by_default="true" />
-    <inspection_tool class="OverloadedMethodsWithSameNumberOfParameters" enabled="true" level="WARNING" enabled_by_default="true">
-      <option name="ignoreInconvertibleTypes" value="true" />
-    </inspection_tool>
     <inspection_tool class="OverlyLongLambda" enabled="false" level="WARNING" enabled_by_default="false">
       <option name="m_limit" value="7" />
     </inspection_tool>

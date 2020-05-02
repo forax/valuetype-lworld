@@ -1,6 +1,7 @@
 package fr.umlv.jsonapi;
 
 import java.io.Reader;
+import java.io.UncheckedIOException;
 import java.util.stream.Stream;
 
 import fr.umlv.jsonapi.builder.ArrayBuilder;

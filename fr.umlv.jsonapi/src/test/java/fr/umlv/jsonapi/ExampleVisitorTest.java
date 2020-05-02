@@ -207,7 +207,7 @@ public class ExampleVisitorTest {
         .add("Jolene")
         .addAll("Joleene", "Joleeeene");
     var printer = new JsonPrinter();
-    arrayBuilder.accept(printer);
+    arrayBuilder.replay(printer);
     assertEquals("""  
         [ "Jolene", "Joleene", "Joleeeene" ]\
         """, printer.toString());
@@ -231,11 +231,11 @@ public class ExampleVisitorTest {
     var objectBuilder = new BuilderConfig(LinkedHashMap::new, ArrayList::new)
         .newObjectBuilder()
         .add("name", "Franky")
-        .with("address", b -> b
+        .withObject("address", b -> b
             .add("street", "3rd")
             .add("city", "NY"));
     var printer = new JsonPrinter();
-    objectBuilder.accept(printer);
+    objectBuilder.replay(printer);
     assertEquals("""
         { "name": "Franky", "address": { "street": "3rd", "city": "NY" } }\
         """, printer.toString());

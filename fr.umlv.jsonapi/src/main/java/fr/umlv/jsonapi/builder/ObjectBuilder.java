@@ -4,6 +4,7 @@ import static fr.umlv.jsonapi.VisitorMode.PUSH;
 import static java.util.Objects.requireNonNull;
 
 import fr.umlv.jsonapi.ArrayVisitor;
+import fr.umlv.jsonapi.JsonPrinter;
 import fr.umlv.jsonapi.JsonReader;
 import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
@@ -31,35 +32,24 @@ import java.util.stream.Collectors;
  *   { "name": "Franky", "address": {  "street": "3rd", "city": "NY" }  }
  *   """;
  * ObjectBuilder objectBuilder = new ObjectBuilder();
- * Map<String, Object></String,> map = JsonReader.parse(text, objectBuilder);
- * assertEquals(
- *         Map.of("name", "Franky",
- *                "address", Map.of("street", "3rd", "city", "NY")),
- *         map);
+ * Map&lt;String, Object&gt; map = JsonReader.parse(text, objectBuilder);
  * </pre>
  *
  * As a builder, it can be mutated using the methods {@link #add(String, Object)},
- * or {@link #addAll(Map)}.
- * Moreover there is a special method {@link #with(String, Consumer)} to create nested objects
+ * {@link #addAll(Map)}, {@link #withObject(String, Consumer)} or
+ * {@link #withArray(String, Consumer)}.
  *
  * <p>
- * Example to generate two JSON objects using an ObjectBuilder
+ * Example to copy the content of a JSON object to another one by replaying the sequence of visits
  * <pre>
- * ObjectBuilder objectBuilder = new BuilderConfig(LinkedHashMap::new, ArrayList::new)
- *     .newObjectBuilder()
+ * ObjectBuilder builder = new ObjectBuilder()
  *     .add("name", "Franky")
- *     .with("address", b -> b
+ *     .withObject("address", b -> b
  *         .add("street", "3rd")
  *         .add("city", "NY"));
- * JsonPrinter printer = new JsonPrinter();
- * objectBuilder.accept(printer::visitObject);
- * assertEquals("""
- *   { "name": "Franky", "address": { "street": "3rd", "city": "NY" } }\
- *   """, printer.toString());
+ * ObjectBuilder builder2 = new ObjectBuilder();
+ * builder.replay(builder2);
  * </pre>
- *
- * The example above is a little ridiculous because,
- * calling {@link ObjectBuilder#toString()} also work !
  */
 public final class ObjectBuilder implements ObjectVisitor {
   private final Map<String, Object> map;
@@ -106,7 +96,7 @@ public final class ObjectBuilder implements ObjectVisitor {
 
   @Override
   public String toString() {
-    return map.entrySet().stream().map(e -> '"' + e.getKey() + "\": " + e.getValue()).collect(Collectors.joining(", ", "{", "}"));
+    return replay(new JsonPrinter()).toString();
   }
 
   /**
@@ -116,7 +106,7 @@ public final class ObjectBuilder implements ObjectVisitor {
    * will replace the existing one.
    *
    * If the class of {code value} is not one of boolean, int, long, double, String, BigInteger,
-   * java.util.List or java.util.Map, the method {@link #accept(ObjectVisitor)} will
+   * java.util.List or java.util.Map, the method {@link #replay(ObjectVisitor)} will
    * consider it as an {@link JsonValue#fromOpaque(Object) opaque value}.
    *
    * @param name name of the member to add
@@ -149,7 +139,7 @@ public final class ObjectBuilder implements ObjectVisitor {
    * <pre>
    * new ObjectBuilder()
    *   .add("name", "Franky")
-   *   .with("address", b -> b
+   *   .withObject("address", b -> b
    *       .add("street", "3rd")
    *       .add("city", "NY"));
    * </pre>
@@ -158,12 +148,36 @@ public final class ObjectBuilder implements ObjectVisitor {
    * @param consumer a function that will called to create the object that will be added
    * @return itself
    */
-  public ObjectBuilder with(String name, Consumer<? super ObjectBuilder> consumer) {
+  public ObjectBuilder withObject(String name, Consumer<? super ObjectBuilder> consumer) {
     requireNonNull(name);
     requireNonNull(consumer);
     var builder = new ObjectBuilder(config, (ObjectVisitor) null);
     consumer.accept(builder);
     add(name, builder.toMap());
+    return this;
+  }
+
+  /**
+   * Create an array by specifying all its values and add it to the current builder;
+   *
+   * <p>Example of usage
+   * <pre>
+   * new ObjectBuilder()
+   *   .add("name", "Franky")
+   *   .withArray("address", b -> b
+   *       .addAll(3, 6, 8, 6, 4));
+   * </pre>
+   *
+   * @param name name of the object member that is added
+   * @param consumer a function that will called to create the object that will be added
+   * @return itself
+   */
+  public ObjectBuilder withArray(String name, Consumer<? super ArrayBuilder> consumer) {
+    requireNonNull(name);
+    requireNonNull(consumer);
+    var builder = new ArrayBuilder(config, (ArrayVisitor) null);
+    consumer.accept(builder);
+    add(name, builder.toList());
     return this;
   }
 
@@ -248,7 +262,7 @@ public final class ObjectBuilder implements ObjectVisitor {
    * @return the value returned by the call to {@link ObjectVisitor#visitEndObject()} on the
    *         array visitor provided as argument
    */
-  public Object accept(ObjectVisitor objectVisitor) {
+  public Object replay(ObjectVisitor objectVisitor) {
     requireNonNull(objectVisitor);
     return Acceptors.acceptMap(map, objectVisitor);
   }

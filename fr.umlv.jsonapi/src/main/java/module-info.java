@@ -1,3 +1,6 @@
+/**
+ * A prototype of JEP 198: a Light-Weight JSON API
+ */
 module fr.umlv.jsonapi {
   requires com.fasterxml.jackson.core;
 

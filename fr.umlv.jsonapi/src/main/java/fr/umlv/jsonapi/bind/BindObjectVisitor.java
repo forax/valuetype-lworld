@@ -5,21 +5,21 @@ import fr.umlv.jsonapi.JsonValue;
 import fr.umlv.jsonapi.ObjectVisitor;
 import fr.umlv.jsonapi.VisitorMode;
 import fr.umlv.jsonapi.bind.Spec.ObjectLayout;
-import fr.umlv.jsonapi.bind.Specs.ClassSpec;
+import fr.umlv.jsonapi.bind.Specs.ObjectSpec;
 import java.util.function.Consumer;
 
-final class BindClassVisitor implements ObjectVisitor {
-  private final ClassSpec spec;
+final class BindObjectVisitor implements ObjectVisitor {
+  private final ObjectSpec spec;
   private Object builder;
   private final Consumer<Object> postOp;
 
-  BindClassVisitor(ClassSpec spec, Consumer<Object> postOp) {
+  BindObjectVisitor(ObjectSpec spec, Consumer<Object> postOp) {
     this.spec = spec;
     this.postOp = postOp;
     this.builder = spec.objectLayout().newBuilder();
   }
 
-  BindClassVisitor(ClassSpec spec) {
+  BindObjectVisitor(ObjectSpec spec) {
     this(spec, __ -> { /* empty */ });
   }
 

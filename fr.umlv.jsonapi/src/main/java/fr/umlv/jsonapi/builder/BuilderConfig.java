@@ -8,35 +8,33 @@ import static java.util.function.UnaryOperator.identity;
 
 import fr.umlv.jsonapi.ArrayVisitor;
 import fr.umlv.jsonapi.ObjectVisitor;
-import fr.umlv.jsonapi.bind.Spec;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 /**
- * Factory functions and transformer functions used as parameter of
- * {@link fr.umlv.jsonapi.bind.Binder#read(Path, Spec, BuilderConfig)} and to construct
- * a {@link ObjectBuilder} or an {@link ArrayBuilder}.
+ * Factory functions and transformer functions used to construct
+ * an {@link ObjectBuilder} or an {@link ArrayBuilder}.
  *
  * Because JSON format is recursive, by example an array may contain objects and
  * an object may contain array, you have to configure the representation
  * used for an object and the representation used for an array both at the same time.
  *
- * <p>The default configuration use {@link HashMap} for representing JSON objects and
- * {@link ArrayList} for representing JSON arrays.
- * for
+ * <p>The default configuration use {@link LinkedHashMap} for representing JSON objects and
+ * {@link ArrayList} for representing JSON arrays (both data structures use the insertion order)
  * <pre>
  *   BuilderConfig config =  BuilderConfig.defaults();
  *   ObjectBuilder builder = config.newObjectBuilder();
  * </pre>
  *
- * You can configure the exact {@link Map} and {@link List} implementations to use
+ * You can configure the exact {@link Map} and {@link List} implementations to use,
+ * by example use {@link java.util.HashMap} instead of {@link LinkedHashMap} to
+ * use less memory (but you loose the insertion order)
  * <pre>
- *   BuilderConfig config = new BuilderConfig(LinkedHashMap::new, ArrayList::new);
+ *   BuilderConfig config = new BuilderConfig(HashMap::new, ArrayList::new);
  *   ArrayBuilder builder = config.newArrayBuilder();
  * </pre>
  *
@@ -77,12 +75,13 @@ public class BuilderConfig {
   }
 
   private BuilderConfig() {
-    this(HashMap::new, ArrayList::new);
+    this(LinkedHashMap::new, ArrayList::new);
   }
 
   /**
-   * Returns a builder configuration that use a factory of {@link HashMap} and a factory
-   * of {@link ArrayList} to be used by a {@link ObjectBuilder} or an {@link ArrayBuilder}
+   * Returns a builder configuration that use a factory of {@link LinkedHashMap} and
+   * a factory of {@link ArrayList} to be used respectively by {@link ObjectBuilder}s
+   * and {@link ArrayBuilder}s
    * @return the default builder configuration
    */
   public static BuilderConfig defaults() {
