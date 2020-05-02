@@ -246,6 +246,9 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
    * works for both mutable and immutable builder. Obviously, the builder doesn't have to be
    * a real builder, it can be an array of object, a map or whatever you want.
    *
+   * The decoding of the member values of an object is done by calling
+   * {@link #memberSpec(String)} to get the spec of each member.
+   *
    * <p>The API works that way
    * <ul>
    *   <li>{@link #newBuilder()} is called first to create a builder
@@ -260,28 +263,90 @@ public /*sealed*/ interface Spec /*add permits clause*/ {
    *    for each member of the class (the pair field name/field value).
    *    The method {@link #accept(Object, MemberVisitor)} is called with an instance of
    *    the class to encode to JSON and the visitor to call on a members.
-   *
-   * In both case, decoding and encoding, the binder has to know the {@link Spec spec}
-   * of member of the class, for that it uses the method {@link #memberSpec(String)}.
+   *    When encoding, the {@link #memberSpec(String) member spec} is not used because
+   *    it represent the compile time type of a member, the dynamic type of the member value
+   *    carry more information.
    *
    * @param <B> the type of the builder
    */
   interface ObjectLayout<B> {
+
+    /**
+     * Returns the compile time information of a member as a {@link Spec spec}.
+     * @param memberName the name of the member
+     * @return the spec of the object member
+     */
     Spec memberSpec(String memberName);
 
-    // TODO, create a Member interface ?  to encapsulate the spec instead of using a string (name)
-    // to avoid too many lookup
-
+    /**
+     * Creates a builder to decode this object
+     * @return a builder used to decode this object
+     */
     B newBuilder();
+
+    /**
+     * Add a Java object decoded from a JSON object as member into the builder.
+     * Given that the builder can be immutable, the builder has to be returned
+     *
+     * @param builder the builder that will store the member value
+     * @param memberName the name of the member
+     * @param object the value of the member
+     * @return either the same builder or a new builder to continue the decoding
+     */
     B addObject(B builder, String memberName, Object object);
+
+    /**
+     * Add a Java object decoded from a JSON array as member into the builder.
+     * Given that the builder can be immutable, the builder has to be returned
+     *
+     * @param builder the builder that will store the member value
+     * @param memberName the name of the member
+     * @param array the value of the member
+     * @return either the same builder or a new builder to continue the decoding
+     */
     B addArray(B builder, String memberName, Object array);
+
+    /**
+     * Add a JSON value as member into the builder.
+     * Given that the builder can be immutable, the builder has to be returned
+     *
+     * @param builder the builder that will store the member value
+     * @param memberName the name of the member
+     * @param value the value of the member
+     * @return either the same builder or a new builder to continue the decoding
+     */
     B addValue(B builder, String memberName, JsonValue value);
+
+    /**
+     * Create the final object from the builder, if the object is immutable,
+     * it can be the builder itself.
+     *
+     * @param builder the builder containing all the previously decoded values
+     * @return a Java object representing the JSON object fully decoded
+     */
     Object build(B builder);
 
+    /**
+     * Called to encode a Java object as a JSON object
+     *
+     * @param object a Java object
+     * @param memberVisitor a visitor with one method
+     *        {@link MemberVisitor#visitMember(String, Object)} that should be called once
+     *        per members with the member value
+     */
     void accept(Object object, MemberVisitor memberVisitor);
 
+    /**
+     * A visitor of the member of a Java object
+     */
     @FunctionalInterface
     interface MemberVisitor {
+
+      /**
+       * Called once per object member to indicate the name of the member and its value.
+       * @param name the name of the member
+       * @param value the value of the member
+       */
       void visitMember(String name, Object value);
     }
 
