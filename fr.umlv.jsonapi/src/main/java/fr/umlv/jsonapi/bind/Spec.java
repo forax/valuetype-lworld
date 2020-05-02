@@ -53,12 +53,13 @@ import java.util.stream.Stream;
  *     return JsonValue.from(object.toString());
  *   }
  * });
- * binder.register(SpecFinder.from(Map.of(LocalDate.class, localDateSpec)));
+ * binder.register(SpecFinder.associate(LocalDate.class, localDateSpec));
  * record Order(LocalDate date) { }
  * String json = """
  *   { "date": "2007-12-03" }
  *   """;
- * Order order = binder.read(json, Order.class);
+ * Order order = binder.read(json, Order.class);  // decode from JSON
+ * String json2 = binder.write(order);            // encode as JSON
  * </pre>
  */
 public /*sealed*/ interface Spec /*add permits clause*/ {
