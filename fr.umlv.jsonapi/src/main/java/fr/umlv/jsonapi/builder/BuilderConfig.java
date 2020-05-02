@@ -145,10 +145,10 @@ public class BuilderConfig {
    *
    * The values returned by a call to {@link ObjectVisitor#visitMemberObject(String)},
    * {@link ObjectVisitor#visitMemberArray(String)} and
-   * {@link ObjectVisitor#visitMemberValue(String, JsonValue)} are stored in the {@link Map}
-   * stored in the created {@link ObjectBuilder}.
+   * {@link ObjectVisitor#visitMemberValue(String, fr.umlv.jsonapi.JsonValue)}
+   * are stored in the {@link Map} stored in the created {@link ObjectBuilder}.
    *
-   * The {code delegate} has to be a visitor in {@link VisitorMode#PULL} mode.
+   * The {code delegate} has to be a visitor in {@link fr.umlv.jsonapi.VisitorMode#PULL} mode.
    *
    * @param delegate an object builder that will be used to react to the visit methods or null.
    * @return a new object builder that delegate its operation to an object visitor.
@@ -176,10 +176,10 @@ public class BuilderConfig {
    *
    * The values returned by a call to {@link ArrayVisitor#visitObject()},
    * {@link ArrayVisitor#visitArray()} and
-   * {@link ArrayVisitor#visitValue(JsonValue)} are stored in the {@link Map}
+   * {@link ArrayVisitor#visitValue(fr.umlv.jsonapi.JsonValue)} are stored in the {@link Map}
    * stored in the created {@link ObjectBuilder}.
    *
-   * The {code delegate} has to be a visitor in {@link VisitorMode#PULL} mode.
+   * The {code delegate} has to be a visitor in {@link fr.umlv.jsonapi.VisitorMode#PULL} mode.
    *
    * @param delegate an object builder that will be used to react to the visit methods or null.
    * @return a new object builder that delegate its operation to an object visitor.
