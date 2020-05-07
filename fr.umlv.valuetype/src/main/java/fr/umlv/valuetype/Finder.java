@@ -1,5 +1,6 @@
 package fr.umlv.valuetype;
 
+
 public interface Finder<E extends Comparable<? super E>> {
   boolean find(E element);
   

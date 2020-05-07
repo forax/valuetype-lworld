@@ -72,7 +72,7 @@ public class RangeBenchMark  {
     };
   }
   
-  private static Iterable<IntBox> rangeIntBoxes(int start, int end) {
+  private static Iterable<IntBox.ref> rangeIntBoxes(int start, int end) {
     return () -> {
       return new Iterator<>() {
         private int index = start;
@@ -82,7 +82,7 @@ public class RangeBenchMark  {
         }
         
         @Override
-        public IntBox next() {
+        public IntBox.ref next() {
           if (index == end) {
             throw new NoSuchElementException();
           }

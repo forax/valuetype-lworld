@@ -17,6 +17,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/*
 public interface Species<T> {
   public Species<T> raw();
   public Class<?> rawClass();
@@ -188,3 +189,4 @@ public interface Species<T> {
     };
   }
 }
+*/

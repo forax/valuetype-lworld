@@ -7,7 +7,7 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 @__inline__
-public final /*inline*/ class Option<E> {
+public final class Option<E> {
   private final E value;
   
   private Option(E value) {
@@ -49,15 +49,15 @@ public final /*inline*/ class Option<E> {
     Objects.requireNonNull(supplier);
     return (value == null)? supplier.get(): value;
   }
-  
-  public Option<E> or(Supplier<? extends Option<E>> supplier) {
+
+  public Option<E> or(Supplier<? extends Option.ref<E>> supplier) {
     Objects.requireNonNull(supplier);
-    return (value == null)? (Option<E>)supplier.get(): this;
+    return (value == null)? supplier.get(): this;
   }
-  
-  public <R> Option<R> flatMap(Function<? super E, ? extends Option<R>> mapper) {
+
+  public <R> Option<R> flatMap(Function<? super E, ? extends Option.ref<R>> mapper) {
     Objects.requireNonNull(mapper);
-    return (value == null)? empty(): (Option<R>)mapper.apply(value);
+    return (value == null)? empty(): mapper.apply(value);
   }
   public Option<E> filter(Predicate<? super E> predicate) {
     Objects.requireNonNull(predicate);

@@ -1121,7 +1121,7 @@ public class XArrayList<E> extends AbstractList<E>
      * @return a cursor
      */
     public InlineCursor<E> cursor() {
-        return new AListCursor<>(0, size, elementData);
+        return new AListCursor<E>(0, size, elementData);
     }
 
     /**
@@ -1154,7 +1154,7 @@ public class XArrayList<E> extends AbstractList<E>
 
         @Override
         public AListCursor<E> advance() {
-            return new AListCursor<>(Math.min(index + 1, size), size, elementData);
+            return new AListCursor<E>(Math.min(index + 1, size), size, elementData);
         }
     }
 
@@ -1252,7 +1252,7 @@ public class XArrayList<E> extends AbstractList<E>
      */
     public List<E> subList(int fromIndex, int toIndex) {
         subListRangeCheck(fromIndex, toIndex, size);
-        return new SubList<>(this, fromIndex, toIndex);
+        return new SubList<E>(this, fromIndex, toIndex);
     }
 
     private static class SubList<E> extends AbstractList<E> implements RandomAccess {
@@ -1558,7 +1558,7 @@ public class XArrayList<E> extends AbstractList<E>
 
         public List<E> subList(int fromIndex, int toIndex) {
             subListRangeCheck(fromIndex, toIndex, size);
-            return new SubList<>(this, fromIndex, toIndex);
+            return new SubList<E>(this, fromIndex, toIndex);
         }
 
         private void rangeCheckForAdd(int index) {

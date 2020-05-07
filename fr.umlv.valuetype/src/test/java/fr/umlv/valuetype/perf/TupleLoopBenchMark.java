@@ -53,7 +53,7 @@ public class TupleLoopBenchMark {
       return new Tuple(index, array[index]);
     }
     
-    Cursor? next() {
+    Cursor.ref next() {
       if (index + 1 == array.length) {
         return null;
       }
@@ -61,7 +61,7 @@ public class TupleLoopBenchMark {
     }
   }
   
-  private static Cursor? indexedElements(int[] array) {
+  private static Cursor.ref indexedElements(int[] array) {
     if (array.length == 0) {
       return null;
     }

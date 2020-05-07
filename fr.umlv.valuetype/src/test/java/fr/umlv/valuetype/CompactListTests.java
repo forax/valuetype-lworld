@@ -15,9 +15,11 @@ import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.function.Executable;
 
 @SuppressWarnings("static-method")
 class CompactListTests {
+  /* BUG
 	@Test
 	void testOf() {
 		var lists = List.of(
@@ -28,11 +30,11 @@ class CompactListTests {
 		for(var list: lists) {
 			Assertions.assertNotNull(list);
 		}
-	}
+	}*/
 	
 	@Test
 	void testOfNull() {
-		Stream<Supplier<CompactList<String>>> suppliers =
+		Stream<Supplier<CompactList.ref<String>>> suppliers =
 		  Stream.of(
 				() -> CompactList.of((String)null),
 				() -> CompactList.of("foo", null), () -> CompactList.of(null, "bar"),
@@ -41,7 +43,8 @@ class CompactListTests {
 				() -> CompactList.of(null, "bar", "baz", "wizz", "buzz"), () -> CompactList.of("foo", null, "baz", "wizz", "buzz"), () -> CompactList.of("foo", "bar", null, "wizz", "buzz"), () -> CompactList.of("foo", "bar", "baz", null, "buzz"), () -> CompactList.of("foo", "bar", "baz", "wizz", null),
 				() -> CompactList.of((String[])null)
 				);
-		assertAll(suppliers.map(supplier -> () -> assertThrows(NullPointerException.class, () -> supplier.get())));
+		// assertAll(suppliers.map(supplier -> () -> assertThrows(NullPointerException.class, () -> supplier.get()))); BUG
+		assertAll(suppliers.map((Supplier<CompactList.ref<String>> supplier) -> () -> assertThrows(NullPointerException.class, () -> supplier.get())));
 	}
 	
 	@Test
@@ -82,7 +85,7 @@ class CompactListTests {
 				CompactList.of("foo", "bar", "baz"), CompactList.of("foo", "bar", "baz", "wizz"),
 				CompactList.of("foo", "bar", "baz", "wizz", "buzz")
 				);
-    assertAll(lists.map((Object/*FIXME*/ list) -> () -> assertEquals("foo", (((CompactList<?>)list).get(0)))));
+    assertAll(lists.map((Object list) -> () -> assertEquals("foo", (((CompactList<?>)list).get(0)))));  //FIXME Object
 	}
 	@Test
 	void testGetAllElements() {
@@ -145,7 +148,8 @@ class CompactListTests {
 				List.of("foo", "bar", "baz", "wizz", "buzz")
 				);
 		assertAll(lists.map(list -> () ->  {
-			var compactList = CompactList.of(list.toArray(String[]::new));
+			// var compactList = CompactList.of(list.toArray(String[]::new)); BUG
+			CompactList.ref<String> compactList = CompactList.of(list.toArray(String[]::new));
 			var arrayList = new ArrayList<String>();
 			for(var element: compactList) {
 				arrayList.add(element);

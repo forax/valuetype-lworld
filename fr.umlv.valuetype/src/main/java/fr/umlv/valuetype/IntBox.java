@@ -1,7 +1,7 @@
 package fr.umlv.valuetype;
 
 @__inline__
-public final /*inline*/ class IntBox implements Comparable<IntBox> {
+public final /*inline*/ class IntBox implements Comparable<IntBox.ref> {
   private final int value;
 
   private IntBox() {
@@ -14,7 +14,7 @@ public final /*inline*/ class IntBox implements Comparable<IntBox> {
   }
 
   @Override
-  public int compareTo(IntBox o) {
+  public int compareTo(IntBox.ref o) {
     return Integer.compare(value, o.value);
   }
   

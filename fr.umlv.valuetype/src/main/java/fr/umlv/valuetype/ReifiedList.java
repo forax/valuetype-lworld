@@ -130,7 +130,7 @@ public class ReifiedList<E> implements Iterable<E> {
     }
     */
     
-    var list = new ReifiedList<>(IntBox.class);
+    var list = new ReifiedList<>(IntBox.ref.class);
     IntStream.range(0, 100_000).forEach(i -> list.add(IntBox.valueOf(i)));
     
     var sum = 0;

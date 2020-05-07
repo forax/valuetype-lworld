@@ -22,7 +22,7 @@ public /*inline*/ final class ValueList<E> {
   }
   
   @__inline__
-  private static /*inline*/ final class ReferenceArrayAccess<E> implements ArrayAccess<E> {
+  private static final class ReferenceArrayAccess<E> implements ArrayAccess<E> {
     //private final boolean empty;  // fake field [not needed anymore]
     
     private ReferenceArrayAccess() {
@@ -71,7 +71,8 @@ public /*inline*/ final class ValueList<E> {
   }
   
   private static <T> ValueList<T> create(ArrayAccess<T> access, T[] array) {
-    return new ValueList<>(access, array);
+    //return new ValueList<>(access, array);  // BUG
+    return new ValueList<T>(access, array);
   }
   
   public int size() {

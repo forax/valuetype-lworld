@@ -8,7 +8,7 @@ import java.lang.reflect.Field;
 import sun.misc.Unsafe;
 
 @__inline__
-public /*inline*/ class FourElementsArray<E> {
+public class FourElementsArray<E> {
   private final E e0;
   private final E e1;
   private final E e2;

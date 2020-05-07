@@ -27,9 +27,9 @@ compiler.
   rawArguments(
     "--default-module-for-created-files", "fr.umlv.valuetype",
   //  "-Xlint:all",
-    "-XDallowGenericsOverValues",
+  //  "-XDallowGenericsOverValues",
     "-XDallowEmptyValues",
-    "-XDallowWithFieldOperator"   
+    "-XDallowWithFieldOperator"
     )
 
 tester.

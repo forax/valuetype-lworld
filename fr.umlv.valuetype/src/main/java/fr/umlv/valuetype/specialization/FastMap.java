@@ -8,14 +8,15 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
+/*
 public class FastMap<K, V> extends AbstractMap<K, V> {
   private final Species<FastMap<K, V>> __SPECIES__;
   private Entry<K, V>[] entries;
   private int size;
   
   @__inline__
-  static /*inline*/ class Entry<K, V> implements Map.Entry<K, V>{
-    private final Species<Entry<K, V>> __SPECIES__;
+  static class Entry<K, V> implements Map.Entry<K, V>{
+    private final Species<Entry<K, V>.ref> __SPECIES__;
     private int hash;
     private K key;
     private V value;
@@ -230,3 +231,4 @@ public class FastMap<K, V> extends AbstractMap<K, V> {
     //}
   }
 }
+*/

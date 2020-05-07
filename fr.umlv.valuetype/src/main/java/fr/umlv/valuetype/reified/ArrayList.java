@@ -62,7 +62,7 @@ public class ArrayList</*any*/E> {
     String s = reified_invokevirtual_get.$(__CP(String.class)).$(list, 0);
     System.out.println(s);
     
-    ArrayList<IntBox> list2 = reified_invokestatic_single.$(__MP0(IntBox.class)).$(IntBox.valueOf(42));
+    ArrayList<IntBox.ref> list2 = reified_invokestatic_single.$(__MP0(IntBox.ref.class)).$(IntBox.valueOf(42));
     IntBox box = reified_invokevirtual_get.$(__CP(IntBox.class)).$(list2, 0);
     System.out.println(box);
   }

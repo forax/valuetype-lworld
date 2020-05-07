@@ -13,7 +13,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 @__inline__
-public /*inline*/ class RubyLikeInt implements Comparable<RubyLikeInt> {
+public /*inline*/ class RubyLikeInt implements Comparable<RubyLikeInt.ref> {
   private final int small;
   private final BigInteger big;
   
@@ -41,7 +41,7 @@ public /*inline*/ class RubyLikeInt implements Comparable<RubyLikeInt> {
   }
   
   @Override
-  public int compareTo(RubyLikeInt integer) {
+  public int compareTo(RubyLikeInt.ref integer) {
     if (big == null && integer.big == null) {
       return Integer.compare(small, integer.small);
     }
@@ -203,23 +203,23 @@ public /*inline*/ class RubyLikeInt implements Comparable<RubyLikeInt> {
         (right.big == null)? valueOf(right.small): right.big));
   }
   
-  public void downto(RubyLikeInt limit, Consumer<? super RubyLikeInt> consumer) {
+  public void downto(RubyLikeInt limit, Consumer<? super RubyLikeInt.ref> consumer) {
     for(var i = this; i.compareTo(limit) >= 0; i = i.pred()) {
       consumer.accept(i);
     }
   }
   
-  public void upto(RubyLikeInt limit, Consumer<? super RubyLikeInt> consumer) {
+  public void upto(RubyLikeInt limit, Consumer<? super RubyLikeInt.ref> consumer) {
     for(var i = this; i.compareTo(limit) <= 0; i = i.succ()) {
       consumer.accept(i);
     }
   }
   
-  public void times(Consumer<? super RubyLikeInt> consumer) {
+  public void times(Consumer<? super RubyLikeInt.ref> consumer) {
     small(0).upto(this, consumer);
   }
   
-  public <T> T rangeReduce(RubyLikeInt to, T initial, BiFunction<? super T, ? super RubyLikeInt, ? extends T> reducer) {
+  public <T> T rangeReduce(RubyLikeInt to, T initial, BiFunction<? super T, ? super RubyLikeInt.ref, ? extends T> reducer) {
     var current = initial;
     for(var i = this; i.compareTo(to) < 0; i = i.succ()) {
       current = reducer.apply(current, i);

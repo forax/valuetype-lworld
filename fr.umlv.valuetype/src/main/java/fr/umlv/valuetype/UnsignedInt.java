@@ -1,7 +1,7 @@
 package fr.umlv.valuetype;
 
 @__inline__
-public /*inline*/ class UnsignedInt implements Comparable<UnsignedInt> {
+public /*inline*/ class UnsignedInt implements Comparable<UnsignedInt.ref> {
   private final int value;
 
   private UnsignedInt(int value) {
@@ -52,7 +52,7 @@ public /*inline*/ class UnsignedInt implements Comparable<UnsignedInt> {
   }
   
   @Override
-  public int compareTo(UnsignedInt unsignedInt) {
+  public int compareTo(UnsignedInt.ref unsignedInt) {
     return Integer.compareUnsigned(value, unsignedInt.value);
   }
   

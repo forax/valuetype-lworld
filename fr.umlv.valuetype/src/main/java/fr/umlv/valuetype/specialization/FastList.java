@@ -3,7 +3,7 @@ package fr.umlv.valuetype.specialization;
 import fr.umlv.valuetype.Point;
 import java.util.AbstractList;
 import java.util.Arrays;
-
+/*
 public class FastList<T> extends AbstractList<T> {
   private final Species<FastList<T>> __SPECIES__;
   private T[] elements;
@@ -46,3 +46,4 @@ public class FastList<T> extends AbstractList<T> {
     list2.forEach(System.out::println);
   }
 }
+*/
