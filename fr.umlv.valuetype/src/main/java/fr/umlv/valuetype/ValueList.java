@@ -71,8 +71,7 @@ public /*inline*/ final class ValueList<E> {
   }
   
   private static <T> ValueList<T> create(ArrayAccess<T> access, T[] array) {
-    //return new ValueList<>(access, array);  // BUG
-    return new ValueList<T>(access, array);
+    return new ValueList<>(access, array);
   }
   
   public int size() {

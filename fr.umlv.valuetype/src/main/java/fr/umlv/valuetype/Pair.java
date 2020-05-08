@@ -11,7 +11,6 @@ public class Pair<A, B> {
   }
   
   public static <A, B> Pair<A, B> of(A first, B second) {
-    // return new Pair<>(first, second);  BUG
-    return new Pair<A, B>(first, second);
+    return new Pair<>(first, second);
   }
 }

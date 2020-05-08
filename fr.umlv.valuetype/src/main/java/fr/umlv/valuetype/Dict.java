@@ -95,13 +95,9 @@ public class Dict<K, V> {
 
   @Override
   public String toString() {
-    //return Arrays.stream(array)
-    //    .filter(e -> e.gen != 0 && e.gen < size)
-    //    .map(e -> e.key + ": " + e.value)
-    //    .collect(Collectors.joining(", ", "{", "}"));
-    return Arrays.stream(array)   // BUG
-        .filter((Entry.ref<K,V> e) -> e.gen != 0 && e.gen < size)
-        .map((Entry.ref<K,V> e) -> e.key + ": " + e.value)
+    return Arrays.stream(array)
+        .filter(e -> e.gen != 0 && e.gen < size)
+        .map(e -> e.key + ": " + e.value)
         .collect(Collectors.joining(", ", "{", "}"));
   }
 

@@ -19,7 +19,6 @@ import org.junit.jupiter.api.function.Executable;
 
 @SuppressWarnings("static-method")
 class CompactListTests {
-  /* BUG
 	@Test
 	void testOf() {
 		var lists = List.of(
@@ -30,7 +29,7 @@ class CompactListTests {
 		for(var list: lists) {
 			Assertions.assertNotNull(list);
 		}
-	}*/
+	}
 	
 	@Test
 	void testOfNull() {
@@ -43,8 +42,7 @@ class CompactListTests {
 				() -> CompactList.of(null, "bar", "baz", "wizz", "buzz"), () -> CompactList.of("foo", null, "baz", "wizz", "buzz"), () -> CompactList.of("foo", "bar", null, "wizz", "buzz"), () -> CompactList.of("foo", "bar", "baz", null, "buzz"), () -> CompactList.of("foo", "bar", "baz", "wizz", null),
 				() -> CompactList.of((String[])null)
 				);
-		// assertAll(suppliers.map(supplier -> () -> assertThrows(NullPointerException.class, () -> supplier.get()))); BUG
-		assertAll(suppliers.map((Supplier<CompactList.ref<String>> supplier) -> () -> assertThrows(NullPointerException.class, () -> supplier.get())));
+		assertAll(suppliers.map(supplier -> () -> assertThrows(NullPointerException.class, () -> supplier.get())));
 	}
 	
 	@Test
@@ -148,8 +146,8 @@ class CompactListTests {
 				List.of("foo", "bar", "baz", "wizz", "buzz")
 				);
 		assertAll(lists.map(list -> () ->  {
-			// var compactList = CompactList.of(list.toArray(String[]::new)); BUG
-			CompactList.ref<String> compactList = CompactList.of(list.toArray(String[]::new));
+			//var compactList = CompactList.of(list.toArray(String[]::new));  BUG
+			Iterable<String> compactList = CompactList.of(list.toArray(String[]::new));
 			var arrayList = new ArrayList<String>();
 			for(var element: compactList) {
 				arrayList.add(element);
