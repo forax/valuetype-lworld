@@ -9,6 +9,7 @@ import java.util.Objects;
 
 import sun.misc.Unsafe;
 
+/* Using to access to an inline field is not allowed anymore ?
 public @__inline__ class SmallString implements CharSequence {
   private byte c0;
   private byte c1;
@@ -296,4 +297,4 @@ public @__inline__ class SmallString implements CharSequence {
   	SCALE = scale;
   	UNSAFE = unsafe;
   }
-}
+}*/
